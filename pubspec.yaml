@@ -1,0 +1,134 @@
+name: ieoseo
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.1.0+3
+
+environment:
+  sdk: ^3.12.0
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+
+  # Renders the design system's Lucide-style icon paths (DK_ICONS) as SVG.
+  flutter_svg: ^2.0.10+1
+
+  # 집중 탭의 스킨/세션/모드를 로컬에 영속화(프로토타입 localStorage 대응).
+  shared_preferences: ^2.3.2
+
+  # 인증 API 연동(이슈 #32): 인터셉터·타임아웃·401 refresh 재시도.
+  dio: ^5.9.2
+
+  # access/refresh 토큰을 OS 보안 저장소(Keychain/Keystore)에 보관. 평문 로깅 금지.
+  flutter_secure_storage: ^10.3.1
+
+  # 소셜 로그인 SDK(이슈 #38). 토큰은 SocialTokenProvider 뒤로 감춰 주입한다.
+  # Google: authenticate() → idToken. 7.x는 GoogleSignIn.instance 싱글턴.
+  google_sign_in: ^7.2.0
+  # Apple: getAppleIDCredential() → identityToken(=ID token). iOS/macOS 네이티브.
+  sign_in_with_apple: ^8.1.0
+  # Kakao: 카카오톡 설치 시 앱, 미설치 시 카카오계정 웹 → access token.
+  kakao_flutter_sdk_user: ^2.0.0
+
+  # 관측성(Sentry). main()에서 init + runApp 래핑. DSN(--dart-define) 미설정 시 비활성(ADR-0011).
+  sentry_flutter: ^9.21.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # dio 인터셉터를 가짜 HTTP로 검증(AuthApi/ApiClient 테스트).
+  http_mock_adapter: ^0.6.1
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # 브랜드 로고. 앱 내부 DkLogo 가 런타임에 표시한다(런처 아이콘 마스터와 동일 PNG).
+  assets:
+    - assets/icon/ieoseo-icon-1024.png
+
+  # UI/본문은 Pretendard, 큰 숫자/브랜드는 WantedSans. 디자인시스템-토큰.md §1 참조.
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Light.otf
+          weight: 300
+        - asset: assets/fonts/Pretendard-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Pretendard-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Pretendard-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/Pretendard-Bold.otf
+          weight: 700
+        - asset: assets/fonts/Pretendard-ExtraBold.otf
+          weight: 800
+        - asset: assets/fonts/Pretendard-Black.otf
+          weight: 900
+    - family: WantedSans
+      fonts:
+        - asset: assets/fonts/WantedSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/WantedSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/WantedSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/WantedSans-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/WantedSans-Black.ttf
+          weight: 900
+
+# 앱 런처 아이콘 — 디자인 번들 daykit-icon-blue-grad-1024 마스터.
+# 생성: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/ieoseo-icon-1024.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"
+  min_sdk_android: 21
+  # Android 12+ adaptive icon. 배경 흰색을 명시해 런처가 레거시 비트맵을 검게
+  # 마스킹하는 문제를 없앤다. foreground 는 로고 마스터(중앙 여백 포함).
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon/ieoseo-icon-1024.png"

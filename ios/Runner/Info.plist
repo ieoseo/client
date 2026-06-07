@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>이어서</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>ieoseo</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>UIWindowScene</string>
+					<key>UISceneConfigurationName</key>
+					<string>flutter</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<!-- ───────────────────────────────────────────────────────────────
+	     소셜 로그인 OAuth 설정(이슈 #38). 실제 키는 비워 두고 TODO_* 플레이스홀더로 둔다.
+	     발급 위치:
+	       - Google reversed client id: Google Cloud Console → APIs & Services →
+	         Credentials → iOS OAuth client → "iOS URL scheme"(= REVERSED_CLIENT_ID).
+	         보통 GoogleService-Info.plist 의 REVERSED_CLIENT_ID 값과 같다.
+	       - Kakao native app key: Kakao Developers → 내 애플리케이션 → 앱 키 → 네이티브 앱 키.
+	         URL scheme 은 "kakao{NATIVE_APP_KEY}" 형식.
+	       - Sign in with Apple: Apple Developer → Identifiers → App ID 에서
+	         "Sign In with Apple" capability 활성화 + Runner.entitlements 참조(아래).
+	     주의: 실제 키를 이 파일에 커밋하지 말 것. CI/빌드 시 치환하거나 로컬에서만 채운다.
+	     ─────────────────────────────────────────────────────────────── -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<!-- Google: reversed client id (com.googleusercontent.apps.XXXX) -->
+			<key>CFBundleURLName</key>
+			<string>google-signin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- TODO_GOOGLE_REVERSED_CLIENT_ID: com.googleusercontent.apps.YOUR_CLIENT_ID -->
+				<string>TODO_GOOGLE_REVERSED_CLIENT_ID</string>
+			</array>
+		</dict>
+		<dict>
+			<!-- Kakao: kakao{NATIVE_APP_KEY} -->
+			<key>CFBundleURLName</key>
+			<string>kakao-login</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- TODO_KAKAO_NATIVE_APP_KEY: kakaoYOUR_NATIVE_APP_KEY -->
+				<string>kakaoTODO_KAKAO_NATIVE_APP_KEY</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Kakao: 카카오톡 앱으로 로그인/공유하기 위한 query scheme 허용 목록 -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>kakaokompassauth</string>
+		<string>kakaolink</string>
+	</array>
+</dict>
+</plist>

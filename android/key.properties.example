@@ -1,0 +1,16 @@
+# Android 릴리스 서명 설정 템플릿.
+# 복사: cd client/android && cp key.properties.example key.properties  (key.properties 는 커밋되지 않음)
+#
+# 1) 업로드 keystore 생성(최초 1회) — 비밀번호·정보는 본인이 정함, 잃어버리면 안 됨:
+#    keytool -genkey -v -keystore ~/ieoseo-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# 2) 아래 값을 실제로 채운다(실값은 key.properties 에만, 절대 커밋 금지):
+#    - storeFile: 생성한 .jks 경로(절대경로 권장)
+#    - 비밀번호 2종 + alias
+#
+# 3) 빌드: cd client && flutter build appbundle --release  (key.properties 있으면 자동 서명)
+
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=upload
+storeFile=/ABSOLUTE/PATH/TO/ieoseo-upload.jks

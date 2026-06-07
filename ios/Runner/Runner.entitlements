@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- ───────────────────────────────────────────────────────────────
+	     Sign in with Apple capability(이슈 #38, sign_in_with_apple).
+	     이 entitlements 파일을 Xcode 의 Runner 타깃 빌드 설정
+	     CODE_SIGN_ENTITLEMENTS 에 연결하고, Apple Developer 포털의 App ID 에서
+	     "Sign In with Apple" 를 활성화해야 실제로 동작한다.
+	       발급/설정 위치:
+	         - Apple Developer → Certificates, Identifiers & Profiles → Identifiers
+	           → (앱의 App ID) → Capabilities → Sign In with Apple 체크.
+	         - Xcode → Runner target → Signing & Capabilities → + Capability →
+	           Sign in with Apple (자동으로 이 entitlements 가 갱신됨).
+	     아래 키는 기본 설정이며 별도 실키는 필요 없다(시크릿 아님).
+	     ─────────────────────────────────────────────────────────────── -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+</dict>
+</plist>

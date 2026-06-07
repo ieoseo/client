@@ -1,0 +1,71 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- API 통신에 필요. 릴리스 빌드는 debug/profile 매니페스트의 권한을 쓰지 않으므로
+         여기(main)에 명시해야 한다(없으면 릴리스에서 모든 네트워크 호출 실패). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <application
+        android:label="이어서"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <!-- ───────────────────────────────────────────────────────────
+             소셜 로그인 OAuth(이슈 #38).
+             Google: google_sign_in 은 별도 Activity 가 필요 없다(기본 설정).
+               서버 검증용 web client id 는 dart-define=GOOGLE_SERVER_CLIENT_ID 로 주입.
+             Kakao: 카카오 로그인 redirect 를 받는 Activity. scheme 은
+               "kakao{NATIVE_APP_KEY}", host 는 "oauth".
+               네이티브 앱 키 발급: Kakao Developers → 내 애플리케이션 → 앱 키 → 네이티브 앱 키.
+             주의: 실제 키를 커밋하지 말 것. 빌드 시 manifestPlaceholders 로 치환하거나
+                   로컬에서만 TODO_KAKAO_NATIVE_APP_KEY 를 실제 값으로 바꾼다.
+             ─────────────────────────────────────────────────────────── -->
+        <activity
+            android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- TODO_KAKAO_NATIVE_APP_KEY: kakao{NATIVE_APP_KEY} 로 치환 -->
+                <data
+                    android:host="oauth"
+                    android:scheme="kakaoTODO_KAKAO_NATIVE_APP_KEY" />
+            </intent-filter>
+        </activity>
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+    <!-- Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+</manifest>

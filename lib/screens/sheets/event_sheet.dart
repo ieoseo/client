@@ -1,0 +1,353 @@
+import 'dart:ui' as ui;
+
+import 'package:flutter/widgets.dart';
+
+import '../../data/dday.dart';
+import '../../data/format.dart';
+import '../../data/models.dart';
+import '../../theme/tokens.dart';
+import '../../widgets/dk_button.dart';
+import '../../widgets/dk_icon.dart';
+import '../../widgets/dk_segmented.dart';
+import '../../widgets/dk_sheet.dart';
+import '../me/settings_section.dart';
+import 'sheet_fields.dart';
+
+/// 이벤트 추가/상세 시트 본문. 프로토타입 `EventSheet`.
+class EventSheetBody extends StatefulWidget {
+  const EventSheetBody({
+    super.key,
+    this.event,
+    required this.isNew,
+    required this.onClose,
+    this.onDelete,
+    this.onSubmit,
+  });
+
+  final DkEvent? event;
+  final bool isNew;
+  final VoidCallback onClose;
+  final ValueChanged<DkEvent>? onDelete;
+
+  /// 추가/저장 제출. 폼 값으로 만든 초안(신규는 id 빈 문자열)을 전달한다.
+  final ValueChanged<DkEvent>? onSubmit;
+
+  @override
+  State<EventSheetBody> createState() => _EventSheetBodyState();
+}
+
+class _EventSheetBodyState extends State<EventSheetBody> {
+  late DkEventType _type = widget.event?.type ?? DkEventType.single;
+  late String _cat = widget.event?.category ?? '자격증';
+  late bool _pinned = widget.event?.pinned ?? false;
+  bool _remind = true;
+  late final TextEditingController _title = TextEditingController(
+    text: widget.event?.title ?? '',
+  );
+  late final TextEditingController _date = TextEditingController(
+    text: widget.event?.date ?? '2026-06-29',
+  );
+  late final TextEditingController _start = TextEditingController(
+    text: widget.event?.start ?? '2026-06-08',
+  );
+  late final TextEditingController _end = TextEditingController(
+    text: widget.event?.end ?? '2026-06-12',
+  );
+  late final TextEditingController _memo = TextEditingController(
+    text: widget.event?.memo ?? '',
+  );
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _date.dispose();
+    _start.dispose();
+    _end.dispose();
+    _memo.dispose();
+    super.dispose();
+  }
+
+  /// 폼 값으로 만든 초안(신규는 id 빈 문자열). 색은 기존 값/기본 hue.
+  DkEvent _draft() {
+    final bool single = _type == DkEventType.single;
+    return DkEvent(
+      id: widget.event?.id ?? '',
+      type: _type,
+      title: _title.text.trim(),
+      category: _cat,
+      date: single ? _date.text.trim() : null,
+      start: single ? null : _start.text.trim(),
+      end: single ? null : _end.text.trim(),
+      pinned: _pinned,
+      memo: _memo.text.trim(),
+      color: widget.event?.color ?? 'cool',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final DkTokens t = DkTheme.of(context);
+    final DkEvent? ev = widget.event;
+    final bool showHero = !widget.isNew && ev != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (showHero) _hero(t, ev),
+        DkField(
+          label: '이벤트 타입',
+          child: DkSegmented<DkEventType>(
+            full: true,
+            value: _type,
+            onChanged: (DkEventType v) => setState(() => _type = v),
+            options: const <DkSegment<DkEventType>>[
+              DkSegment<DkEventType>(DkEventType.single, 'D-Day'),
+              DkSegment<DkEventType>(DkEventType.progress, '기간 진행률'),
+              DkSegment<DkEventType>(DkEventType.period, '기간 D-Day'),
+            ],
+          ),
+        ),
+        DkField(
+          label: '제목',
+          child: DkTextInput(controller: _title, placeholder: '예) 정보처리기사 실기'),
+        ),
+        DkField(
+          label: '카테고리',
+          child: DkCategoryPills(
+            value: _cat,
+            onChanged: (String c) => setState(() => _cat = c),
+          ),
+        ),
+        DkField(
+          label: _type == DkEventType.single ? '목표일' : '기간',
+          child: _type == DkEventType.single
+              ? DkTextInput(controller: _date)
+              : Row(
+                  children: <Widget>[
+                    Expanded(child: DkTextInput(controller: _start)),
+                    const SizedBox(width: 8),
+                    Expanded(child: DkTextInput(controller: _end)),
+                  ],
+                ),
+        ),
+        DkField(
+          label: '메모',
+          child: DkTextInput(
+            controller: _memo,
+            placeholder: '메모를 남겨보세요',
+            minHeight: 64,
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: t.bgSubtle,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            children: <Widget>[
+              _toggleRow(t, 'pin', '홈 화면에 고정', _pinned, (bool v) {
+                setState(() => _pinned = v);
+              }),
+              Container(height: 1, color: t.borderSubtle),
+              _toggleRow(t, 'bell', 'D-Day 알림 (7·3·1일 전)', _remind, (bool v) {
+                setState(() => _remind = v);
+              }),
+            ],
+          ),
+        ),
+        _stickyActions(t, ev),
+      ],
+    );
+  }
+
+  Widget _hero(DkTokens t, DkEvent ev) {
+    final DkDdayInfo info = ddayInfo(ev);
+    final DkHue h = DkHue.byName(ev.color);
+    const Color white = Color(0xFFFFFFFF);
+    final String big = info.type == DkEventType.progress
+        ? '${info.pct}%'
+        : info.label.replaceAll('마감 ', '');
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 18),
+        decoration: BoxDecoration(
+          color: t.fgStrong,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Stack(
+          children: <Widget>[
+            Positioned(
+              top: -50,
+              right: -30,
+              child: ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    color: h.color.withValues(alpha: 0.32),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              '${ev.category} · ${eventDateLabel(ev)}',
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontSize: 13,
+                                color: Color(0xB3FFFFFF),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              ev.title,
+                              style: const TextStyle(
+                                fontFamily: 'Pretendard',
+                                fontSize: 19,
+                                fontWeight: FontWeight.w700,
+                                color: white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        big,
+                        style: const TextStyle(
+                          fontFamily: 'WantedSans',
+                          fontSize: 40,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -1.2,
+                          color: white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (info.type == DkEventType.progress) ...<Widget>[
+                    const SizedBox(height: 14),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: SizedBox(
+                        height: 7,
+                        child: Stack(
+                          children: <Widget>[
+                            Container(color: const Color(0x33FFFFFF)),
+                            FractionallySizedBox(
+                              widthFactor: info.pct / 100,
+                              child: Container(color: white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _toggleRow(
+    DkTokens t,
+    String icon,
+    String label,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: <Widget>[
+          DkIcon(icon, size: 19, color: t.fgMuted),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Pretendard',
+                fontSize: 14.5,
+                fontWeight: FontWeight.w500,
+                color: t.fg,
+              ),
+            ),
+          ),
+          DkToggle(value: value, onChanged: onChanged),
+        ],
+      ),
+    );
+  }
+
+  Widget _stickyActions(DkTokens t, DkEvent? ev) {
+    return Row(
+      children: <Widget>[
+        if (!widget.isNew && ev != null) ...<Widget>[
+          DkButton(
+            size: DkButtonSize.lg,
+            variant: DkButtonVariant.danger,
+            onPressed: () {
+              widget.onDelete?.call(ev);
+              widget.onClose();
+            },
+            leading: DkIcon('trash', size: 18, color: t.danger, strokeWidth: 2),
+          ),
+          const SizedBox(width: 10),
+        ],
+        Expanded(
+          child: DkButton(
+            size: DkButtonSize.lg,
+            full: true,
+            onPressed: () {
+              widget.onSubmit?.call(_draft());
+              widget.onClose();
+            },
+            child: Text(widget.isNew ? '추가하기' : '저장'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 이벤트 시트를 띄운다.
+Future<void> showEventSheet(
+  BuildContext context, {
+  DkEvent? event,
+  required bool isNew,
+  ValueChanged<DkEvent>? onDelete,
+  ValueChanged<DkEvent>? onSubmit,
+}) {
+  return showDkSheet<void>(
+    context,
+    title: isNew ? '이벤트 추가' : '이벤트 상세',
+    full: true,
+    child: Builder(
+      builder: (BuildContext sheetContext) => EventSheetBody(
+        event: event,
+        isNew: isNew,
+        onClose: () => Navigator.of(sheetContext).maybePop(),
+        onDelete: onDelete,
+        onSubmit: onSubmit,
+      ),
+    ),
+  );
+}
