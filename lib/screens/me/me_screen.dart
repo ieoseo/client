@@ -4,12 +4,14 @@ import 'package:flutter/widgets.dart';
 
 import '../../data/api/auth_dto.dart';
 import '../../data/api/settings_dto.dart';
+import '../../data/auth/social_auth.dart';
 import '../../data/models.dart';
 import '../../parts/app_header.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_button.dart';
 import '../../widgets/dk_feedback.dart';
 import '../../widgets/dk_icon.dart';
+import 'linked_accounts_section.dart';
 import 'settings_dialogs.dart';
 import 'settings_section.dart';
 
@@ -36,6 +38,9 @@ class MeScreen extends StatelessWidget {
     required this.onSaveSettings,
     required this.onWithdraw,
     this.unread = 0,
+    this.linkedProviders = const <String>{},
+    this.onLinkAccount,
+    this.onUnlinkAccount,
   });
 
   /// 현재 인증 사용자(프로필 표시·수정 대상, 이슈 #56).
@@ -70,6 +75,15 @@ class MeScreen extends StatelessWidget {
 
   /// 회원 탈퇴 확정 콜백(2단계 확인 통과 후 DELETE → 로그아웃).
   final Future<void> Function() onWithdraw;
+
+  /// 현재 연동된 provider 이름 집합(예: {'email','google','kakao'}, 이슈 #10).
+  final Set<String> linkedProviders;
+
+  /// 소셜 계정 연결 콜백(linkIdentity). null 이면 연동 섹션을 숨긴다.
+  final Future<void> Function(SocialProvider provider)? onLinkAccount;
+
+  /// 소셜 계정 연결 해제 콜백(unlinkIdentity).
+  final Future<void> Function(SocialProvider provider)? onUnlinkAccount;
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +144,14 @@ class MeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _reviewEntry(t),
+              if (onLinkAccount != null && onUnlinkAccount != null) ...<Widget>[
+                const SizedBox(height: 16),
+                LinkedAccountsSection(
+                  linkedProviders: linkedProviders,
+                  onLink: onLinkAccount!,
+                  onUnlink: onUnlinkAccount!,
+                ),
+              ],
             ],
           ),
         ),

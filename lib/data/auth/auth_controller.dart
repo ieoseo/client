@@ -48,12 +48,15 @@ class AuthController extends ChangeNotifier {
     _api = api ?? AuthApi(_client);
     // OAuth(딥링크) 복귀로 세션이 생기면 server provisioning 을 수행한다.
     _signInSub = _gateway.onSignedIn.listen((_) => _onExternalSignIn());
+    // 연동 추가(linkIdentity) 등 사용자 갱신 시 최신 identity 를 반영한다.
+    _userUpdatedSub = _gateway.onUserUpdated.listen((_) => _onUserUpdated());
   }
 
   final SupabaseAuthGateway _gateway;
   late final ApiClient _client;
   late final AuthApi _api;
   StreamSubscription<void>? _signInSub;
+  StreamSubscription<void>? _userUpdatedSub;
 
   /// 동시 provisioning(중복 `/auth/me`) 방지 가드.
   bool _provisioning = false;
@@ -101,6 +104,21 @@ class AuthController extends ChangeNotifier {
   Future<void> oauthSignIn(SocialProvider provider) =>
       _gateway.signInWithOAuth(provider);
 
+  /// 현재 계정에 연동된 provider 이름 집합(예: {'email','google','kakao'}).
+  Set<String> get linkedProviders => _gateway.linkedProviders;
+
+  /// 소셜 계정 추가 연동(`linkIdentity`, 브라우저 + 딥링크). 완료는 [onUserUpdated] →
+  /// [_onUserUpdated] 가 반영한다. 실패는 [Exception] 전파(UI 표시).
+  Future<void> linkAccount(SocialProvider provider) =>
+      _gateway.linkOAuth(provider);
+
+  /// 소셜 계정 연동 해제(`unlinkIdentity`). 성공 시 최신 identity 로 갱신·알림.
+  /// 마지막 identity 해제 등은 게이트웨이가 예외로 막는다(UI 표시).
+  Future<void> unlinkAccount(SocialProvider provider) async {
+    await _gateway.unlinkOAuth(provider);
+    notifyListeners();
+  }
+
   /// 이메일 회원가입(ADR-0014). Supabase `signUp`(Confirm email OFF → 즉시 세션) →
   /// server `/auth/me` provisioning. 성공 시 [justSignedUp] 이 true 가 되어 진입 게이트가
   /// 닉네임 설정 화면을 띄운다. 실패는 [AuthException]/[Exception] 전파(UI 표시).
@@ -135,6 +153,12 @@ class AuthController extends ChangeNotifier {
     } on ApiException {
       // 복귀 직후 me 실패 — 미인증 유지(화면이 재시도).
     }
+  }
+
+  /// 사용자 갱신(연동 추가 등) 통지 시 최신 identity 를 로컬에 반영하고 알린다.
+  Future<void> _onUserUpdated() async {
+    await _gateway.reloadUser();
+    notifyListeners();
   }
 
   /// 현재 세션으로 `/auth/me` 를 조회해 인증 상태로 전환한다(중복 방지 가드).
@@ -173,6 +197,7 @@ class AuthController extends ChangeNotifier {
   @override
   void dispose() {
     _signInSub?.cancel();
+    _userUpdatedSub?.cancel();
     super.dispose();
   }
 

@@ -45,6 +45,22 @@ abstract class SupabaseAuthGateway {
 
   /// 로그아웃 — Supabase 세션 종료(로컬 토큰 폐기).
   Future<void> signOut();
+
+  /// 현재 사용자에 연동된 provider 이름 집합(예: {'email','google','kakao'}). 세션 없으면 빈 집합.
+  Set<String> get linkedProviders;
+
+  /// 사용자 정보(연동 identity 포함) 변경 통지. 연동 추가(linkOAuth) 완료 시 발행될 수 있다.
+  Stream<void> get onUserUpdated;
+
+  /// 현재 계정에 소셜 provider 를 추가 연동(`linkIdentity`, 브라우저 + 딥링크).
+  /// 완료는 비동기다 — [onUserUpdated] 로 통지된다. Supabase 'Manual Linking' 활성 필요.
+  Future<void> linkOAuth(SocialProvider provider);
+
+  /// 연동된 소셜 provider 를 해제(`unlinkIdentity`). 연동 안 됐거나 마지막 identity 면 예외.
+  Future<void> unlinkOAuth(SocialProvider provider);
+
+  /// 서버에서 최신 사용자(연동 identity 포함)를 다시 읽어 로컬 세션을 갱신한다.
+  Future<void> reloadUser();
 }
 
 /// `supabase_flutter` 기반 실제 구현.
@@ -94,14 +110,18 @@ class SupabaseAuthGatewayImpl implements SupabaseAuthGateway {
       ? LaunchMode.externalApplication
       : LaunchMode.platformDefault;
 
+  /// provider → (Supabase OAuthProvider, 요청 scope). Kakao 는 닉네임만 요청
+  /// (account_email 은 KOE205 회피, server email nullable).
+  (OAuthProvider, String?) _oauthSpec(SocialProvider provider) =>
+      switch (provider) {
+        SocialProvider.google => (OAuthProvider.google, null),
+        SocialProvider.kakao => (OAuthProvider.kakao, 'profile_nickname'),
+        SocialProvider.apple => (OAuthProvider.apple, null),
+      };
+
   @override
   Future<void> signInWithOAuth(SocialProvider provider) async {
-    // Kakao 는 닉네임만 요청(account_email 은 KOE205 회피, server email nullable).
-    final (OAuthProvider oauth, String? scopes) = switch (provider) {
-      SocialProvider.google => (OAuthProvider.google, null),
-      SocialProvider.kakao => (OAuthProvider.kakao, 'profile_nickname'),
-      SocialProvider.apple => (OAuthProvider.apple, null),
-    };
+    final (OAuthProvider oauth, String? scopes) = _oauthSpec(provider);
     await _auth.signInWithOAuth(
       oauth,
       redirectTo: kSupabaseRedirectUri,
@@ -138,4 +158,55 @@ class SupabaseAuthGatewayImpl implements SupabaseAuthGateway {
 
   @override
   Future<void> signOut() => _auth.signOut();
+
+  @override
+  Set<String> get linkedProviders =>
+      _authOrNull?.currentUser?.identities
+          ?.map((UserIdentity i) => i.provider)
+          .toSet() ??
+      const <String>{};
+
+  @override
+  Stream<void> get onUserUpdated {
+    final GoTrueClient? auth = _authOrNull;
+    if (auth == null) return const Stream<void>.empty();
+    return auth.onAuthStateChange
+        .where((AuthState data) => data.event == AuthChangeEvent.userUpdated)
+        .map((_) {});
+  }
+
+  @override
+  Future<void> linkOAuth(SocialProvider provider) async {
+    final (OAuthProvider oauth, String? scopes) = _oauthSpec(provider);
+    await _auth.linkIdentity(
+      oauth,
+      redirectTo: kSupabaseRedirectUri,
+      scopes: scopes,
+      authScreenLaunchMode: _authLaunchMode,
+    );
+  }
+
+  @override
+  Future<void> unlinkOAuth(SocialProvider provider) async {
+    final String name = provider.wireName;
+    final List<UserIdentity> identities =
+        _auth.currentUser?.identities ?? const <UserIdentity>[];
+    final Iterable<UserIdentity> matches = identities.where(
+      (UserIdentity i) => i.provider == name,
+    );
+    if (matches.isEmpty) {
+      throw StateError('연동되지 않은 계정이에요.');
+    }
+    await _auth.unlinkIdentity(matches.first);
+    await reloadUser();
+  }
+
+  @override
+  Future<void> reloadUser() async {
+    try {
+      await _auth.refreshSession();
+    } on AuthException {
+      // 세션 갱신 실패는 무시(다음 요청 401 처리에 위임).
+    }
+  }
 }

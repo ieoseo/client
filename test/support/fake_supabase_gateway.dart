@@ -19,10 +19,31 @@ class FakeSupabaseGateway implements SupabaseAuthGateway {
     this.emailError,
     this.refreshResult,
     this.grantedAccessToken = 'supabase-access',
+    this.linkError,
+    this.unlinkError,
+    Set<String>? linkedProviders,
     // ignore: prefer_initializing_formals
-  }) : _accessToken = accessToken;
+  }) : _accessToken = accessToken,
+       _linkedProviders = linkedProviders ?? <String>{};
 
   String? _accessToken;
+
+  /// 현재 연동된 provider 이름 집합(link/unlink 로 변한다).
+  final Set<String> _linkedProviders;
+
+  /// 지정하면 [linkOAuth] 가 이 예외를 던진다.
+  final Object? linkError;
+
+  /// 지정하면 [unlinkOAuth] 가 이 예외를 던진다.
+  final Object? unlinkError;
+
+  /// link/unlink 호출 이력(검증용).
+  final List<SocialProvider> linkCalls = <SocialProvider>[];
+  final List<SocialProvider> unlinkCalls = <SocialProvider>[];
+  bool reloadCalled = false;
+
+  final StreamController<void> _userUpdatedController =
+      StreamController<void>.broadcast();
 
   /// 지정하면 [signInWithOAuth] 가 이 예외를 던진다.
   final Object? oauthError;
@@ -101,6 +122,40 @@ class FakeSupabaseGateway implements SupabaseAuthGateway {
     _accessToken = null;
   }
 
+  @override
+  Set<String> get linkedProviders => Set<String>.unmodifiable(_linkedProviders);
+
+  @override
+  Stream<void> get onUserUpdated => _userUpdatedController.stream;
+
+  @override
+  Future<void> linkOAuth(SocialProvider provider) async {
+    linkCalls.add(provider);
+    final Object? err = linkError;
+    if (err != null) throw err;
+    _linkedProviders.add(provider.wireName);
+    _userUpdatedController.add(null);
+  }
+
+  @override
+  Future<void> unlinkOAuth(SocialProvider provider) async {
+    unlinkCalls.add(provider);
+    final Object? err = unlinkError;
+    if (err != null) throw err;
+    if (!_linkedProviders.contains(provider.wireName)) {
+      throw StateError('연동되지 않은 계정이에요.');
+    }
+    _linkedProviders.remove(provider.wireName);
+  }
+
+  @override
+  Future<void> reloadUser() async {
+    reloadCalled = true;
+  }
+
   /// 테스트 종료 시 스트림 정리(선택).
-  void dispose() => _signedInController.close();
+  void dispose() {
+    _signedInController.close();
+    _userUpdatedController.close();
+  }
 }
