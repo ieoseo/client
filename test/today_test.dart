@@ -14,6 +14,7 @@ TodayScreen _screen({
   VoidCallback? onOpenDebt,
 }) {
   return TodayScreen(
+    userName: '지우',
     tasks: tasks ?? kTasks,
     events: kEvents,
     debts: kDebts,

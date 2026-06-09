@@ -36,13 +36,15 @@
 - 도메인 권위는 server. 클라이언트 D-Day/포모도로 계산은 표현/데모용.
 - 계약 차이(메모): server `DebtResponse`에는 `title`/`fromLabel`이 없다 → `DkDebtDto`는 제목을 비워 매핑(표시 제목은 후속에서 태스크 조인). un-complete 전용 액션이 없어 완료 취소는 PUT으로 today 복귀를 표현. 자동 이월(`/debts/{id}/auto-carry`)은 미배선.
 
-## 인증 (이슈 #32, A-1 — 인증만 실연동)
-- 인증 server 실연동(이메일). 데이터(events/tasks/debts) 실연동은 **이슈 #35(A-2)** 에서 완료 — 위 데이터 절 참조.
-- `data/api/`: `ApiClient`(dio 래퍼 — baseUrl·타임아웃·envelope 언랩·`ApiException` 매핑·Bearer 부착·401 refresh 1회 재시도), `AuthApi`(signup/login/refresh/logout/me), DTO(`AuthSession`/`AuthTokens`/`AuthUser`).
-- `data/auth/`: `TokenStorage`(flutter_secure_storage로 access/refresh 보관), `AuthController`(ChangeNotifier — signup/login/logout/tryRestore + `AuthStatus`).
-- 진입 게이트(`main.dart`): 부팅 시 `tryRestore`로 저장 토큰 복원 → 유효하면 main, 아니면 splash→onboarding→인증 화면. 로그아웃 시 토큰 삭제 + 인증 화면.
-- 설정: API base는 `--dart-define=API_BASE_URL=...`(기본 `http://localhost:8080/api/v1`). 운영은 https, 로컬 dev는 http 허용.
-- 보안: 토큰은 **flutter_secure_storage만**(SharedPreferences·평문 로깅 금지), dio 타임아웃 필수. 계약: `../docs/05-API/auth.md`.
+## 인증 (Supabase Auth — 소셜 전용, ADR-0014)
+- **이메일 + 소셜**: 이메일 가입/로그인(Supabase `signUp`/`signInWithPassword`)과 소셜(**Kakao·Google**, Apple 후속). 로그인·세션·토큰은 `supabase_flutter` 가 담당하고, server 는 Supabase JWT 를 JWKS 로 **검증만** 한다(토큰 발급 엔드포인트 없음).
+- **소셜은 전부 웹 OAuth(ADR-0014)**: `signInWithOAuth(provider, redirectTo: app.ieoseo://login-callback)`(브라우저 + 딥링크) → 복귀 시 `onAuthStateChange(signedIn)` → server `/auth/me` provisioning. **인증은 Supabase(web client)가 처리** → 앱 내 client id·네이티브 SDK(google_sign_in 등) 불필요. (Google 네이티브 idToken 방식을 쓰려면 Android/iOS OAuth 클라이언트가 필요해 채택 안 함.)
+- **이메일 가입 직후**: 닉네임이 없으므로 `NicknameSetupScreen` 으로 닉네임을 받아 `/auth/me`(PATCH) 저장(`justSignedUp`).
+- `data/auth/`: `SupabaseAuthGateway`(supabase_flutter 추상화 — 토큰/`signInWithOAuth`/이메일/refresh/signOut/onSignedIn, 테스트는 가짜 주입), `AuthController`(ChangeNotifier — oauthSignIn/emailSignUp/emailSignIn/tryRestore/updateProfile/withdraw/logout + `AuthStatus`), `social_auth.dart`(`SocialProvider` 표시용 enum), `supabase_config.dart`(URL/anonKey + `kSupabaseRedirectUri`).
+- `data/api/`: `ApiClient`(dio 래퍼 — baseUrl·타임아웃·envelope 언랩·`ApiException`·Bearer(Supabase 세션 토큰)·401 시 `refreshSession` 1회 재시도), `AuthApi`(**me/updateProfile/withdraw** 만), DTO `AuthUser`(`email` 은 **nullable** — Kakao 등 미제공 가능).
+- 진입 게이트(`main.dart`): `Supabase.initialize` 후 부팅 시 `tryRestore`(Supabase 세션 → `/auth/me`) → 유효하면 main, 아니면 splash→onboarding→로그인. 로그아웃은 `signOut`.
+- 설정: `.env.json`(dart-define-from-file) — `SUPABASE_URL`·`SUPABASE_ANON_KEY`(필수), `API_BASE_URL`(에뮬레이터 `http://10.0.2.2:8080/api/v1`). 하드코딩 기본값 없음. 딥링크 복귀 scheme `app.ieoseo://login-callback` 은 Android `AndroidManifest.xml`(intent-filter)·iOS `Info.plist`(CFBundleURLTypes scheme `app.ieoseo`)·Supabase 대시보드 Redirect URLs 에 동일하게 등록(셋 다 일치해야 복귀 동작). 네이티브 SDK scheme(google_sign_in·kakao)은 미사용이라 제거.
+- 보안: 세션은 supabase_flutter 가 보관(평문 로깅 금지), dio 타임아웃 필수. 계약: `../docs/05-API/auth.md`.
 
 ## 제안 구조 (구현 착수 시)
 ```
@@ -55,7 +57,8 @@ lib/
 ```
 
 ## 실행
-- `flutter pub get` → `flutter run`
+- 설정값은 **`.env.json`**(dart-define-from-file)으로 관리한다. 최초 1회: `cp .env.json.example .env.json` 후 값 채움(**필수**: `SUPABASE_URL`·`SUPABASE_ANON_KEY`, `API_BASE_URL` 에뮬레이터=`http://10.0.2.2:8080/api/v1`). `.env.json` 은 gitignore. 미설정 시 `main` 의 assert 로 빠르게 실패한다(특정 프로젝트 URL 을 소스에 하드코딩하지 않음).
+- `flutter pub get` → `flutter run --dart-define-from-file=.env.json` (IntelliJ 는 Run config 의 Additional run args 에 동일 플래그).
 - 분석/포맷: `flutter analyze`, `dart format .`
 - 테스트: `flutter test` (유틸/도메인·위젯; 시각은 골든/스크린샷 보조).
 

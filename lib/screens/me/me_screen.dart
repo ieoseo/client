@@ -199,7 +199,7 @@ class MeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 1),
                 Text(
-                  user.email,
+                  user.email ?? '이메일 미등록',
                   style: TextStyle(
                     fontFamily: 'Pretendard',
                     fontSize: 13,

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'data/api/api_repository.dart';
 import 'data/api/notif_api.dart';
 import 'data/api/settings_api.dart';
 import 'data/auth/auth_controller.dart';
-import 'data/auth/auth_sdk_token_provider.dart';
+import 'data/auth/supabase_config.dart';
 import 'data/data_controller.dart';
 import 'data/notif_controller.dart';
 import 'data/settings_controller.dart';
 import 'observability/sentry_config.dart';
 import 'screens/login.dart';
 import 'screens/main_scaffold.dart';
+import 'screens/nickname_setup.dart';
 import 'screens/onboarding.dart';
 import 'screens/splash.dart';
 import 'theme/tokens.dart';
@@ -20,6 +22,20 @@ import 'theme/tweaks.dart';
 /// 앱 진입점. Sentry DSN(`--dart-define=SENTRY_DSN`)이 설정돼 있으면 Sentry 로 감싸
 /// 미처리 예외를 보고하고, 미설정이면 곧장 앱을 띄운다(외부 전송 0, ADR-0011).
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 인증은 Supabase Auth(ADR-0014) — 세션·토큰을 supabase_flutter 가 관리한다.
+  // anonKey 는 --dart-define=SUPABASE_ANON_KEY 로 주입(미주입 시 초기화 실패).
+  final SupabaseConfig supa = SupabaseConfig.fromEnvironment();
+  assert(
+    supa.isConfigured,
+    'SUPABASE_URL·SUPABASE_ANON_KEY 가 필요합니다. '
+    '--dart-define-from-file=.env.json 로 실행하세요(.env.json.example 참조).',
+  );
+  // anonKey: 레거시 anon(public) 키 사용. publishable 키로 전환 시 교체.
+  // ignore: deprecated_member_use
+  await Supabase.initialize(url: supa.url, anonKey: supa.anonKey);
+
   final SentryConfig sentry = SentryConfig.fromEnvironment();
   if (!sentry.isEnabled) {
     runApp(const IeoseoApp());
@@ -87,14 +103,8 @@ class _IeoseoAppState extends State<IeoseoApp> {
   @override
   void initState() {
     super.initState();
-    _auth =
-        widget._injectedAuth ??
-        AuthController(
-          // 소셜 로그인 SDK 토큰 획득(이슈 #38). 키는 --dart-define 으로 주입.
-          social: AuthSdkTokenProvider(
-            config: SocialAuthConfig.fromEnvironment(),
-          ),
-        );
+    // 소셜은 Supabase signInWithOAuth(웹 흐름)로 처리한다 — 앱 내 SDK/클라이언트 불필요(ADR-0014).
+    _auth = widget._injectedAuth ?? AuthController();
     // 데이터 레이어는 인증 클라이언트(Bearer + refresh)를 재사용한다.
     _data =
         widget._injectedData ?? DataController(ApiRepository(_auth.apiClient));
@@ -150,6 +160,13 @@ class _IeoseoAppState extends State<IeoseoApp> {
 
     // 인증되면 진입 흐름과 무관하게 main으로 전환(로그인/복원 공통 게이트).
     if (_auth.status == AuthStatus.authenticated && _auth.user != null) {
+      // 이메일 가입 직후엔 닉네임 설정 화면을 먼저 보여준다.
+      if (_auth.justSignedUp) {
+        return Container(
+          color: tokens.page,
+          child: NicknameSetupScreen(auth: _auth),
+        );
+      }
       body = MainScaffold(
         controller: _data,
         notif: _notif,

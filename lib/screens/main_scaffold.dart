@@ -445,7 +445,7 @@ class _MainScaffoldState extends State<MainScaffold> {
       case _Sub.review:
         return ReviewScreen(
           review: _c.repository.weekReview(),
-          streak: _c.repository.streak(),
+          streak: _streakDays(),
           onBack: () => setState(() => _sub = _Sub.none),
         );
       case _Sub.calendar:
@@ -467,6 +467,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     switch (_tab) {
       case DkTab.today:
         return TodayScreen(
+          userName: widget.user.nickname,
           tasks: _c.tasks,
           events: _c.events,
           debts: _c.debts,
@@ -487,7 +488,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           // 외부 일정은 server /calendar/external 에서 로드(이슈 #59).
           // 연결 0이면 빈 목록 → 앱 일정만 표시(graceful).
           externals: _externals,
-          summary: _c.repository.weekSummary(),
+          summary: _weekSummary(),
           debtTotal: _debtTotal(),
           debtOverdue: _debtOverdue(),
           unread: unread,
@@ -502,7 +503,7 @@ class _MainScaffoldState extends State<MainScaffold> {
       case DkTab.focus:
         return FocusScreen(
           pomodoro: _c.repository.pomodoro(),
-          focusStats: _c.repository.focusStats(),
+          focusStats: _focusStats(),
           linkedTask: _linkedTask,
           unread: unread,
           onClearTask: () => setState(() => _linkedTask = null),
@@ -513,9 +514,9 @@ class _MainScaffoldState extends State<MainScaffold> {
       case DkTab.me:
         return MeScreen(
           user: widget.user,
-          summary: _c.repository.weekSummary(),
-          streak: _c.repository.streak(),
-          focusStats: _c.repository.focusStats(),
+          summary: _weekSummary(),
+          streak: _streakDays(),
+          focusStats: _focusStats(),
           settings: _s.settings,
           dark: widget.dark,
           unread: unread,
@@ -559,4 +560,29 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   int _debtOverdue() =>
       _c.debts.where((DkDebt d) => d.status == DkDebtStatus.overdue).length;
+
+  // ── 통계: 서버 주간/집중/스트릭 엔드포인트가 없어 목 상수를 쓰지 않고,
+  //     로드된 실제 task 에서 계산하거나 0 으로 둔다(하드코딩 제거). ──
+
+  /// 주간 요약: 실제 task 의 전체/완료 수 + 미룬 시간 합계로 계산.
+  DkWeekSummary _weekSummary() {
+    final List<DkTask> tasks = _c.tasks;
+    final double planned = tasks.length.toDouble();
+    final double done = tasks
+        .where((DkTask t) => t.state == DkTaskState.done)
+        .length
+        .toDouble();
+    return DkWeekSummary(
+      planned: planned,
+      done: done,
+      debt: _debtTotal().toDouble(),
+    );
+  }
+
+  /// 집중 통계: 집중 기록 저장/조회 기능이 아직 없어 0(목표만 유지).
+  DkFocusStats _focusStats() =>
+      const DkFocusStats(todaySessions: 0, todayMinutes: 0, goal: 8);
+
+  /// 연속 달성(스트릭): 이력 데이터가 없어 0.
+  int _streakDays() => 0;
 }

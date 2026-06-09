@@ -67,45 +67,23 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<!-- ───────────────────────────────────────────────────────────────
-	     소셜 로그인 OAuth 설정(이슈 #38). 실제 키는 비워 두고 TODO_* 플레이스홀더로 둔다.
-	     발급 위치:
-	       - Google reversed client id: Google Cloud Console → APIs & Services →
-	         Credentials → iOS OAuth client → "iOS URL scheme"(= REVERSED_CLIENT_ID).
-	         보통 GoogleService-Info.plist 의 REVERSED_CLIENT_ID 값과 같다.
-	       - Kakao native app key: Kakao Developers → 내 애플리케이션 → 앱 키 → 네이티브 앱 키.
-	         URL scheme 은 "kakao{NATIVE_APP_KEY}" 형식.
-	       - Sign in with Apple: Apple Developer → Identifiers → App ID 에서
-	         "Sign In with Apple" capability 활성화 + Runner.entitlements 참조(아래).
-	     주의: 실제 키를 이 파일에 커밋하지 말 것. CI/빌드 시 치환하거나 로컬에서만 채운다.
+	     Supabase Auth 웹 OAuth 딥링크 복귀 scheme(ADR-0014).
+	     소셜/이메일 로그인은 supabase_flutter 의 signInWithOAuth 가 브라우저로
+	     처리하고, 인증 완료 후 app.ieoseo://login-callback 으로 앱에 복귀한다.
+	     네이티브 SDK(google_sign_in·kakao)나 provider client id 는 쓰지 않는다
+	     (인증은 Supabase web client 가 보유). Android 는 AndroidManifest.xml
+	     의 intent-filter 가 같은 scheme 을 처리한다.
 	     ─────────────────────────────────────────────────────────────── -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
-			<!-- Google: reversed client id (com.googleusercontent.apps.XXXX) -->
 			<key>CFBundleURLName</key>
-			<string>google-signin</string>
+			<string>supabase-login-callback</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<!-- TODO_GOOGLE_REVERSED_CLIENT_ID: com.googleusercontent.apps.YOUR_CLIENT_ID -->
-				<string>TODO_GOOGLE_REVERSED_CLIENT_ID</string>
+				<string>app.ieoseo</string>
 			</array>
 		</dict>
-		<dict>
-			<!-- Kakao: kakao{NATIVE_APP_KEY} -->
-			<key>CFBundleURLName</key>
-			<string>kakao-login</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<!-- TODO_KAKAO_NATIVE_APP_KEY: kakaoYOUR_NATIVE_APP_KEY -->
-				<string>kakaoTODO_KAKAO_NATIVE_APP_KEY</string>
-			</array>
-		</dict>
-	</array>
-	<!-- Kakao: 카카오톡 앱으로 로그인/공유하기 위한 query scheme 허용 목록 -->
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>kakaokompassauth</string>
-		<string>kakaolink</string>
 	</array>
 </dict>
 </plist>

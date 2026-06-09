@@ -363,10 +363,10 @@ class OnbArt extends StatelessWidget {
     ];
 
     return SizedBox(
-      width: 220,
-      height: 200,
+      width: 232,
+      height: 216,
       child: Stack(
-        alignment: Alignment.center,
+        alignment: Alignment.topCenter,
         children: <Widget>[
           Container(
             width: 180,
@@ -394,16 +394,18 @@ class OnbArt extends StatelessWidget {
               ],
             ),
           ),
+          // source 칩: 카드 폭을 넘지 않게 2줄로 흐르게 둔다(잘림 방지).
           Positioned(
-            bottom: 6,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 6,
+              runSpacing: 6,
               children: <Widget>[
                 for (final List<String> s in sources)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: _sourceChip(t, s[0], _parseHex(s[1])),
-                  ),
+                  _sourceChip(t, s[0], _parseHex(s[1])),
               ],
             ),
           ),
@@ -414,7 +416,7 @@ class OnbArt extends StatelessWidget {
 
   Widget _sourceChip(DkTokens t, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.fromLTRB(5, 4, 9, 4),
       decoration: BoxDecoration(
         color: t.bg,
         borderRadius: BorderRadius.circular(99),
@@ -423,12 +425,8 @@ class OnbArt extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 4),
+          _providerMark(label, color),
+          const SizedBox(width: 5),
           Text(
             label,
             style: TextStyle(
@@ -439,6 +437,30 @@ class OnbArt extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// provider 브랜드 마크. 앱아이콘형(브랜드색 라운드 사각형 + 흰 이니셜).
+  /// 공식 로고 자산이 없어 이니셜로 대체한다(이어서/G/A/N).
+  Widget _providerMark(String label, Color color) {
+    return Container(
+      width: 15,
+      height: 15,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Text(
+        label.substring(0, 1),
+        style: const TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 9,
+          height: 1.0,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFFFFFFFF),
+        ),
       ),
     );
   }

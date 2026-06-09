@@ -31,6 +31,8 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/android/build/
+/android/.gradle/
 /coverage/
 
 # Symbolication related
@@ -48,6 +50,7 @@ app.*.map.json
 .env
 .env.*
 !.env.example
+!.env.json.example
 *.local
 *.key
 *.pem
