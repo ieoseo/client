@@ -140,6 +140,25 @@ class _IeoseoAppState extends State<IeoseoApp> {
     return MaterialApp(
       title: '이어서',
       debugShowCheckedModeBanner: false,
+      // Supabase OAuth 콜백 딥링크(app.ieoseo://login-callback?code=...)는 Navigator
+      // 전환이 필요 없다 — 세션 완성은 supabase_flutter + AuthController.onSignedIn 이
+      // 처리한다. 자동 딥링크가 이를 named route 로 열려다 "route generator 없음"으로
+      // 크래시하는 것을 흡수하되, 첫 프레임에 곧장 pop 해 home 입력을 막지 않는다
+      // (modal barrier 가 남으면 화면이 안 눌린다).
+      onGenerateRoute: (RouteSettings settings) => PageRouteBuilder<void>(
+        settings: settings,
+        opaque: false,
+        barrierDismissible: false,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (BuildContext context, _, _) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final NavigatorState nav = Navigator.of(context);
+            if (nav.canPop()) nav.pop();
+          });
+          return const SizedBox.shrink();
+        },
+      ),
       theme: ThemeData(
         scaffoldBackgroundColor: tokens.page,
         fontFamily: 'Pretendard',
