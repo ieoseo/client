@@ -27,11 +27,14 @@ Future<void> main() async {
   // 인증은 Supabase Auth(ADR-0014) — 세션·토큰을 supabase_flutter 가 관리한다.
   // anonKey 는 --dart-define=SUPABASE_ANON_KEY 로 주입(미주입 시 초기화 실패).
   final SupabaseConfig supa = SupabaseConfig.fromEnvironment();
-  assert(
-    supa.isConfigured,
-    'SUPABASE_URL·SUPABASE_ANON_KEY 가 필요합니다. '
-    '--dart-define-from-file=.env.json 로 실행하세요(.env.json.example 참조).',
-  );
+  // assert 는 release 빌드에서 제거되므로 런타임 가드로 빠르게 실패한다 — 미설정 시
+  // 빈 값으로 Supabase.initialize 가 호출돼 모호하게 크래시하는 것을 막는다.
+  if (!supa.isConfigured) {
+    throw StateError(
+      'SUPABASE_URL·SUPABASE_ANON_KEY 가 필요합니다. '
+      '--dart-define-from-file=.env.json 로 실행하세요(.env.json.example 참조).',
+    );
+  }
   // anonKey: 레거시 anon(public) 키 사용. publishable 키로 전환 시 교체.
   // ignore: deprecated_member_use
   await Supabase.initialize(url: supa.url, anonKey: supa.anonKey);
