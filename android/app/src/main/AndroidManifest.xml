@@ -23,14 +23,21 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- supabase_flutter(app_links)가 OAuth 콜백 딥링크를 직접 처리하므로 Flutter
+                 자동 딥링크(Navigator 라우팅)는 끈다 — 콜백 URL(/?code=...)을 named route 로
+                 열려다 "route generator 없음"으로 크래시하는 것을 막는다(ADR-0014). -->
+            <meta-data
+              android:name="flutter_deeplinking_enabled"
+              android:value="false"
+              />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- 소셜 OAuth(Kakao) 딥링크 복귀 수신(ADR-0014).
+            <!-- 소셜 OAuth(Google·Kakao) 딥링크 복귀 수신(ADR-0014).
                  scheme/host 는 lib/data/auth/supabase_config.dart 의 kSupabaseRedirectUri
                  (app.ieoseo://login-callback) 와 일치하고, Supabase 대시보드 Redirect URLs
-                 허용목록에도 등록돼 있어야 한다. Google 은 네이티브(google_sign_in)라 별도 Activity 불필요. -->
+                 허용목록에도 등록돼 있어야 한다. Google·Kakao 모두 웹 OAuth(브라우저+딥링크)다. -->
             <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

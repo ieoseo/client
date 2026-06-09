@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- supabase_flutter(app_links)가 OAuth 콜백 딥링크를 직접 처리하므로 Flutter 자동
+	     딥링크(Navigator 라우팅)는 끈다 — 콜백 URL(/?code=...)을 named route 로 열려다
+	     "route generator 없음"으로 크래시하는 것을 막는다(ADR-0014). -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

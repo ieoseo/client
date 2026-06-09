@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'social_auth.dart';
@@ -84,6 +86,14 @@ class SupabaseAuthGatewayImpl implements SupabaseAuthGateway {
         .map((_) {});
   }
 
+  /// 인증 브라우저 런치 모드. iOS 는 in-app SFSafariViewController 가 딥링크 복귀 후
+  /// 자동으로 닫히지 않아 빈 브라우저가 남으므로(supabase_flutter 가 closeInAppWebView 미호출)
+  /// 외부 브라우저로 연다. Android 는 Custom Tab(platformDefault)이 리다이렉트 시 자동으로
+  /// 닫히므로 기본을 유지한다.
+  LaunchMode get _authLaunchMode => defaultTargetPlatform == TargetPlatform.iOS
+      ? LaunchMode.externalApplication
+      : LaunchMode.platformDefault;
+
   @override
   Future<void> signInWithOAuth(SocialProvider provider) async {
     // Kakao 는 닉네임만 요청(account_email 은 KOE205 회피, server email nullable).
@@ -96,6 +106,7 @@ class SupabaseAuthGatewayImpl implements SupabaseAuthGateway {
       oauth,
       redirectTo: kSupabaseRedirectUri,
       scopes: scopes,
+      authScreenLaunchMode: _authLaunchMode,
     );
   }
 
