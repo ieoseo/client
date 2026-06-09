@@ -200,6 +200,9 @@ class _IeoseoAppState extends State<IeoseoApp> {
         onUpdateProfile: (String nickname) =>
             _auth.updateProfile(nickname: nickname),
         onWithdraw: _auth.withdraw,
+        linkedProviders: _auth.linkedProviders,
+        onLinkAccount: _auth.linkAccount,
+        onUnlinkAccount: _auth.unlinkAccount,
       );
       return Container(color: tokens.page, child: body);
     }

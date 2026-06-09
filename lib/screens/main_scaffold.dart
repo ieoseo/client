@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../data/api/api_exception.dart';
 import '../data/api/auth_dto.dart';
+import '../data/auth/social_auth.dart';
 import '../data/api/notif_dto.dart';
 import '../data/api/settings_dto.dart';
 import '../data/data_controller.dart';
@@ -46,6 +47,9 @@ class MainScaffold extends StatefulWidget {
     required this.onLogout,
     required this.onUpdateProfile,
     required this.onWithdraw,
+    this.linkedProviders = const <String>{},
+    this.onLinkAccount,
+    this.onUnlinkAccount,
   });
 
   final DataController controller;
@@ -69,6 +73,15 @@ class MainScaffold extends StatefulWidget {
 
   /// 회원 탈퇴 콜백(DELETE → 로그아웃, 이슈 #56).
   final Future<void> Function() onWithdraw;
+
+  /// 현재 연동된 provider 이름 집합(예: {'email','google','kakao'}, 이슈 #10).
+  final Set<String> linkedProviders;
+
+  /// 소셜 계정 연결 콜백(linkIdentity, 브라우저+딥링크). null 이면 연동 섹션 비노출.
+  final Future<void> Function(SocialProvider provider)? onLinkAccount;
+
+  /// 소셜 계정 연결 해제 콜백(unlinkIdentity).
+  final Future<void> Function(SocialProvider provider)? onUnlinkAccount;
 
   @override
   State<MainScaffold> createState() => _MainScaffoldState();
@@ -530,6 +543,9 @@ class _MainScaffoldState extends State<MainScaffold> {
           onUpdateProfile: _updateProfile,
           onSaveSettings: _saveSettings,
           onWithdraw: _withdraw,
+          linkedProviders: widget.linkedProviders,
+          onLinkAccount: widget.onLinkAccount,
+          onUnlinkAccount: widget.onUnlinkAccount,
         );
     }
   }

@@ -298,4 +298,59 @@ void main() {
       expect(controller.status, isNot(AuthStatus.authenticated));
     });
   });
+
+  group('연동 계정 (link/unlink, 이슈 #10)', () {
+    test('linkedProviders 는 게이트웨이 값을 노출한다', () {
+      final FakeSupabaseGateway gateway = FakeSupabaseGateway(
+        accessToken: 'x',
+        linkedProviders: <String>{'email', 'kakao'},
+      );
+      final AuthController controller = AuthController(gateway: gateway);
+      expect(controller.linkedProviders, <String>{'email', 'kakao'});
+    });
+
+    test('linkAccount → 게이트웨이 linkOAuth 위임', () async {
+      final FakeSupabaseGateway gateway = FakeSupabaseGateway(
+        accessToken: 'x',
+        linkedProviders: <String>{'email'},
+      );
+      final AuthController controller = AuthController(gateway: gateway);
+
+      await controller.linkAccount(SocialProvider.google);
+
+      expect(gateway.linkCalls, <SocialProvider>[SocialProvider.google]);
+    });
+
+    test('unlinkAccount → unlinkOAuth 위임 + 목록 갱신 + 알림', () async {
+      final FakeSupabaseGateway gateway = FakeSupabaseGateway(
+        accessToken: 'x',
+        linkedProviders: <String>{'email', 'kakao'},
+      );
+      final AuthController controller = AuthController(gateway: gateway);
+      int notified = 0;
+      controller.addListener(() => notified++);
+
+      await controller.unlinkAccount(SocialProvider.kakao);
+
+      expect(gateway.unlinkCalls, <SocialProvider>[SocialProvider.kakao]);
+      expect(controller.linkedProviders, <String>{'email'});
+      expect(notified, greaterThan(0));
+    });
+
+    test('연동 추가 완료(onUserUpdated) → reloadUser + 알림', () async {
+      final FakeSupabaseGateway gateway = FakeSupabaseGateway(
+        accessToken: 'x',
+        linkedProviders: <String>{'email'},
+      );
+      final AuthController controller = AuthController(gateway: gateway);
+      int notified = 0;
+      controller.addListener(() => notified++);
+
+      await controller.linkAccount(SocialProvider.google);
+      await Future<void>.delayed(Duration.zero); // onUserUpdated 리스너 실행 대기
+
+      expect(gateway.reloadCalled, isTrue);
+      expect(notified, greaterThan(0));
+    });
+  });
 }
