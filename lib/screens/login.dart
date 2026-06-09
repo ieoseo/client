@@ -9,9 +9,11 @@ import '../widgets/dk_logo.dart';
 
 /// 로그인 화면에 노출할 소셜 provider(ADR-0014).
 ///
-/// 현재는 **이메일 우선**이라 소셜 버튼은 숨긴다(연동 코드는 유지). 소셜을 다시 노출하려면
-/// 이 집합에 provider 를 추가한다(예: `SocialProvider.kakao`). Kakao 는 비즈앱 전환 후.
-const Set<SocialProvider> kVisibleSocialProviders = <SocialProvider>{};
+/// 이 집합에 있는 provider 만 로그인 버튼으로 노출한다. Apple 은 후속이라 제외.
+const Set<SocialProvider> kVisibleSocialProviders = <SocialProvider>{
+  SocialProvider.google,
+  SocialProvider.kakao,
+};
 
 /// 로그인 / 회원가입 모드.
 enum _LoginMode { login, signup }
@@ -19,7 +21,7 @@ enum _LoginMode { login, signup }
 /// 로그인 화면(이메일 가입/로그인, ADR-0014).
 ///
 /// 이메일 가입은 Supabase `signUp`(닉네임 없음) → 가입 직후 닉네임 설정 화면([justSignedUp]).
-/// 로그인은 `signInWithPassword`. 소셜은 [kVisibleSocialProviders] 가 비어 있어 숨김.
+/// 로그인은 `signInWithPassword`. 소셜(Google·Kakao)은 [kVisibleSocialProviders] 로 노출.
 /// 성공 시 진입 전환은 main.dart 가 [AuthController.status]/[AuthController.justSignedUp] 으로 처리.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.auth, this.onLogin});
@@ -133,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return '문제가 발생했어요. 잠시 후 다시 시도해 주세요.';
   }
 
-  /// 소셜 로그인(ADR-0014). 현재는 버튼이 숨겨져 호출되지 않지만 재노출 대비 유지.
+  /// 소셜 로그인(ADR-0014). Supabase `signInWithOAuth`(브라우저 + 딥링크)로 위임한다.
   Future<void> _socialSignIn(SocialProvider provider) async {
     if (_busy) return;
     setState(() {
