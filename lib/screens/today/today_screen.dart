@@ -21,9 +21,17 @@ import 'today_logic.dart';
 ///
 /// 콕핏(ink, 완료율 ring, 다음 할 일) → 마감 D-Day 레일 → 오늘의 흐름 아젠다
 /// 타임라인 → 미룬 시간 넛지.
+/// 오늘 날짜를 "M월 d일 X요일"(한국어)로 포맷한다.
+String _todayLabel() {
+  final DateTime now = DateTime.now();
+  const List<String> weekdays = <String>['월', '화', '수', '목', '금', '토', '일'];
+  return '${now.month}월 ${now.day}일 ${weekdays[now.weekday - 1]}요일';
+}
+
 class TodayScreen extends StatelessWidget {
   const TodayScreen({
     super.key,
+    required this.userName,
     required this.tasks,
     required this.events,
     required this.debts,
@@ -37,6 +45,9 @@ class TodayScreen extends StatelessWidget {
     required this.onOpenDebt,
     this.unread = 0,
   });
+
+  /// 인사말에 쓸 사용자 닉네임(실제 로그인 사용자).
+  final String userName;
 
   final List<DkTask> tasks;
   final List<DkEvent> events;
@@ -70,6 +81,7 @@ class TodayScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: _Cockpit(
+            userName: userName,
             stats: stats,
             unread: unread,
             onOpenTask: onOpenTask,
@@ -135,6 +147,7 @@ class TodayScreen extends StatelessWidget {
 /// ink 콕핏. 인사 + 진행 링 + 다음 할 일.
 class _Cockpit extends StatelessWidget {
   const _Cockpit({
+    required this.userName,
     required this.stats,
     required this.unread,
     required this.onOpenTask,
@@ -142,6 +155,7 @@ class _Cockpit extends StatelessWidget {
     required this.onOpenCalc,
   });
 
+  final String userName;
   final TodayStats stats;
   final int unread;
   final ValueChanged<DkTask> onOpenTask;
@@ -191,7 +205,7 @@ class _Cockpit extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              '6월 1일 월요일',
+                              _todayLabel(),
                               style: TextStyle(
                                 fontFamily: 'Pretendard',
                                 fontSize: 12.5,
@@ -201,7 +215,7 @@ class _Cockpit extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '안녕하세요, 지우님',
+                              '안녕하세요, $userName님',
                               style: TextStyle(
                                 fontFamily: 'Pretendard',
                                 fontSize: 22,

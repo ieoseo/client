@@ -4,67 +4,48 @@ import 'package:ieoseo/data/api/api_exception.dart';
 import 'package:ieoseo/data/api/auth_api.dart';
 import 'package:ieoseo/data/auth/auth_controller.dart';
 import 'package:ieoseo/data/auth/social_auth.dart';
-import 'package:ieoseo/data/auth/token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 
-import 'support/fake_secure_storage.dart';
-import 'support/fake_social_token_provider.dart';
+import 'support/fake_supabase_gateway.dart';
 
-Map<String, dynamic> sessionEnvelope() => <String, dynamic>{
-  'success': true,
-  'data': <String, dynamic>{
-    'user': <String, dynamic>{
-      'id': 'u-1',
-      'email': 'jiwoo@daykit.app',
-      'nickname': '지우',
-      'provider': 'LOCAL',
-    },
-    'tokens': <String, dynamic>{
-      'accessToken': 'acc-1',
-      'refreshToken': 'ref-1',
-      'tokenType': 'Bearer',
-      'expiresIn': 1800,
-    },
-  },
-  'error': null,
-  'meta': null,
-};
+/// 인증은 Supabase Auth(ADR-0014): 소셜 로그인 → Supabase 세션 → server /auth/me provisioning.
 
-Map<String, dynamic> meEnvelope() => <String, dynamic>{
+Map<String, dynamic> meEnvelope({String nickname = '지우'}) => <String, dynamic>{
   'success': true,
   'data': <String, dynamic>{
     'id': 'u-1',
     'email': 'jiwoo@daykit.app',
-    'nickname': '지우',
-    'provider': 'LOCAL',
+    'nickname': nickname,
+    'provider': 'GOOGLE',
   },
   'error': null,
   'meta': null,
 };
 
-/// fake storage + DioAdapter로 실제 ApiClient/AuthApi를 구동하는 컨트롤러 구성.
-({AuthController controller, DioAdapter adapter, FakeSecureStorage fake})
-buildController({SocialTokenProvider? social}) {
-  final FakeSecureStorage fake = FakeSecureStorage();
-  final TokenStorage storage = TokenStorage(storage: fake);
+/// fake gateway + DioAdapter 로 실제 ApiClient/AuthApi 를 구동하는 컨트롤러 구성.
+({AuthController controller, DioAdapter adapter, FakeSupabaseGateway gateway})
+buildController({String? sessionToken, Object? oauthError}) {
+  final FakeSupabaseGateway gateway = FakeSupabaseGateway(
+    accessToken: sessionToken,
+    oauthError: oauthError,
+  );
   final Dio dio = Dio(
     BaseOptions(baseUrl: apiBaseUrl, validateStatus: (int? _) => true),
   );
   final DioAdapter adapter = DioAdapter(dio: dio);
   final ApiClient client = ApiClient(
     dio: dio,
-    accessTokenReader: storage.readAccess,
-    tokenRefresher: () async => storage.readRefresh(),
+    accessTokenReader: () async => gateway.accessToken,
+    tokenRefresher: gateway.refreshAccessToken,
   );
   final AuthController controller = AuthController(
-    storage: storage,
+    gateway: gateway,
     api: AuthApi(client),
     client: client,
-    social: social,
   );
-  return (controller: controller, adapter: adapter, fake: fake);
+  return (controller: controller, adapter: adapter, gateway: gateway);
 }
 
 void main() {
@@ -74,120 +55,139 @@ void main() {
     expect(c.controller.user, isNull);
   });
 
-  test('login 성공 → 토큰 저장 + authenticated 전환', () async {
-    final c = buildController();
-    c.adapter.onPost(
-      '/auth/login',
-      (server) => server.reply(200, sessionEnvelope()),
-      data: <String, dynamic>{
-        'email': 'jiwoo@daykit.app',
-        'password': 'pw123456',
+  group('oauthSignIn (ADR-0014, 웹 흐름)', () {
+    test(
+      'google 성공 → signInWithOAuth → onSignedIn → me → authenticated',
+      () async {
+        final c = buildController();
+        c.adapter.onGet(
+          '/auth/me',
+          (server) => server.reply(200, meEnvelope()),
+        );
+
+        int notifications = 0;
+        c.controller.addListener(() => notifications += 1);
+
+        await c.controller.oauthSignIn(SocialProvider.google);
+        // 딥링크 복귀(onSignedIn) 후 provisioning 이 비동기로 진행됨.
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        expect(c.gateway.oauthCalls, <SocialProvider>[SocialProvider.google]);
+        expect(c.controller.status, AuthStatus.authenticated);
+        expect(c.controller.user?.nickname, '지우');
+        expect(notifications, greaterThanOrEqualTo(1));
       },
     );
 
-    int notifications = 0;
-    c.controller.addListener(() => notifications += 1);
+    test(
+      'kakao 성공 → signInWithOAuth → onSignedIn → me → authenticated',
+      () async {
+        final c = buildController();
+        c.adapter.onGet(
+          '/auth/me',
+          (server) => server.reply(200, meEnvelope()),
+        );
 
-    await c.controller.login(email: 'jiwoo@daykit.app', password: 'pw123456');
+        await c.controller.oauthSignIn(SocialProvider.kakao);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
 
-    expect(c.controller.status, AuthStatus.authenticated);
-    expect(c.controller.user?.nickname, '지우');
-    expect(c.fake.snapshot[kAccessTokenKey], 'acc-1');
-    expect(c.fake.snapshot[kRefreshTokenKey], 'ref-1');
-    expect(notifications, greaterThanOrEqualTo(1));
-  });
-
-  test('signup 성공 → 토큰 저장 + authenticated 전환', () async {
-    final c = buildController();
-    c.adapter.onPost(
-      '/auth/signup',
-      (server) => server.reply(201, sessionEnvelope()),
-      data: <String, dynamic>{
-        'email': 'jiwoo@daykit.app',
-        'password': 'pw123456',
-        'nickname': '지우',
+        expect(c.gateway.oauthCalls, <SocialProvider>[SocialProvider.kakao]);
+        expect(c.controller.status, AuthStatus.authenticated);
       },
     );
 
-    await c.controller.signup(
-      email: 'jiwoo@daykit.app',
-      password: 'pw123456',
-      nickname: '지우',
-    );
+    test('OAuth 시작 실패 → 예외 전파, 미인증 유지', () async {
+      final c = buildController(oauthError: Exception('launch fail'));
 
-    expect(c.controller.isAuthenticated, isTrue);
-    expect(c.fake.snapshot[kAccessTokenKey], 'acc-1');
+      await expectLater(
+        c.controller.oauthSignIn(SocialProvider.google),
+        throwsA(isA<Exception>()),
+      );
+      expect(c.controller.status, isNot(AuthStatus.authenticated));
+    });
+
+    test('복귀 후 server me 401 → 미인증 유지(예외는 화면이 아닌 내부에서 흡수)', () async {
+      final c = buildController();
+      c.adapter.onGet(
+        '/auth/me',
+        (server) => server.reply(401, <String, dynamic>{
+          'success': false,
+          'data': null,
+          'error': <String, dynamic>{
+            'code': 'UNAUTHORIZED',
+            'message': '인증이 필요합니다',
+          },
+          'meta': null,
+        }),
+      );
+
+      await c.controller.oauthSignIn(SocialProvider.google);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(c.controller.status, isNot(AuthStatus.authenticated));
+    });
   });
 
-  test('logout → 토큰 삭제 + unauthenticated 전환', () async {
-    final c = buildController();
-    await c.fake.write(key: kAccessTokenKey, value: 'acc-1');
-    await c.fake.write(key: kRefreshTokenKey, value: 'ref-1');
-    c.adapter.onPost(
-      '/auth/logout',
-      (server) => server.reply(204, <String, dynamic>{
-        'success': true,
-        'data': null,
-        'error': null,
-        'meta': null,
-      }),
-      data: <String, dynamic>{'refreshToken': 'ref-1'},
-    );
+  group('tryRestore', () {
+    test('세션 없으면 unauthenticated', () async {
+      final c = buildController();
+
+      await c.controller.tryRestore();
+
+      expect(c.controller.status, AuthStatus.unauthenticated);
+    });
+
+    test('세션 있으면 me 조회 후 authenticated', () async {
+      final c = buildController(sessionToken: 'existing');
+      c.adapter.onGet('/auth/me', (server) => server.reply(200, meEnvelope()));
+
+      await c.controller.tryRestore();
+
+      expect(c.controller.status, AuthStatus.authenticated);
+      expect(c.controller.user?.email, 'jiwoo@daykit.app');
+    });
+
+    test('세션 있으나 me 실패 → signOut + unauthenticated', () async {
+      final c = buildController(sessionToken: 'stale');
+      c.adapter.onGet(
+        '/auth/me',
+        (server) => server.reply(401, <String, dynamic>{
+          'success': false,
+          'data': null,
+          'error': <String, dynamic>{
+            'code': 'UNAUTHORIZED',
+            'message': '인증이 필요합니다',
+          },
+          'meta': null,
+        }),
+      );
+
+      await c.controller.tryRestore();
+
+      expect(c.controller.status, AuthStatus.unauthenticated);
+      expect(c.gateway.signedOut, isTrue);
+    });
+  });
+
+  test('logout → Supabase signOut + unauthenticated', () async {
+    final c = buildController(sessionToken: 'x');
 
     await c.controller.logout();
 
     expect(c.controller.status, AuthStatus.unauthenticated);
-    expect(c.fake.snapshot.containsKey(kAccessTokenKey), isFalse);
-    expect(c.fake.snapshot.containsKey(kRefreshTokenKey), isFalse);
-  });
-
-  test('tryRestore: 저장 토큰 없으면 unauthenticated', () async {
-    final c = buildController();
-
-    await c.controller.tryRestore();
-
-    expect(c.controller.status, AuthStatus.unauthenticated);
-  });
-
-  test('tryRestore: 유효 토큰이면 me 조회 후 authenticated', () async {
-    final c = buildController();
-    await c.fake.write(key: kAccessTokenKey, value: 'acc-1');
-    await c.fake.write(key: kRefreshTokenKey, value: 'ref-1');
-    c.adapter.onGet('/auth/me', (server) => server.reply(200, meEnvelope()));
-
-    await c.controller.tryRestore();
-
-    expect(c.controller.status, AuthStatus.authenticated);
-    expect(c.controller.user?.email, 'jiwoo@daykit.app');
+    expect(c.gateway.signedOut, isTrue);
   });
 
   group('updateProfile / withdraw (이슈 #56)', () {
     test('updateProfile 성공 → user 닉네임 갱신', () async {
       final c = buildController();
-      // 인증 상태로 만든 뒤 프로필 수정.
-      c.adapter.onPost(
-        '/auth/login',
-        (server) => server.reply(200, sessionEnvelope()),
-        data: <String, dynamic>{
-          'email': 'jiwoo@daykit.app',
-          'password': 'pw123456',
-        },
-      );
-      await c.controller.login(email: 'jiwoo@daykit.app', password: 'pw123456');
+      c.adapter.onGet('/auth/me', (server) => server.reply(200, meEnvelope()));
+      await c.controller.oauthSignIn(SocialProvider.google);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
 
       c.adapter.onPatch(
         '/auth/me',
-        (server) => server.reply(200, <String, dynamic>{
-          'success': true,
-          'data': <String, dynamic>{
-            'id': 'u-1',
-            'email': 'jiwoo@daykit.app',
-            'nickname': '새이름',
-            'provider': 'LOCAL',
-          },
-          'error': null,
-          'meta': null,
-        }),
+        (server) => server.reply(200, meEnvelope(nickname: '새이름')),
         data: <String, dynamic>{'nickname': '새이름'},
       );
 
@@ -197,10 +197,8 @@ void main() {
       expect(c.controller.status, AuthStatus.authenticated);
     });
 
-    test('withdraw 성공 → 토큰 삭제 + unauthenticated 전환', () async {
-      final c = buildController();
-      await c.fake.write(key: kAccessTokenKey, value: 'acc-1');
-      await c.fake.write(key: kRefreshTokenKey, value: 'ref-1');
+    test('withdraw 성공 → signOut + unauthenticated', () async {
+      final c = buildController(sessionToken: 'x');
       c.adapter.onDelete(
         '/auth/me',
         (server) => server.reply(204, <String, dynamic>{
@@ -214,14 +212,11 @@ void main() {
       await c.controller.withdraw();
 
       expect(c.controller.status, AuthStatus.unauthenticated);
-      expect(c.fake.snapshot.containsKey(kAccessTokenKey), isFalse);
-      expect(c.fake.snapshot.containsKey(kRefreshTokenKey), isFalse);
+      expect(c.gateway.signedOut, isTrue);
     });
 
     test('withdraw 서버 실패 → ApiException 전파, 세션 유지', () async {
-      final c = buildController();
-      await c.fake.write(key: kAccessTokenKey, value: 'acc-1');
-      await c.fake.write(key: kRefreshTokenKey, value: 'ref-1');
+      final c = buildController(sessionToken: 'x');
       c.adapter.onDelete(
         '/auth/me',
         (server) => server.reply(500, <String, dynamic>{
@@ -236,87 +231,71 @@ void main() {
       );
 
       await expectLater(c.controller.withdraw(), throwsA(isA<ApiException>()));
-      // 실패 시 로컬 토큰은 남아 재시도 가능.
-      expect(c.fake.snapshot[kAccessTokenKey], 'acc-1');
+      expect(c.gateway.signedOut, isFalse);
     });
   });
 
-  group('oauthSignIn (이슈 #38)', () {
-    test('google 성공 → idToken 교환 → 세션 저장 + authenticated', () async {
-      final fake = FakeSocialTokenProvider(token: 'g-id');
-      final c = buildController(social: fake);
-      c.adapter.onPost(
-        '/auth/oauth/google',
-        (server) => server.reply(200, sessionEnvelope()),
-        data: <String, dynamic>{'idToken': 'g-id'},
-      );
-
-      await c.controller.oauthSignIn(SocialProvider.google);
-
-      expect(fake.calls, <SocialProvider>[SocialProvider.google]);
-      expect(c.controller.status, AuthStatus.authenticated);
-      expect(c.fake.snapshot[kAccessTokenKey], 'acc-1');
-      expect(c.fake.snapshot[kRefreshTokenKey], 'ref-1');
-    });
-
-    test('kakao 성공 → accessToken 으로 교환', () async {
-      final fake = FakeSocialTokenProvider(token: 'k-acc');
-      final c = buildController(social: fake);
-      c.adapter.onPost(
-        '/auth/oauth/kakao',
-        (server) => server.reply(200, sessionEnvelope()),
-        data: <String, dynamic>{'accessToken': 'k-acc'},
-      );
-
-      await c.controller.oauthSignIn(SocialProvider.kakao);
-
-      expect(c.controller.isAuthenticated, isTrue);
-    });
-
-    test('사용자 취소 → SocialSignInCancelled 전파, 미인증 유지', () async {
-      final fake = FakeSocialTokenProvider(cancel: true);
-      final c = buildController(social: fake);
-
-      await expectLater(
-        c.controller.oauthSignIn(SocialProvider.google),
-        throwsA(isA<SocialSignInCancelled>()),
-      );
-      expect(c.controller.status, isNot(AuthStatus.authenticated));
-    });
-
-    test('서버 401 OAUTH_INVALID → ApiException 전파, 미인증 유지', () async {
-      final fake = FakeSocialTokenProvider(token: 'g-id');
-      final c = buildController(social: fake);
-      c.adapter.onPost(
-        '/auth/oauth/google',
-        (server) => server.reply(401, <String, dynamic>{
-          'success': false,
-          'data': null,
-          'error': <String, dynamic>{
-            'code': 'OAUTH_INVALID',
-            'message': '소셜 로그인에 실패했어요.',
-          },
-          'meta': null,
-        }),
-        data: <String, dynamic>{'idToken': 'g-id'},
-      );
-
-      await expectLater(
-        c.controller.oauthSignIn(SocialProvider.google),
-        throwsA(
-          isA<ApiException>().having((e) => e.code, 'code', 'OAUTH_INVALID'),
-        ),
-      );
-      expect(c.controller.status, isNot(AuthStatus.authenticated));
-    });
-
-    test('social 미주입 → StateError', () async {
+  group('email auth (ADR-0014)', () {
+    test('emailSignUp 성공 → authenticated + justSignedUp=true', () async {
       final c = buildController();
+      c.adapter.onGet('/auth/me', (server) => server.reply(200, meEnvelope()));
+
+      await c.controller.emailSignUp(email: 'a@b.com', password: 'pw1234');
+
+      expect(c.gateway.emailCalls, contains('signup:a@b.com'));
+      expect(c.controller.status, AuthStatus.authenticated);
+      expect(c.controller.justSignedUp, isTrue);
+    });
+
+    test('emailSignIn 성공 → authenticated, justSignedUp=false', () async {
+      final c = buildController();
+      c.adapter.onGet('/auth/me', (server) => server.reply(200, meEnvelope()));
+
+      await c.controller.emailSignIn(email: 'a@b.com', password: 'pw1234');
+
+      expect(c.controller.status, AuthStatus.authenticated);
+      expect(c.controller.justSignedUp, isFalse);
+    });
+
+    test('가입 후 updateProfile → justSignedUp 해제', () async {
+      final c = buildController();
+      c.adapter.onGet('/auth/me', (server) => server.reply(200, meEnvelope()));
+      await c.controller.emailSignUp(email: 'a@b.com', password: 'pw1234');
+      expect(c.controller.justSignedUp, isTrue);
+
+      c.adapter.onPatch(
+        '/auth/me',
+        (server) => server.reply(200, meEnvelope(nickname: '새이름')),
+        data: <String, dynamic>{'nickname': '새이름'},
+      );
+      await c.controller.updateProfile(nickname: '새이름');
+
+      expect(c.controller.justSignedUp, isFalse);
+      expect(c.controller.user?.nickname, '새이름');
+    });
+
+    test('emailSignUp 실패 → 예외 전파, justSignedUp=false', () async {
+      final dio = Dio(
+        BaseOptions(baseUrl: apiBaseUrl, validateStatus: (int? _) => true),
+      );
+      final gateway = FakeSupabaseGateway(emailError: Exception('taken'));
+      final client = ApiClient(
+        dio: dio,
+        accessTokenReader: () async => gateway.accessToken,
+        tokenRefresher: gateway.refreshAccessToken,
+      );
+      final controller = AuthController(
+        gateway: gateway,
+        api: AuthApi(client),
+        client: client,
+      );
 
       await expectLater(
-        c.controller.oauthSignIn(SocialProvider.google),
-        throwsA(isA<StateError>()),
+        controller.emailSignUp(email: 'a@b.com', password: 'pw1234'),
+        throwsA(isA<Exception>()),
       );
+      expect(controller.justSignedUp, isFalse);
+      expect(controller.status, isNot(AuthStatus.authenticated));
     });
   });
 }

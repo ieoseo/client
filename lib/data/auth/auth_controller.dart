@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../api/api_client.dart';
@@ -5,11 +7,11 @@ import '../api/api_exception.dart';
 import '../api/auth_api.dart';
 import '../api/auth_dto.dart';
 import 'social_auth.dart';
-import 'token_storage.dart';
+import 'supabase_auth_gateway.dart';
 
 /// 인증 진입 상태(이슈 #32).
 enum AuthStatus {
-  /// 부팅 직후 — 저장 토큰 복원 시도 중(스플래시/대기).
+  /// 부팅 직후 — 세션 복원 시도 중(스플래시/대기).
   unknown,
 
   /// 유효 세션 — main 진입.
@@ -19,39 +21,49 @@ enum AuthStatus {
   unauthenticated,
 }
 
-/// 인증 상태 + 토큰 보관/복원을 한곳에서 관리하는 컨트롤러(이슈 #32).
+/// 인증 상태 + 세션 복원을 관리하는 컨트롤러(이슈 #32, ADR-0014).
 ///
-/// `AuthRepository`(signup/login/logout/currentUser/tryRestore) 역할과
-/// `ChangeNotifier` 상태를 겸한다. UI는 [status]/[user]를 구독하고,
-/// 진입 게이트(main.dart)는 [tryRestore]로 저장 토큰을 복원한다.
+/// 인증은 Supabase Auth 다 — 로그인·세션·토큰은 [SupabaseAuthGateway] 뒤의
+/// `supabase_flutter` 가 담당하고, server 는 그 JWT 를 JWKS 로 검증만 한다. 이 컨트롤러는
+/// 소셜 로그인 후 server `/auth/me` 로 사용자 provisioning 을 받아 [status]/[user] 를 노출한다.
+///
+/// 두 가지 로그인 경로:
+/// - **Google**: 네이티브 idToken → `signInWithIdToken`(동기 세션) → 즉시 `/auth/me`.
+/// - **Kakao**: `signInWithOAuth`(브라우저 + 딥링크, 비동기) → 복귀 시 [SupabaseAuthGateway.onSignedIn]
+///   이벤트로 `/auth/me`.
 ///
 /// 토큰 평문은 로깅하지 않는다.
 class AuthController extends ChangeNotifier {
   AuthController({
-    TokenStorage? storage,
+    SupabaseAuthGateway? gateway,
     AuthApi? api,
     ApiClient? client,
-    this.social,
-  }) : _storage = storage ?? TokenStorage() {
+  }) : _gateway = gateway ?? SupabaseAuthGatewayImpl() {
     _client =
         client ??
         ApiClient(
-          accessTokenReader: _storage.readAccess,
-          tokenRefresher: _refreshAccess,
+          accessTokenReader: () async => _gateway.accessToken,
+          tokenRefresher: _gateway.refreshAccessToken,
         );
     _api = api ?? AuthApi(_client);
+    // OAuth(딥링크) 복귀로 세션이 생기면 server provisioning 을 수행한다.
+    _signInSub = _gateway.onSignedIn.listen((_) => _onExternalSignIn());
   }
 
-  final TokenStorage _storage;
+  final SupabaseAuthGateway _gateway;
   late final ApiClient _client;
   late final AuthApi _api;
+  StreamSubscription<void>? _signInSub;
 
-  /// 소셜 토큰 획득 추상화(이슈 #38). 주입되지 않으면 [oauthSignIn]은
-  /// [StateError]를 던진다(소셜 미구성 환경 방어).
-  final SocialTokenProvider? social;
+  /// 동시 provisioning(중복 `/auth/me`) 방지 가드.
+  bool _provisioning = false;
 
-  /// 인증 헤더·401 refresh 가 붙은 공유 [ApiClient]. 데이터 레이어
-  /// (ApiRepository)가 같은 클라이언트를 재사용하도록 노출(이슈 #35).
+  /// 직전에 이메일 회원가입을 했는지(가입 직후 닉네임 설정 화면을 띄우는 신호).
+  /// 닉네임 저장([updateProfile]) 성공 시 해제된다.
+  bool _justSignedUp = false;
+  bool get justSignedUp => _justSignedUp;
+
+  /// 인증 헤더·401 refresh 가 붙은 공유 [ApiClient]. 데이터 레이어가 재사용(이슈 #35).
   ApiClient get apiClient => _client;
 
   AuthStatus _status = AuthStatus.unknown;
@@ -66,29 +78,10 @@ class AuthController extends ChangeNotifier {
   /// 인증된 상태인지.
   bool get isAuthenticated => _status == AuthStatus.authenticated;
 
-  /// 401 재시도용 access 토큰 재발급. 성공 시 새 access 반환, 실패 시 세션 폐기.
-  Future<String?> _refreshAccess() async {
-    final String? refresh = await _storage.readRefresh();
-    if (refresh == null || refresh.isEmpty) return null;
-    try {
-      final AuthTokens tokens = await _api.refresh(refresh);
-      await _storage.save(
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      );
-      return tokens.accessToken;
-    } on ApiException {
-      // refresh 폐기/만료 → 로컬 토큰 정리. 상태 전환은 호출 흐름에서 처리.
-      await _storage.clear();
-      return null;
-    }
-  }
-
-  /// 저장 토큰으로 세션 복원 시도. 진입 게이트에서 호출.
-  /// 성공 → [AuthStatus.authenticated], 실패 → [AuthStatus.unauthenticated].
+  /// Supabase 세션으로 복원 시도. 진입 게이트(main.dart)에서 호출.
+  /// 세션이 있으면 server `/auth/me` 로 사용자를 확인한다.
   Future<void> tryRestore() async {
-    final bool hasSession = await _storage.hasSession();
-    if (!hasSession) {
+    if (!_gateway.hasSession) {
       _setUnauthenticated();
       return;
     }
@@ -96,92 +89,91 @@ class AuthController extends ChangeNotifier {
       final AuthUser me = await _api.me();
       _setAuthenticated(me);
     } on ApiException {
-      // me 401 → 인터셉터가 refresh를 1회 시도. 그래도 실패면 여기로 온다.
-      await _storage.clear();
+      await _gateway.signOut();
       _setUnauthenticated();
     }
   }
 
-  /// 이메일 회원가입. 성공 시 토큰 저장 + 인증 상태 전환.
-  /// 실패는 [ApiException]을 그대로 던진다(UI가 메시지 표시).
-  Future<void> signup({
+  /// 소셜 로그인(ADR-0014). 모든 provider 가 Supabase `signInWithOAuth`(브라우저 + 딥링크)
+  /// 웹 흐름이다 — 인증은 Supabase(web client)가 처리하므로 앱 내 client id·네이티브 SDK 불필요.
+  /// 이 호출은 브라우저를 띄우고 곧장 반환하며, 완료는 [onSignedIn] → [_onExternalSignIn] 에서
+  /// `/auth/me` provisioning 으로 처리된다. 실패는 [Exception] 전파(UI 표시).
+  Future<void> oauthSignIn(SocialProvider provider) =>
+      _gateway.signInWithOAuth(provider);
+
+  /// 이메일 회원가입(ADR-0014). Supabase `signUp`(Confirm email OFF → 즉시 세션) →
+  /// server `/auth/me` provisioning. 성공 시 [justSignedUp] 이 true 가 되어 진입 게이트가
+  /// 닉네임 설정 화면을 띄운다. 실패는 [AuthException]/[Exception] 전파(UI 표시).
+  Future<void> emailSignUp({
     required String email,
     required String password,
-    required String nickname,
   }) async {
-    final AuthSession session = await _api.signup(
-      email: email,
-      password: password,
-      nickname: nickname,
-    );
-    await _persist(session);
-  }
-
-  /// 이메일 로그인. 성공 시 토큰 저장 + 인증 상태 전환.
-  Future<void> login({required String email, required String password}) async {
-    final AuthSession session = await _api.login(
-      email: email,
-      password: password,
-    );
-    await _persist(session);
-  }
-
-  /// 소셜 로그인(이슈 #38). provider SDK로 토큰을 얻어 서버에 교환한다.
-  ///
-  /// 흐름: [SocialTokenProvider.getToken] → [AuthApi.oauth] → 세션 저장 + 인증 전환.
-  /// - 사용자가 SDK 흐름을 취소하면 [SocialSignInCancelled]를 그대로 던진다
-  ///   (UI는 조용히 무시 — 오류 토스트 금지).
-  /// - 서버/네트워크 실패는 [ApiException]을 그대로 던진다(UI가 메시지 표시).
-  Future<void> oauthSignIn(SocialProvider provider) async {
-    final SocialTokenProvider? tokenProvider = social;
-    if (tokenProvider == null) {
-      throw StateError('SocialTokenProvider 가 주입되지 않았어요.');
+    _justSignedUp = true;
+    try {
+      await _gateway.signUpWithEmail(email: email, password: password);
+      await _provisionAndAuthenticate();
+    } catch (_) {
+      _justSignedUp = false;
+      rethrow;
     }
-    // 취소(SocialSignInCancelled)·SDK 오류는 호출부로 그대로 전파한다.
-    final SocialToken token = await tokenProvider.getToken(provider);
-    final AuthSession session = await _api.oauth(
-      provider: provider.wireName,
-      token: token,
-    );
-    await _persist(session);
+  }
+
+  /// 이메일 로그인. Supabase `signInWithPassword` → `/auth/me`. 닉네임 화면 없이 main.
+  Future<void> emailSignIn({
+    required String email,
+    required String password,
+  }) async {
+    await _gateway.signInWithEmail(email: email, password: password);
+    await _provisionAndAuthenticate();
+  }
+
+  /// OAuth 딥링크 복귀로 세션이 생긴 뒤 server provisioning(이미 인증/진행 중이면 무시).
+  Future<void> _onExternalSignIn() async {
+    if (_status == AuthStatus.authenticated || _provisioning) return;
+    try {
+      await _provisionAndAuthenticate();
+    } on ApiException {
+      // 복귀 직후 me 실패 — 미인증 유지(화면이 재시도).
+    }
+  }
+
+  /// 현재 세션으로 `/auth/me` 를 조회해 인증 상태로 전환한다(중복 방지 가드).
+  Future<void> _provisionAndAuthenticate() async {
+    if (_provisioning) return;
+    _provisioning = true;
+    try {
+      final AuthUser me = await _api.me();
+      _setAuthenticated(me);
+    } finally {
+      _provisioning = false;
+    }
   }
 
   /// 프로필(닉네임) 수정(이슈 #56). 성공 시 [user] 를 갱신하고 알림.
-  /// 실패는 [ApiException] 을 그대로 던진다(UI가 메시지 표시).
   Future<void> updateProfile({required String nickname}) async {
     final AuthUser updated = await _api.updateProfile(nickname: nickname);
     _user = updated;
+    _justSignedUp = false; // 닉네임 설정 완료 → 가입 직후 플래그 해제.
     notifyListeners();
   }
 
-  /// 회원 탈퇴(이슈 #56). 서버 탈퇴(소프트 삭제 + refresh 폐기) 후 로컬 세션을 정리하고
-  /// 미인증으로 전환한다(→ 인증 화면). 서버 실패는 [ApiException] 으로 던지며, 이때 로컬 세션은
-  /// 유지된다(사용자가 재시도 가능). 성공 후에는 토큰을 삭제한다.
+  /// 회원 탈퇴(이슈 #56). server 탈퇴 후 Supabase 로그아웃 + 미인증 전환.
   Future<void> withdraw() async {
     await _api.withdraw();
-    await _storage.clear();
+    await _gateway.signOut();
     _setUnauthenticated();
   }
 
-  /// 로그아웃. 서버 폐기 시도 후 로컬 토큰 삭제 + 미인증 전환.
-  /// 서버 호출 실패(네트워크 등)여도 로컬 세션은 반드시 정리한다.
+  /// 로그아웃. Supabase 세션 종료 + 미인증 전환.
   Future<void> logout() async {
-    final String? refresh = await _storage.readRefresh();
-    try {
-      await _api.logout(refreshToken: refresh);
-    } on ApiException {
-      // 서버 폐기 실패는 무시 — 로컬 세션은 아래에서 정리.
-    }
-    await _storage.clear();
+    await _gateway.signOut();
     _setUnauthenticated();
   }
 
-  Future<void> _persist(AuthSession session) async {
-    await _storage.save(
-      accessToken: session.tokens.accessToken,
-      refreshToken: session.tokens.refreshToken,
-    );
-    _setAuthenticated(session.user);
+  @override
+  void dispose() {
+    _signInSub?.cancel();
+    super.dispose();
   }
 
   void _setAuthenticated(AuthUser user) {

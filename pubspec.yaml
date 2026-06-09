@@ -49,14 +49,11 @@ dependencies:
 
   # 소셜 로그인 SDK(이슈 #38). 토큰은 SocialTokenProvider 뒤로 감춰 주입한다.
   # Google: authenticate() → idToken. 7.x는 GoogleSignIn.instance 싱글턴.
-  google_sign_in: ^7.2.0
   # Apple: getAppleIDCredential() → identityToken(=ID token). iOS/macOS 네이티브.
-  sign_in_with_apple: ^8.1.0
   # Kakao: 카카오톡 설치 시 앱, 미설치 시 카카오계정 웹 → access token.
-  kakao_flutter_sdk_user: ^2.0.0
-
   # 관측성(Sentry). main()에서 init + runApp 래핑. DSN(--dart-define) 미설정 시 비활성(ADR-0011).
   sentry_flutter: ^9.21.0
+  supabase_flutter: ^2.14.1
 
 dev_dependencies:
   flutter_test:
