@@ -104,17 +104,22 @@ void main() {
     expect(auth.controller.status, isNot(AuthStatus.authenticated));
   });
 
-  testWidgets('소셜 버튼은 숨겨져 있다(이메일 우선)', (WidgetTester tester) async {
+  testWidgets('Google·Kakao 소셜 버튼이 노출된다', (WidgetTester tester) async {
     final auth = buildAuth();
 
     await tester.pumpWidget(wrapForTest(LoginScreen(auth: auth.controller)));
 
     expect(
       find.byKey(ValueKey<String>('social-${SocialProvider.google.wireName}')),
-      findsNothing,
+      findsOneWidget,
     );
     expect(
       find.byKey(ValueKey<String>('social-${SocialProvider.kakao.wireName}')),
+      findsOneWidget,
+    );
+    // Apple 은 후속(미노출).
+    expect(
+      find.byKey(ValueKey<String>('social-${SocialProvider.apple.wireName}')),
       findsNothing,
     );
     expect(find.byKey(const ValueKey<String>('login-email')), findsOneWidget);
