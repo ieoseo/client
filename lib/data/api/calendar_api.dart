@@ -1,5 +1,6 @@
 import '../models.dart';
 import 'api_client.dart';
+import 'api_exception.dart';
 
 /// 외부 캘린더 연동·동기화 데이터 소스 추상화(이슈 #59).
 ///
@@ -24,6 +25,10 @@ abstract class CalendarSource {
 
   /// 외부 일정 범위 조회(server: GET /calendar/external?from&to). ISO ymd.
   Future<List<DkExternal>> external({required String from, required String to});
+
+  /// 서버 주도 Google OAuth 동의 URL(server: GET /calendar/connect/google/url, 이슈 #9).
+  /// 앱은 이 URL 을 외부 브라우저로 열고, 완료 시 딥링크로 복귀한다.
+  Future<String> googleConnectUrl();
 }
 
 /// server 캘린더 REST 를 호출하는 [CalendarSource] 구현(이슈 #59).
@@ -78,6 +83,16 @@ class CalendarApi implements CalendarSource {
       query: <String, dynamic>{'from': from, 'to': to},
     );
     return _asList(data).map(_externalFromJson).toList(growable: false);
+  }
+
+  @override
+  Future<String> googleConnectUrl() async {
+    final dynamic data = await _client.get('/calendar/connect/google/url');
+    final String? url = _asMap(data)['url'] as String?;
+    if (url == null || url.isEmpty) {
+      throw ApiException.unknown('Google 연동 URL 을 가져오지 못했어요');
+    }
+    return url;
   }
 
   // ── 매핑 ────────────────────────────────────────────────

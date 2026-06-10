@@ -186,5 +186,32 @@ void main() {
         ),
       );
     });
+
+    test('googleConnectUrl: envelope 의 url 을 돌려준다(이슈 #9)', () async {
+      final h = harness();
+      h.adapter.onGet(
+        '/calendar/connect/google/url',
+        (s) => s.reply(
+          200,
+          ok(<String, dynamic>{
+            'url': 'https://accounts.google.com/o/oauth2/v2/auth?x=1',
+          }),
+        ),
+      );
+
+      final String url = await h.api.googleConnectUrl();
+
+      expect(url, 'https://accounts.google.com/o/oauth2/v2/auth?x=1');
+    });
+
+    test('googleConnectUrl: url 이 비면 ApiException', () async {
+      final h = harness();
+      h.adapter.onGet(
+        '/calendar/connect/google/url',
+        (s) => s.reply(200, ok(<String, dynamic>{'url': ''})),
+      );
+
+      await expectLater(h.api.googleConnectUrl(), throwsA(isA<ApiException>()));
+    });
   });
 }

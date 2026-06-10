@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../data/api/api_exception.dart';
 import '../data/api/auth_dto.dart';
@@ -90,10 +91,14 @@ class MainScaffold extends StatefulWidget {
 /// 서브화면(탭 위에 덮어 표시).
 enum _Sub { none, debt, review, calendar }
 
-class _MainScaffoldState extends State<MainScaffold> {
+class _MainScaffoldState extends State<MainScaffold>
+    with WidgetsBindingObserver {
   DkTab _tab = DkTab.today;
   _Sub _sub = _Sub.none;
   final GlobalKey<DkToastHostState> _toastKey = GlobalKey<DkToastHostState>();
+
+  /// Google 캘린더 OAuth 를 외부 브라우저로 시작했는지(복귀 시 연결 재로딩 트리거, 이슈 #9).
+  bool _pendingCalendarConnect = false;
 
   /// 집중 탭에 연결된 태스크.
   DkTask? _linkedTask;
@@ -110,6 +115,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _c.addListener(_onData);
     _n.addListener(_onData);
     _s.addListener(_onData);
@@ -145,10 +151,20 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _c.removeListener(_onData);
     _n.removeListener(_onData);
     _s.removeListener(_onData);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 서버 주도 OAuth 후 브라우저→앱 복귀 시 연결 상태를 다시 읽는다(이슈 #9 Phase B).
+    if (state == AppLifecycleState.resumed && _pendingCalendarConnect) {
+      _pendingCalendarConnect = false;
+      _loadCalendar();
+    }
   }
 
   void _onData() {
@@ -306,20 +322,25 @@ class _MainScaffoldState extends State<MainScaffold> {
   // ── 외부 캘린더 연동(이슈 #59) ────────────────────────────
   void _openCalendarSync() => setState(() => _sub = _Sub.calendar);
 
-  /// provider 연결(토큰 등록). 본 트랙은 소셜 토큰 미보유 시 데모 placeholder 로 등록한다
-  /// (server 는 토큰을 저장만 하고 동기화 때 검증 — 실패 시 SYNC_FAILED). 성공 후 재로딩.
+  /// Google 캘린더 연결: 서버 주도 OAuth(이슈 #9 Phase B). 서버에서 동의 URL 을 받아 외부
+  /// 브라우저로 열고, 완료 후 딥링크로 앱에 복귀하면 [didChangeAppLifecycleState] 가 연결을
+  /// 재로딩한다. (서버가 토큰을 보유하므로 앱은 placeholder 토큰을 보내지 않는다.)
   Future<void> _connectCalendar(DkSource source) async {
-    await _run(
-      () async {
-        await _c.repository.connectCalendar(
-          source,
-          accessToken: 'demo-token-placeholder',
-        );
-        await _loadCalendar();
-      },
-      success: '${sourceMeta(source).label} 캘린더를 연결했어요',
-      successIcon: 'check',
-    );
+    try {
+      final String url = await _c.repository.googleCalendarConnectUrl();
+      final bool launched = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        _toast('브라우저를 열 수 없어요', icon: 'x', tone: DkTone.danger);
+        return;
+      }
+      _pendingCalendarConnect = true;
+      _toast('브라우저에서 Google 로그인을 완료해 주세요', icon: 'repeat', tone: DkTone.info);
+    } on ApiException catch (e) {
+      _toast(e.message, icon: 'x', tone: DkTone.danger);
+    }
   }
 
   Future<void> _disconnectCalendar(DkSource source) async {

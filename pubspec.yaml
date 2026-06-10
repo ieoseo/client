@@ -55,6 +55,9 @@ dependencies:
   sentry_flutter: ^9.21.0
   supabase_flutter: ^2.14.1
 
+  # 외부 브라우저로 서버 주도 Google 캘린더 OAuth URL 열기(이슈 #9 Phase B).
+  url_launcher: ^6.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

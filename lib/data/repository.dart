@@ -85,6 +85,10 @@ abstract class IeoseoRepository {
     required String to,
   });
 
+  /// 서버 주도 Google OAuth 동의 URL(GET /calendar/connect/google/url, 이슈 #9).
+  /// 앱이 외부 브라우저로 열고, 완료 시 딥링크로 복귀한다.
+  Future<String> googleCalendarConnectUrl();
+
   // ── 목 전용 동기 읽기(server 엔드포인트 없음) ──────────────
   /// 데모/테스트용 더미 외부 일정(동기). 실연동은 [externalEventsRange] 를 쓴다.
   List<DkExternal> externalEvents();
@@ -288,6 +292,10 @@ class MockRepository implements IeoseoRepository {
             x.date.compareTo(from) >= 0 && x.date.compareTo(to) <= 0,
       )
       .toList(growable: false);
+
+  @override
+  Future<String> googleCalendarConnectUrl() async =>
+      'https://accounts.google.com/o/oauth2/v2/auth?demo=mock'; // 데모/테스트용
 
   @override
   List<DkExternal> externalEvents() => kExternal;
