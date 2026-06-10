@@ -43,6 +43,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="app.ieoseo" android:host="login-callback" />
+                <!-- 서버 주도 Google 캘린더 OAuth 복귀(이슈 #9, GOOGLE_CALENDAR_RETURN_DEEPLINK). -->
+                <data android:scheme="app.ieoseo" android:host="calendar-callback" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

@@ -176,6 +176,9 @@ class ApiRepository implements IeoseoRepository {
   Future<List<DkCalendarConnection>> syncCalendars() => _calendar.sync();
 
   @override
+  Future<String> googleCalendarConnectUrl() => _calendar.googleConnectUrl();
+
+  @override
   Future<List<DkExternal>> externalEventsRange({
     required String from,
     required String to,
