@@ -16,7 +16,8 @@ class WeekStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
-    final DateTime start = parseYmd('2026-06-01');
+    // 주 시작은 kToday 가 속한 주의 월요일에서 파생(독립 리터럴 금지).
+    final DateTime start = addDays(kToday, 1 - kToday.weekday);
     final String todayKey = ymd(kToday);
 
     return Padding(

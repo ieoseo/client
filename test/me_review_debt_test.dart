@@ -58,7 +58,8 @@ void main() {
     expect(find.text('연속 달성'), findsOneWidget);
     expect(find.text('이번 주 돌아보기'), findsOneWidget);
     expect(find.text('다크 모드'), findsOneWidget);
-    expect(find.text('이어서 v1.0.0'), findsOneWidget);
+    // 버전은 빌드 메타에서 읽으므로(하드코딩 제거) 테스트 환경에선 fallback "이어서".
+    expect(find.textContaining('이어서'), findsOneWidget);
 
     await tester.tap(find.text('이번 주 돌아보기'));
     expect(reviewOpened, true);
