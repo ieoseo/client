@@ -26,6 +26,7 @@ import 'me/calendar_sync_screen.dart';
 import 'me/me_screen.dart';
 import 'plan/plan_screen.dart';
 import 'review/review_screen.dart';
+import 'review/week_review_builder.dart';
 import 'sheets/event_sheet.dart';
 import 'sheets/notif_sheet.dart';
 import 'sheets/task_sheet.dart';
@@ -478,7 +479,7 @@ class _MainScaffoldState extends State<MainScaffold>
         );
       case _Sub.review:
         return ReviewScreen(
-          review: _c.repository.weekReview(),
+          review: _weekReview(),
           streak: _streakDays(),
           onBack: () => setState(() => _sub = _Sub.none),
         );
@@ -616,10 +617,17 @@ class _MainScaffoldState extends State<MainScaffold>
     );
   }
 
-  /// 집중 통계: 집중 기록 저장/조회 기능이 아직 없어 0(목표만 유지).
-  DkFocusStats _focusStats() =>
-      const DkFocusStats(todaySessions: 0, todayMinutes: 0, goal: 8);
+  /// 집중 통계: 집중 기록 저장/조회 기능이 아직 없어 0(목표는 기본 상수).
+  DkFocusStats _focusStats() => const DkFocusStats(
+    todaySessions: 0,
+    todayMinutes: 0,
+    goal: kDefaultFocusGoal,
+  );
 
   /// 연속 달성(스트릭): 이력 데이터가 없어 0.
   int _streakDays() => 0;
+
+  /// 주간 리뷰: 서버 엔드포인트가 없어 목 상수 대신 로드된 실제 task/debt 에서 파생한다.
+  DkWeekReview _weekReview() =>
+      buildWeekReview(tasks: _c.tasks, debts: _c.debts);
 }

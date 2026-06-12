@@ -32,7 +32,8 @@
 - **주입**: `main.dart`가 로그인 후 `DataController(ApiRepository(auth.apiClient))`를 `MainScaffold`에 공급(테스트는 `DataController(MockRepository())` 주입).
 - `DataController`(ChangeNotifier): `load()`로 events/tasks/debts 병렬 로딩, `isLoading`/`error` 상태, 쓰기는 **낙관적 업데이트 + 실패 시 롤백**(오류는 `ApiException`을 다시 던져 화면 토스트).
 - DTO 매핑은 `data/api/dtos.dart`(`DkEventDto`/`DkTaskDto`/`DkDebtDto` — server enum 코드·ymd 날짜). `data/api/api_repository.dart`가 호출.
-- 외부 캘린더·주간 요약·집중 통계·스트릭·주간 리뷰는 server 엔드포인트가 없어 **목 데이터(동기 읽기)** 로 유지.
+- 외부 캘린더·집중 통계·스트릭은 server 엔드포인트가 없어 **로드된 실데이터에서 파생하거나 0** 으로 둔다(운영에 조작 상수 노출 금지). 집중 목표 기본값은 `kDefaultFocusGoal`.
+- **주간 리뷰는 실데이터 파생**: server 엔드포인트가 없지만 조작 상수(`kWeekReview`) 대신 로드된 task/debt 에서 `buildWeekReview`(`screens/review/week_review_builder.dart`)로 계산한다. 실제 출처가 없는 필드(카테고리 없으면 분포, insight)는 빈 값/0/중립 문구로 둔다(지어내지 않음). `ApiRepository.weekReview()` 는 직접 호출 시 `UnsupportedError`. `kWeekReview` 는 `MockRepository`/위젯 테스트 데모용으로만 남긴다.
 - **Google 캘린더 연동(이슈 #9 Phase B)**: 나>설정>캘린더 연동에서 연결 시 server `/calendar/connect/google/url`로 동의 URL을 받아 **외부 브라우저(`url_launcher`)** 로 연다(placeholder 토큰 미사용). 서버가 토큰 교환·저장 후 `app.ieoseo://calendar-callback` 로 복귀 → `main_scaffold` 의 `WidgetsBindingObserver`(resume)가 연결 재로딩. Android 는 해당 host intent-filter 추가, iOS 는 scheme 매칭으로 처리. **전제: 서버 env(`GOOGLE_*`) + Google Cloud 설정.**
 - 도메인 권위는 server. 클라이언트 D-Day/포모도로 계산은 표현/데모용.
 - 계약 차이(메모): server `DebtResponse`에는 `title`/`fromLabel`이 없다 → `DkDebtDto`는 제목을 비워 매핑(표시 제목은 후속에서 태스크 조인). un-complete 전용 액션이 없어 완료 취소는 PUT으로 today 복귀를 표현. 자동 이월(`/debts/{id}/auto-carry`)은 미배선.
