@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'data/api/api_config.dart';
 import 'data/api/api_repository.dart';
 import 'data/api/notif_api.dart';
 import 'data/api/settings_api.dart';
@@ -33,6 +34,14 @@ Future<void> main() async {
     throw StateError(
       'SUPABASE_URL·SUPABASE_ANON_KEY 가 필요합니다. '
       '--dart-define-from-file=.env.json 로 실행하세요(.env.json.example 참조).',
+    );
+  }
+  // API base URL 도 env 주입(소스에 URL 하드코딩 금지) — 미주입이면 잘못된 서버를
+  // 향하지 않도록 빠르게 실패한다. 로컬은 .env.json, 운영은 .env.prod.json.
+  if (apiBaseUrl.isEmpty) {
+    throw StateError(
+      'API_BASE_URL 가 필요합니다. 로컬은 .env.json, 운영은 .env.prod.json 으로 '
+      '--dart-define-from-file 주입하세요(docs/가이드/환경변수.md).',
     );
   }
   // anonKey: 레거시 anon(public) 키 사용. publishable 키로 전환 시 교체.

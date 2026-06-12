@@ -1,15 +1,15 @@
 /// 인증/데이터 API 연동 설정값(이슈 #32). 시크릿 아님 — 커밋 OK.
 library;
 
-/// API base URL. 기본값은 **운영 백엔드**(Azure App Service)다 → 릴리스 빌드가
-/// 별도 주입 없이 운영을 향한다(localhost 가리키는 앱을 실수로 출시하는 사고 방지).
-/// 로컬 개발은 빌드 시 오버라이드한다:
-///   flutter run --dart-define=API_BASE_URL=http://localhost:8080/api/v1
-///   (Android 에뮬레이터는 http://10.0.2.2:8080/api/v1)
-const String apiBaseUrl = String.fromEnvironment(
-  'API_BASE_URL',
-  defaultValue: 'https://ieoseo-api.azurewebsites.net/api/v1',
-);
+/// API base URL. **소스에 URL 을 두지 않는다**(SUPABASE_URL 과 동일 원칙) — 값은 환경별
+/// env 파일에서 `--dart-define-from-file` 로 주입한다. 어떤 환경을 향할지는 **어느 파일을
+/// 넘기느냐**로 갈린다:
+/// - **로컬(개발)**: `client/.env.json` 의 `API_BASE_URL`(로컬 서버) — `flutter run` 이 사용.
+/// - **운영(릴리스)**: `client/.env.prod.json` 의 `API_BASE_URL`(운영 도메인) — Play/CI 빌드가 사용.
+///
+/// 값 레퍼런스(실제 URL 예시)는 [docs/가이드/환경변수.md] 에 둔다. 미주입 시 빈 문자열이며,
+/// 진입점(main.dart)의 가드가 빠르게 실패시킨다(localhost 가리키는 앱을 실수로 출시하는 사고 방지).
+const String apiBaseUrl = String.fromEnvironment('API_BASE_URL');
 
 /// dio 연결 타임아웃. 보안 규칙(타임아웃 필수).
 const Duration kConnectTimeout = Duration(seconds: 10);
