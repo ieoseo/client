@@ -282,7 +282,9 @@ class ReviewScreen extends StatelessWidget {
 
   Widget _bar(DkTokens t, DkReviewDay d, double maxDay) {
     final double ratio = d.planned == 0 ? 0 : d.done / d.planned;
-    final double h = math.max(8, (d.planned / maxDay * 104).round().toDouble());
+    final double h = maxDay <= 0
+        ? 8
+        : math.max(8, (d.planned / maxDay * 104).round().toDouble());
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: <Widget>[
