@@ -65,7 +65,7 @@ lib/
 - 테스트: `flutter test` (유틸/도메인·위젯; 시각은 골든/스크린샷 보조).
 
 ## 릴리스 빌드 (Play)
-- **API base**: 기본값이 운영(Azure App Service)이라 별도 주입 없이 운영을 향한다. 로컬은 `--dart-define=API_BASE_URL=http://localhost:8080/api/v1` 로 오버라이드.
+- **API base**: `data/api/api_config.dart` 기본값이 **옛 Azure App Service URL(`ieoseo-api.azurewebsites.net`, 폐기됨)** 로 하드코딩돼 있다. 배포 타깃이 **Azure Container Apps**([ADR-0018](../docs/04-ADR/0018-배포-AzureContainerApps-채택.md))로 바뀌었으므로, ACA 배포(Phase 2) 후 **ACA FQDN/커스텀 도메인(`ieoseo.app`)으로 교체 필요**. 로컬은 `--dart-define=API_BASE_URL=http://localhost:8080/api/v1` 로 오버라이드.
 - **서명**: `cd android && cp key.properties.example key.properties` → `keytool` 로 업로드 keystore 생성 후 경로·비번 기입(미커밋). key.properties 없으면 debug 키 폴백(빌드는 됨).
 - **앱 아이콘**: `assets/icon/ieoseo-icon-1024.png` → `dart run flutter_launcher_icons` 로 생성. 표시 이름 "이어서".
 - **빌드**: `flutter build appbundle --release` → `build/app/outputs/bundle/release/app-release.aab` (Play 업로드).
