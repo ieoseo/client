@@ -191,8 +191,12 @@ class _MonthGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
-    final List<int?> cells = monthCells(2026, 6);
+    // 표시 월은 선택된 날짜에서 파생(독립 리터럴 금지).
+    final DateTime month = parseYmd(selected);
+    final List<int?> cells = monthCells(month.year, month.month);
     final String todayKey = ymd(kToday);
+    final String monthPrefix =
+        '${month.year}-${month.month.toString().padLeft(2, '0')}';
 
     return Column(
       children: <Widget>[
@@ -223,16 +227,30 @@ class _MonthGrid extends StatelessWidget {
           Row(
             children: <Widget>[
               for (int col = 0; col < 7; col++)
-                Expanded(child: _cell(t, cells[row * 7 + col], col, todayKey)),
+                Expanded(
+                  child: _cell(
+                    t,
+                    cells[row * 7 + col],
+                    col,
+                    todayKey,
+                    monthPrefix,
+                  ),
+                ),
             ],
           ),
       ],
     );
   }
 
-  Widget _cell(DkTokens t, int? day, int dow, String todayKey) {
+  Widget _cell(
+    DkTokens t,
+    int? day,
+    int dow,
+    String todayKey,
+    String monthPrefix,
+  ) {
     if (day == null) return const SizedBox(height: 45);
-    final String key = '2026-06-${day.toString().padLeft(2, '0')}';
+    final String key = '$monthPrefix-${day.toString().padLeft(2, '0')}';
     final List<DayItem> items = dayItems(
       key,
       tasks: tasks,

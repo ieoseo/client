@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../data/api/settings_dto.dart';
 import '../../theme/tokens.dart';
@@ -410,18 +411,52 @@ class SettingsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Center(
-            child: Text(
-              '이어서 v1.0.0',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: t.fgDisabled,
-              ),
-            ),
-          ),
+          const Center(child: _AppVersionLabel()),
         ],
+      ),
+    );
+  }
+}
+
+/// 앱 버전 라벨(`이어서 v{version}`). 버전은 빌드 메타([PackageInfo])에서 읽는다.
+/// 아직 로드되지 않았거나 조회 실패 시 "이어서"만 표기한다(하드코딩 버전 없음).
+class _AppVersionLabel extends StatefulWidget {
+  const _AppVersionLabel();
+
+  @override
+  State<_AppVersionLabel> createState() => _AppVersionLabelState();
+}
+
+class _AppVersionLabelState extends State<_AppVersionLabel> {
+  String? _version;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final PackageInfo info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() => _version = info.version);
+    } catch (_) {
+      // 플랫폼 채널이 없는 환경(테스트 등)에서는 버전 없이 표기.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final DkTokens t = DkTheme.of(context);
+    final String label = _version == null ? '이어서' : '이어서 v$_version';
+    return Text(
+      label,
+      style: TextStyle(
+        fontFamily: 'Pretendard',
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: t.fgDisabled,
       ),
     );
   }
