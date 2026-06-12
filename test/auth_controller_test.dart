@@ -89,9 +89,7 @@ void main() {
         );
 
         final List<bool> seen = <bool>[];
-        c.controller.addListener(
-          () => seen.add(c.controller.isAuthenticating),
-        );
+        c.controller.addListener(() => seen.add(c.controller.isAuthenticating));
 
         await c.controller.oauthSignIn(SocialProvider.google);
         await Future<void>.delayed(const Duration(milliseconds: 100));
