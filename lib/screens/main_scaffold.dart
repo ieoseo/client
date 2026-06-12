@@ -560,7 +560,7 @@ class _MainScaffoldState extends State<MainScaffold>
           onOpenCalc: _openCalc,
           onOpenReview: () => setState(() => _sub = _Sub.review),
           onOpenCalendar: _openCalendarSync,
-          onStub: () => _toast('곧 제공될 기능이에요', icon: 'sparkle'),
+          onStub: () => _toast(kComingSoonMessage, icon: 'sparkle'),
           onLogout: widget.onLogout,
           onUpdateProfile: _updateProfile,
           onSaveSettings: _saveSettings,

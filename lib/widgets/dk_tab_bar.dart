@@ -17,7 +17,7 @@ const List<_TabSpec> _tabs = <_TabSpec>[
   _TabSpec(DkTab.today, '오늘', 'home'),
   _TabSpec(DkTab.plan, '플랜', 'calendar'),
   _TabSpec(DkTab.focus, '집중', 'focus'),
-  _TabSpec(DkTab.me, '나', 'user'),
+  _TabSpec(DkTab.me, '프로필', 'user'),
 ];
 
 /// 하단 탭바. 프로토타입 `TabBar`.

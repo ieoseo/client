@@ -7,6 +7,10 @@ import 'models.dart';
 /// 카테고리·상태·출처의 표시 메타데이터. 프로토타입 `CATEGORY_META`/`TASK_STATE`/
 /// `DEBT_STATE`/`SOURCE_META`를 Dart로 이식한다.
 
+/// 아직 준비 중인 기능(스텁)을 탭했을 때 보여줄 단일 안내 문구. 프로필 아바타·구독
+/// 일정 관리·알림 설정 등 미구현 진입점이 모두 이 문구를 재사용해 일관성을 유지한다.
+const String kComingSoonMessage = '곧 제공될 기능이에요';
+
 /// 카테고리명 → 카테고리 hue. 미상은 [DkHue.cool].
 DkHue categoryHue(String category) => DkHue.byName(kCategoryHue[category]);
 

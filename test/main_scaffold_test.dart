@@ -83,7 +83,7 @@ void main() {
     expect(find.text('안녕하세요, 지우님'), findsOneWidget);
   });
 
-  testWidgets('탭바로 플랜·집중·나로 전환된다', (WidgetTester tester) async {
+  testWidgets('탭바로 플랜·집중·프로필로 전환된다', (WidgetTester tester) async {
     await _pumpTall(tester);
 
     await tester.tap(find.text('플랜'));
@@ -94,7 +94,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(FocusScreen), findsOneWidget);
 
-    await tester.tap(find.text('나'));
+    await tester.tap(find.text('프로필'));
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(MeScreen), findsOneWidget);
   });

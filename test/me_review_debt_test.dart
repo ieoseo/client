@@ -65,6 +65,96 @@ void main() {
     expect(reviewOpened, true);
   });
 
+  testWidgets('MeScreen 헤더 제목은 프로필이다', (WidgetTester tester) async {
+    await _pumpTall(
+      tester,
+      MeScreen(
+        user: _user,
+        summary: kWeekSummary,
+        streak: kStreak,
+        focusStats: kFocusStats,
+        settings: _settings,
+        dark: false,
+        onToggleDark: (_) {},
+        onBell: () {},
+        onOpenCalc: () {},
+        onOpenReview: () {},
+        onOpenCalendar: () {},
+        onStub: () {},
+        onLogout: () {},
+        onUpdateProfile: (_) async {},
+        onSaveSettings: (_) {},
+        onWithdraw: () async {},
+      ),
+    );
+
+    expect(find.text('프로필'), findsOneWidget);
+  });
+
+  testWidgets('프로필 아바타 탭은 통합 준비 중 콜백(onStub)을 호출한다', (
+    WidgetTester tester,
+  ) async {
+    int stubbed = 0;
+    await _pumpTall(
+      tester,
+      MeScreen(
+        user: _user,
+        summary: kWeekSummary,
+        streak: kStreak,
+        focusStats: kFocusStats,
+        settings: _settings,
+        dark: false,
+        onToggleDark: (_) {},
+        onBell: () {},
+        onOpenCalc: () {},
+        onOpenReview: () {},
+        onOpenCalendar: () {},
+        onStub: () => stubbed++,
+        onLogout: () {},
+        onUpdateProfile: (_) async {},
+        onSaveSettings: (_) {},
+        onWithdraw: () async {},
+      ),
+    );
+
+    // 아바타(중립 인물 아이콘) 탭 → 준비 중 안내.
+    await tester.tap(find.byKey(const ValueKey<String>('profile-avatar')));
+    await tester.pump();
+    expect(stubbed, 1);
+  });
+
+  testWidgets('구독 일정 관리 탭은 통합 준비 중 콜백(onStub)을 호출한다', (
+    WidgetTester tester,
+  ) async {
+    int stubbed = 0;
+    await _pumpTall(
+      tester,
+      MeScreen(
+        user: _user,
+        summary: kWeekSummary,
+        streak: kStreak,
+        focusStats: kFocusStats,
+        settings: _settings,
+        dark: false,
+        onToggleDark: (_) {},
+        onBell: () {},
+        onOpenCalc: () {},
+        onOpenReview: () {},
+        onOpenCalendar: () {},
+        onStub: () => stubbed++,
+        onLogout: () {},
+        onUpdateProfile: (_) async {},
+        onSaveSettings: (_) {},
+        onWithdraw: () async {},
+      ),
+    );
+
+    expect(find.text('구독 일정 관리'), findsOneWidget);
+    await tester.tap(find.text('구독 일정 관리'));
+    await tester.pump();
+    expect(stubbed, 1);
+  });
+
   testWidgets('다크 모드 토글 탭은 onToggleDark를 호출한다', (WidgetTester tester) async {
     bool? toggled;
     await _pumpTall(
