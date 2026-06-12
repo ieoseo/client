@@ -80,6 +80,27 @@ void main() {
     );
 
     test(
+      'provisioning 중 isAuthenticating=true → 완료 후 false (로그인 화면 깜빡임 방지)',
+      () async {
+        final c = buildController();
+        c.adapter.onGet(
+          '/auth/me',
+          (server) => server.reply(200, meEnvelope()),
+        );
+
+        final List<bool> seen = <bool>[];
+        c.controller.addListener(() => seen.add(c.controller.isAuthenticating));
+
+        await c.controller.oauthSignIn(SocialProvider.google);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        expect(seen, contains(true)); // provisioning 동안 게이트에 로딩 신호
+        expect(c.controller.isAuthenticating, isFalse); // 완료 후 해제
+        expect(c.controller.status, AuthStatus.authenticated);
+      },
+    );
+
+    test(
       'kakao 성공 → signInWithOAuth → onSignedIn → me → authenticated',
       () async {
         final c = buildController();

@@ -46,7 +46,7 @@
 - `data/auth/`: `SupabaseAuthGateway`(supabase_flutter 추상화 — 토큰/`signInWithOAuth`/이메일/refresh/signOut/onSignedIn + `linkedProviders`/`linkOAuth`/`unlinkOAuth`/`onUserUpdated`/`reloadUser`, 테스트는 가짜 주입), `AuthController`(ChangeNotifier — oauthSignIn/emailSignUp/emailSignIn/tryRestore/updateProfile/withdraw/logout + linkAccount/unlinkAccount/linkedProviders + `AuthStatus`), `social_auth.dart`(`SocialProvider` 표시용 enum), `supabase_config.dart`(URL/anonKey + `kSupabaseRedirectUri`).
 - `data/api/`: `ApiClient`(dio 래퍼 — baseUrl·타임아웃·envelope 언랩·`ApiException`·Bearer(Supabase 세션 토큰)·401 시 `refreshSession` 1회 재시도), `AuthApi`(**me/updateProfile/withdraw** 만), DTO `AuthUser`(`email` 은 **nullable** — Kakao 등 미제공 가능).
 - 진입 게이트(`main.dart`): `Supabase.initialize` 후 부팅 시 `tryRestore`(Supabase 세션 → `/auth/me`) → 유효하면 main, 아니면 splash→onboarding→로그인. 로그아웃은 `signOut`.
-- 설정: `.env.json`(dart-define-from-file) — `SUPABASE_URL`·`SUPABASE_ANON_KEY`(필수), `API_BASE_URL`(에뮬레이터 `http://10.0.2.2:8080/api/v1`). 하드코딩 기본값 없음. 딥링크 복귀 scheme `app.ieoseo://login-callback` 은 Android `AndroidManifest.xml`(intent-filter)·iOS `Info.plist`(CFBundleURLTypes scheme `app.ieoseo`)·Supabase 대시보드 Redirect URLs 에 동일하게 등록(셋 다 일치해야 복귀 동작). 네이티브 SDK scheme(google_sign_in·kakao)은 미사용이라 제거.
+- 설정: env 파일(`--dart-define-from-file`) — `SUPABASE_URL`·`SUPABASE_ANON_KEY`(필수)·`API_BASE_URL`(필수). **소스에 URL 하드코딩 없음**(`api_config.dart` 의 `apiBaseUrl=String.fromEnvironment('API_BASE_URL')`, 미주입 시 `main` 가드로 fail-fast). 환경별 파일 분리: **`.env.json`(로컬=로컬 서버)** / **`.env.prod.json`(운영=운영 도메인)** — 실행/빌드가 넘기는 파일로 타깃이 갈린다(값 레퍼런스: `../docs/가이드/환경변수.md`). 딥링크 복귀 scheme `app.ieoseo://login-callback` 은 Android `AndroidManifest.xml`(intent-filter)·iOS `Info.plist`(CFBundleURLTypes scheme `app.ieoseo`)·Supabase 대시보드 Redirect URLs 에 동일하게 등록(셋 다 일치해야 복귀 동작). 네이티브 SDK scheme(google_sign_in·kakao)은 미사용이라 제거.
 - 보안: 세션은 supabase_flutter 가 보관(평문 로깅 금지), dio 타임아웃 필수. 계약: `../docs/05-API/auth.md`.
 
 ## 제안 구조 (구현 착수 시)
@@ -60,13 +60,14 @@ lib/
 ```
 
 ## 실행
-- 설정값은 **`.env.json`**(dart-define-from-file)으로 관리한다. 최초 1회: `cp .env.json.example .env.json` 후 값 채움(**필수**: `SUPABASE_URL`·`SUPABASE_ANON_KEY`, `API_BASE_URL` 에뮬레이터=`http://10.0.2.2:8080/api/v1`). `.env.json` 은 gitignore. 미설정 시 `main` 의 assert 로 빠르게 실패한다(특정 프로젝트 URL 을 소스에 하드코딩하지 않음).
-- `flutter pub get` → `flutter run --dart-define-from-file=.env.json` (IntelliJ 는 Run config 의 Additional run args 에 동일 플래그).
+- 설정값은 **env 파일**(`--dart-define-from-file`)으로 관리한다(둘 다 gitignore). 최초 1회: `cp .env.json.example .env.json`(로컬, `API_BASE_URL`=로컬 서버) + `.env.prod.json`(운영, `API_BASE_URL`=운영 도메인). 값 예시는 [../docs/가이드/환경변수.md](../docs/가이드/환경변수.md). 미설정 시 `main` 가드로 빠르게 실패한다(프로젝트 URL 을 소스에 하드코딩하지 않음).
+- **로컬 실행**: `flutter pub get` → `flutter run --dart-define-from-file=.env.json` (IntelliJ 는 Run config 의 Additional run args 에 동일 플래그). 에뮬레이터는 `.env.json` 의 `API_BASE_URL` 을 `http://10.0.2.2:8080/api/v1` 로.
+- **운영 향해 실행/빌드**: `--dart-define-from-file=.env.prod.json` 로 바꿔 넘긴다(예: `flutter run --dart-define-from-file=.env.prod.json`, `flutter build appbundle --release --dart-define-from-file=.env.prod.json`).
 - 분석/포맷: `flutter analyze`, `dart format .`
 - 테스트: `flutter test` (유틸/도메인·위젯; 시각은 골든/스크린샷 보조).
 
 ## 릴리스 빌드 (Play)
-- **API base**: `data/api/api_config.dart` 기본값이 **옛 Azure App Service URL(`ieoseo-api.azurewebsites.net`, 폐기됨)** 로 하드코딩돼 있다. 배포 타깃이 **Azure Container Apps**([ADR-0018](../docs/04-ADR/0018-배포-AzureContainerApps-채택.md))로 바뀌었으므로, ACA 배포(Phase 2) 후 **ACA FQDN/커스텀 도메인(`ieoseo.app`)으로 교체 필요**. 로컬은 `--dart-define=API_BASE_URL=http://localhost:8080/api/v1` 로 오버라이드.
+- **API base**: 소스에 URL 하드코딩 없음 — `apiBaseUrl=String.fromEnvironment('API_BASE_URL')`. 운영 빌드는 **`--dart-define-from-file=.env.prod.json`**(`API_BASE_URL`=운영 도메인 `https://api.ieoseo.app/api/v1`)으로 주입한다. CI(release-client.yml)는 secret 으로 같은 값을 주입. 주입 누락 시 `main` 가드가 실패시켜 잘못된 서버로의 출시를 막는다([ADR-0018](../docs/04-ADR/0018-배포-AzureContainerApps-채택.md)).
 - **서명**: `cd android && cp key.properties.example key.properties` → `keytool` 로 업로드 keystore 생성 후 경로·비번 기입(미커밋). key.properties 없으면 debug 키 폴백(빌드는 됨).
 - **앱 아이콘**: `assets/icon/ieoseo-icon-1024.png` → `dart run flutter_launcher_icons` 로 생성. 표시 이름 "이어서".
 - **빌드**: `flutter build appbundle --release` → `build/app/outputs/bundle/release/app-release.aab` (Play 업로드).

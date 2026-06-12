@@ -81,6 +81,10 @@ class AuthController extends ChangeNotifier {
   /// 인증된 상태인지.
   bool get isAuthenticated => _status == AuthStatus.authenticated;
 
+  /// 외부 OAuth 복귀 후 server `/auth/me` provisioning 이 진행 중인지.
+  /// 진입 게이트가 이 동안 로그인 화면 대신 로딩을 띄워 깜빡임을 막는다.
+  bool get isAuthenticating => _provisioning;
+
   /// Supabase 세션으로 복원 시도. 진입 게이트(main.dart)에서 호출.
   /// 세션이 있으면 server `/auth/me` 로 사용자를 확인한다.
   Future<void> tryRestore() async {
@@ -165,11 +169,15 @@ class AuthController extends ChangeNotifier {
   Future<void> _provisionAndAuthenticate() async {
     if (_provisioning) return;
     _provisioning = true;
+    notifyListeners(); // provisioning 시작 → 게이트가 로딩 표시(로그인 화면 깜빡임 방지)
     try {
       final AuthUser me = await _api.me();
       _setAuthenticated(me);
     } finally {
+      final bool stillNotAuthenticated = _status != AuthStatus.authenticated;
       _provisioning = false;
+      // 실패(예외)로 인증되지 않았으면 게이트가 로딩을 해제하도록 알린다.
+      if (stillNotAuthenticated) notifyListeners();
     }
   }
 
