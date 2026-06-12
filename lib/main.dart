@@ -216,6 +216,24 @@ class _IeoseoAppState extends State<IeoseoApp> {
       return Container(color: tokens.page, child: body);
     }
 
+    // 외부 OAuth 복귀 후 server provisioning(`/auth/me`) 중에는 로그인 화면을 다시
+    // 보여주지 않고 로딩을 띄운다 — 브라우저 → 로딩 → home 의 자연스러운 전환.
+    if (_auth.isAuthenticating) {
+      return Container(
+        color: tokens.page,
+        alignment: Alignment.center,
+        child: Text(
+          '로그인 중…',
+          style: TextStyle(
+            fontFamily: 'Pretendard',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: tokens.fgMuted,
+          ),
+        ),
+      );
+    }
+
     switch (_phase) {
       case AppPhase.splash:
         body = SplashScreen(
