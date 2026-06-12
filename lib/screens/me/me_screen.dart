@@ -96,7 +96,7 @@ class MeScreen extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: <Widget>[
         AppHeader(
-          title: '나',
+          title: '프로필',
           subtitle: '기록과 설정',
           unread: unread,
           onBell: onBell,
@@ -144,6 +144,21 @@ class MeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _reviewEntry(t),
+              const SizedBox(height: 16),
+              // 구독 일정 관리: 정기결제 구독 일정을 모아 보는 향후 기능의 진입점.
+              // 아직 화면/데이터가 없어 탭 시 통합 준비 중 안내 토스트만 띄운다.
+              SettingGroup(
+                children: <Widget>[
+                  SettingRow(
+                    icon: 'repeat',
+                    iconBg: t.primarySubtle,
+                    iconColor: t.primary,
+                    label: '구독 일정 관리',
+                    last: true,
+                    onTap: onStub,
+                  ),
+                ],
+              ),
               if (onLinkAccount != null && onUnlinkAccount != null) ...<Widget>[
                 const SizedBox(height: 16),
                 LinkedAccountsSection(
@@ -172,35 +187,36 @@ class MeScreen extends StatelessWidget {
   }
 
   Widget _profile(BuildContext context, DkTokens t) {
-    final String initial = user.nickname.isNotEmpty
-        ? user.nickname.substring(0, 1)
-        : '?';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
       child: Row(
         children: <Widget>[
-          Container(
-            width: 60,
-            height: 60,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: t.primary,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: t.primary.withValues(alpha: 0.38),
-                  offset: const Offset(0, 6),
-                  blurRadius: 18,
-                ),
-              ],
-            ),
-            child: Text(
-              initial,
-              style: const TextStyle(
-                fontFamily: 'WantedSans',
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
+          // 아바타: 중립 인물 placeholder(배경사진 설정의 향후 진입점). 탭하면
+          // 통합 준비 중 안내 토스트([onStub])를 띄운다.
+          GestureDetector(
+            key: const ValueKey<String>('profile-avatar'),
+            behavior: HitTestBehavior.opaque,
+            onTap: onStub,
+            child: Container(
+              width: 60,
+              height: 60,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: t.primary,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: t.primary.withValues(alpha: 0.38),
+                    offset: const Offset(0, 6),
+                    blurRadius: 18,
+                  ),
+                ],
+              ),
+              child: const DkIcon(
+                'user',
+                size: 30,
                 color: Color(0xFFFFFFFF),
+                strokeWidth: 2,
               ),
             ),
           ),
