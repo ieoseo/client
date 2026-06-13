@@ -9,6 +9,7 @@ import '../../data/models.dart';
 import '../../parts/app_header.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_button.dart';
+import '../../widgets/dk_coming_soon.dart';
 import '../../widgets/dk_feedback.dart';
 import '../../widgets/dk_icon.dart';
 import 'linked_accounts_section.dart';
@@ -151,10 +152,9 @@ class MeScreen extends StatelessWidget {
                 children: <Widget>[
                   SettingRow(
                     icon: 'repeat',
-                    iconBg: t.primarySubtle,
-                    iconColor: t.primary,
                     label: '구독 일정 관리',
                     last: true,
+                    comingSoon: true,
                     onTap: onStub,
                   ),
                 ],
@@ -191,11 +191,11 @@ class MeScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
       child: Row(
         children: <Widget>[
-          // 아바타: 중립 인물 placeholder(배경사진 설정의 향후 진입점). 탭하면
-          // 통합 준비 중 안내 토스트([onStub])를 띄운다.
-          GestureDetector(
+          // 아바타: 중립 인물 placeholder(배경사진 설정의 향후 진입점). 준비 중
+          // 트리트먼트(뮤트 + '준비 중' 뱃지)로 감싸고, 탭하면 통합 준비 중 안내
+          // 토스트([onStub])를 띄운다.
+          DkComingSoon(
             key: const ValueKey<String>('profile-avatar'),
-            behavior: HitTestBehavior.opaque,
             onTap: onStub,
             child: Container(
               width: 60,

@@ -11,6 +11,10 @@ import 'models.dart';
 /// 일정 관리·알림 설정 등 미구현 진입점이 모두 이 문구를 재사용해 일관성을 유지한다.
 const String kComingSoonMessage = '곧 제공될 기능이에요';
 
+/// 준비 중 컨트롤에 붙이는 짧은 어포던스 뱃지 라벨. 토스트 문구([kComingSoonMessage])와
+/// 달리 컨트롤 옆에 상시 노출돼 탭 전에 미구현임을 알린다.
+const String kComingSoonBadgeLabel = '준비 중';
+
 /// 카테고리명 → 카테고리 hue. 미상은 [DkHue.cool].
 DkHue categoryHue(String category) => DkHue.byName(kCategoryHue[category]);
 
