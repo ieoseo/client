@@ -65,6 +65,7 @@ lib/
 - **운영 향해 실행/빌드**: `--dart-define-from-file=.env.prod.json` 로 바꿔 넘긴다(예: `flutter run --dart-define-from-file=.env.prod.json`, `flutter build appbundle --release --dart-define-from-file=.env.prod.json`).
 - 분석/포맷: `flutter analyze`, `dart format .`
 - 테스트: `flutter test` (유틸/도메인·위젯; 시각은 골든/스크린샷 보조).
+- **커밋 주의(Android 전용)**: `flutter test`·`flutter pub get` 실행 시 `ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved`(추적 파일)가 자동 변경·스테이징된다. 기능과 무관하니 커밋에서 제외한다(`git restore --staged <경로> && git checkout -- <경로>`).
 
 ## 릴리스 빌드 (Play)
 - **API base**: 소스에 URL 하드코딩 없음 — `apiBaseUrl=String.fromEnvironment('API_BASE_URL')`. 운영 빌드는 **`--dart-define-from-file=.env.prod.json`**(`API_BASE_URL`=운영 도메인 `https://api.ieoseo.app/api/v1`)으로 주입한다. CI(release-client.yml)는 secret 으로 같은 값을 주입. 주입 누락 시 `main` 가드가 실패시켜 잘못된 서버로의 출시를 막는다([ADR-0018](../docs/04-ADR/0018-배포-AzureContainerApps-채택.md)).
