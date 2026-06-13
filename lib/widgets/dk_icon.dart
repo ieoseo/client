@@ -7,6 +7,10 @@ const Map<String, String> kDkIcons = <String, String>{
   'home': 'M3 10.5 12 3l9 7.5 M5 9.5V21h14V9.5 M9.5 21v-6h5v6',
   'calendar':
       'M3 9h18 M7 3v3 M17 3v3 M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z',
+  // 미룬 시간/하루 최대 예약: 달력 + 앞으로 향하는 화살표(못 한 일을 다음 날로 이월).
+  'carryForward':
+      'M21 11V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h6 '
+      'M3 9h18 M8 2v4 M16 2v4 M14 18h6 M20 18l-2.5-2.5 M20 18l-2.5 2.5',
   'tasks': 'M4 6h2v2H4z M4 11h2v2H4z M4 16h2v2H4z M9 7h11 M9 12h11 M9 17h11',
   'focus': 'M12 22a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 8v4l3 2 M9 2h6',
   'settings':
