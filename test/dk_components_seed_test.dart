@@ -5,6 +5,7 @@ import 'package:ieoseo/theme/tokens.dart';
 import 'package:ieoseo/theme/tweaks.dart';
 import 'package:ieoseo/widgets/dk_badge.dart';
 import 'package:ieoseo/widgets/dk_card.dart';
+import 'package:ieoseo/widgets/dk_choice_chip.dart';
 import 'package:ieoseo/widgets/dk_segmented.dart';
 
 import 'support/harness.dart';
@@ -85,6 +86,26 @@ void main() {
       );
       expect(find.text('월'), findsOneWidget);
       expect(find.text('주'), findsOneWidget);
+    });
+  });
+
+  group('DkChoiceChip — seed 스펙 소비', () {
+    test('SeedChip 권위값 + on/off 색 키', () {
+      expect(SeedChip.radius, 10);
+      expect(SeedChip.borderWidth, 1.5);
+      expect(SeedChip.on.bg, 'primarySubtle');
+      expect(SeedChip.on.border, 'primary');
+      expect(SeedChip.off.bg, 'bg');
+      expect(SeedChip.off.border, 'border');
+    });
+
+    testWidgets('선택 상태 라벨을 렌더한다', (tester) async {
+      await tester.pumpWidget(
+        wrapForTest(
+          const Center(child: DkChoiceChip(label: '월', selected: true)),
+        ),
+      );
+      expect(find.text('월'), findsOneWidget);
     });
   });
 }

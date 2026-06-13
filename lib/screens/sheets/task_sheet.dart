@@ -4,6 +4,7 @@ import '../../data/format.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_button.dart';
+import '../../widgets/dk_choice_chip.dart';
 import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_segmented.dart';
 import '../../widgets/dk_sheet.dart';
@@ -173,7 +174,7 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
           child: Wrap(
             spacing: 7,
             runSpacing: 7,
-            children: <Widget>[for (final int v in _minOptions) _minChip(t, v)],
+            children: <Widget>[for (final int v in _minOptions) _minChip(v)],
           ),
         ),
         DkField(
@@ -205,9 +206,7 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
           DkField(
             label: '반복 요일',
             child: Row(
-              children: <Widget>[
-                for (int i = 0; i < 7; i++) _weekdayChip(t, i),
-              ],
+              children: <Widget>[for (int i = 0; i < 7; i++) _weekdayChip(i)],
             ),
           ),
         if (!widget.isNew && task != null) ...<Widget>[
@@ -260,65 +259,32 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
     );
   }
 
-  Widget _minChip(DkTokens t, int v) {
-    final bool on = v == _mins;
-    return GestureDetector(
+  Widget _minChip(int v) {
+    return DkChoiceChip(
+      label: fmtMins(v),
+      selected: v == _mins,
       onTap: () => setState(() => _mins = v),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        decoration: BoxDecoration(
-          color: on ? t.primarySubtle : t.bg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: on ? t.primary : t.border, width: 1.5),
-        ),
-        child: Text(
-          fmtMins(v),
-          style: TextStyle(
-            fontFamily: 'Pretendard',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: on ? t.primary : t.fgMuted,
-          ),
-        ),
-      ),
     );
   }
 
   /// 칩 인덱스 i(일=0 … 토=6, kWeekdaysKo 순서) → `DateTime.weekday`(월=1 … 일=7).
   int _weekdayNum(int i) => i == 0 ? 7 : i;
 
-  Widget _weekdayChip(DkTokens t, int i) {
+  Widget _weekdayChip(int i) {
     final int num = _weekdayNum(i);
-    final bool on = _weeklyDays.contains(num);
     return Expanded(
       child: Padding(
         padding: EdgeInsets.only(right: i < 6 ? 6 : 0),
         child: AspectRatio(
           aspectRatio: 1,
-          child: GestureDetector(
+          child: DkChoiceChip(
+            label: kWeekdaysKo[i],
+            selected: _weeklyDays.contains(num),
+            fontSize: 13,
+            expand: true,
             onTap: () => setState(() {
               if (!_weeklyDays.add(num)) _weeklyDays.remove(num);
             }),
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: on ? t.primarySubtle : t.bg,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: on ? t.primary : t.border,
-                  width: 1.5,
-                ),
-              ),
-              child: Text(
-                kWeekdaysKo[i],
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: on ? t.primary : t.fgMuted,
-                ),
-              ),
-            ),
           ),
         ),
       ),

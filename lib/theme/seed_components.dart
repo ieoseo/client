@@ -101,3 +101,24 @@ abstract final class SeedSegmented {
   static const int thumbDurationMs = 260;
   static const int textDurationMs = 200;
 }
+
+/// 선택 칩 스펙(단일 소스). on/off 색은 [SeedButtonVariant] 재사용. client DkChoiceChip 소비.
+abstract final class SeedChip {
+  static const double padX = 14;
+  static const double padY = 9;
+  static const double radius = 10;
+  static const double fontSize = 14;
+  static const int weight = 600;
+  static const double borderWidth = 1.5;
+  static const double gap = 6;
+  static const SeedButtonVariant on = SeedButtonVariant(
+    'primarySubtle',
+    'primary',
+    'primary',
+  );
+  static const SeedButtonVariant off = SeedButtonVariant(
+    'bg',
+    'fgMuted',
+    'border',
+  );
+}
