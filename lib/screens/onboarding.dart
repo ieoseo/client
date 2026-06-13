@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:ieoseo/theme/seed_tokens.dart';
 
 import '../theme/tokens.dart';
 import '../widgets/dk_button.dart';
@@ -335,23 +336,23 @@ class OnbArt extends StatelessWidget {
   Widget _art2(DkTokens t) {
     const List<Color?> cells = <Color?>[
       null,
-      Color(0xFF0066FF),
+      SeedSource.app,
       null,
-      Color(0xFF34A853),
-      null,
-      null,
-      Color(0xFF7B61FF),
+      SeedSource.google,
       null,
       null,
-      Color(0xFF0066FF),
-      null,
-      Color(0xFF111111),
+      SeedSource.notion,
       null,
       null,
-      Color(0xFF34A853),
+      SeedSource.app,
+      null,
+      SeedSource.apple,
       null,
       null,
-      Color(0xFF0066FF),
+      SeedSource.google,
+      null,
+      null,
+      SeedSource.app,
       null,
       null,
     ];

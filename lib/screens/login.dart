@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:ieoseo/theme/seed_tokens.dart';
 
 import '../data/api/api_exception.dart';
 import '../data/auth/auth_controller.dart';
@@ -167,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const _SocialSpec(
                 SocialProvider.kakao,
                 '카카오로 계속하기',
-                Color(0xFFFEE500),
+                SeedSource.kakao,
                 Color(0xFF191600),
               ),
               _SocialSpec(

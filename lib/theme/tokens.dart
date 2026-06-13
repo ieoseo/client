@@ -13,7 +13,7 @@ Color _mix(Color a, Color b, double pct) {
   return Color.lerp(a, b, 1 - pct / 100)!;
 }
 
-/// 카테고리 / 출처 색(hue). 프로토타입 `DK_HUE`를 그대로 이식.
+/// 카테고리 / 출처 색(hue). 값은 seed [SeedHue] 단일 소스에서 가져온다.
 @immutable
 class DkHue {
   const DkHue(this.color, this.subtle);
@@ -24,34 +24,31 @@ class DkHue {
   /// 옅은 배경(반투명).
   final Color subtle;
 
-  static const DkHue blue = DkHue(Color(0xFF0066FF), Color(0x1A0066FF));
-  static const DkHue violet = DkHue(Color(0xFF6541F2), Color(0x1A6541F2));
-  static const DkHue orange = DkHue(Color(0xFFFF9200), Color(0x1FFF9200));
-  static const DkHue green = DkHue(Color(0xFF00BF40), Color(0x1F00BF40));
-  static const DkHue sky = DkHue(Color(0xFF00AEFF), Color(0x1F00AEFF));
-  static const DkHue cool = DkHue(Color(0xFF70737C), Color(0x1F70737C));
-  static const DkHue red = DkHue(Color(0xFFFF4242), Color(0x1AFF4242));
+  // 값은 seed [SeedHue] 단일 소스에서. (DkHue.blue 등 API 유지)
+  static final DkHue blue = DkHue(SeedHue.blue.color, SeedHue.blue.subtle);
+  static final DkHue violet = DkHue(
+    SeedHue.violet.color,
+    SeedHue.violet.subtle,
+  );
+  static final DkHue orange = DkHue(
+    SeedHue.orange.color,
+    SeedHue.orange.subtle,
+  );
+  static final DkHue green = DkHue(SeedHue.green.color, SeedHue.green.subtle);
+  static final DkHue sky = DkHue(SeedHue.sky.color, SeedHue.sky.subtle);
+  static final DkHue cool = DkHue(SeedHue.cool.color, SeedHue.cool.subtle);
+  static final DkHue red = DkHue(SeedHue.red.color, SeedHue.red.subtle);
 
   /// hue 이름 → [DkHue]. 미지정/미상은 [cool].
-  static DkHue byName(String? name) {
-    switch (name) {
-      case 'blue':
-        return blue;
-      case 'violet':
-        return violet;
-      case 'orange':
-        return orange;
-      case 'green':
-        return green;
-      case 'sky':
-        return sky;
-      case 'red':
-        return red;
-      case 'cool':
-      default:
-        return cool;
-    }
-  }
+  static DkHue byName(String? name) => switch (name) {
+    'blue' => blue,
+    'violet' => violet,
+    'orange' => orange,
+    'green' => green,
+    'sky' => sky,
+    'red' => red,
+    _ => cool,
+  };
 }
 
 /// 카테고리명 → hue 이름(프로토타입 `CATEGORY_META`).
