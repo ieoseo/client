@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:ieoseo/theme/seed_tokens.dart';
 
 import '../../data/auth/social_auth.dart';
 import '../../theme/tokens.dart';
@@ -234,14 +235,10 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
       const Color(0xFFFFFFFF),
       const Color(0xFF1F1F1F),
     ),
-    SocialProvider.kakao => (
-      '카카오',
-      const Color(0xFFFEE500),
-      const Color(0xFF191600),
-    ),
+    SocialProvider.kakao => ('카카오', SeedSource.kakao, const Color(0xFF191600)),
     SocialProvider.apple => (
       'Apple',
-      const Color(0xFF111111),
+      SeedSource.apple,
       const Color(0xFFFFFFFF),
     ),
   };

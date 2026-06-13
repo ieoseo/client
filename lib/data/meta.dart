@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:ieoseo/theme/seed_tokens.dart';
 
 import '../theme/tokens.dart';
 import '../widgets/dk_badge.dart';
@@ -56,10 +57,10 @@ class DkSourceMeta {
 
 /// 출처 → 메타. `app`은 토큰 primary를 쓰므로 호출부에서 색을 덮어쓴다.
 DkSourceMeta sourceMeta(DkSource source) => switch (source) {
-  DkSource.app => const DkSourceMeta('이어서', Color(0xFF0066FF)),
-  DkSource.google => const DkSourceMeta('Google', Color(0xFF34A853)),
-  DkSource.apple => const DkSourceMeta('Apple', Color(0xFF111111)),
-  DkSource.notion => const DkSourceMeta('Notion', Color(0xFF7B61FF)),
+  DkSource.app => const DkSourceMeta('이어서', SeedSource.app),
+  DkSource.google => const DkSourceMeta('Google', SeedSource.google),
+  DkSource.apple => const DkSourceMeta('Apple', SeedSource.apple),
+  DkSource.notion => const DkSourceMeta('Notion', SeedSource.notion),
 };
 
 /// 모든 출처(범례용, app→notion 순).

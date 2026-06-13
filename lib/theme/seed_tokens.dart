@@ -165,6 +165,7 @@ abstract final class SeedSource {
   static const Color google = Color(0xFF34A853);
   static const Color apple = Color(0xFF111111);
   static const Color notion = Color(0xFF7B61FF);
+  static const Color kakao = Color(0xFFFEE500);
 }
 
 abstract final class SeedRadius {
