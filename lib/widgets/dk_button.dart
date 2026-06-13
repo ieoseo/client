@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../theme/seed_components.dart';
 import '../theme/tokens.dart';
 
 /// 버튼 크기. 프로토타입 `Btn` size 스케일.
@@ -7,29 +8,6 @@ enum DkButtonSize { sm, md, lg }
 
 /// 버튼 변형. 프로토타입 `Btn` variant.
 enum DkButtonVariant { primary, neutral, outline, subtle, ghost, danger }
-
-class _SizeSpec {
-  const _SizeSpec(
-    this.height,
-    this.padH,
-    this.padV,
-    this.fontSize,
-    this.radius,
-    this.gap,
-  );
-  final double height;
-  final double padH;
-  final double padV;
-  final double fontSize;
-  final double radius;
-  final double gap;
-}
-
-const Map<DkButtonSize, _SizeSpec> _sizes = <DkButtonSize, _SizeSpec>{
-  DkButtonSize.sm: _SizeSpec(40, 14, 8, 13, 10, 6),
-  DkButtonSize.md: _SizeSpec(50, 18, 13, 15, 14, 7),
-  DkButtonSize.lg: _SizeSpec(56, 22, 16, 16, 16, 8),
-};
 
 /// 디자인 시스템 버튼. 프로토타입 `Btn`을 이식.
 ///
@@ -64,43 +42,51 @@ class DkButton extends StatefulWidget {
 class _DkButtonState extends State<DkButton> {
   bool _pressed = false;
 
-  ({Color bg, Color fg, Color border}) _colors(DkTokens t) {
-    switch (widget.variant) {
-      case DkButtonVariant.primary:
-        return (
-          bg: t.primary,
-          fg: const Color(0xFFFFFFFF),
-          border: const Color(0x00000000),
-        );
-      case DkButtonVariant.neutral:
-        return (bg: t.fg, fg: t.bg, border: const Color(0x00000000));
-      case DkButtonVariant.outline:
-        return (bg: const Color(0x00000000), fg: t.fg, border: t.border);
-      case DkButtonVariant.subtle:
-        return (
-          bg: t.primarySubtle,
-          fg: t.primary,
-          border: const Color(0x00000000),
-        );
-      case DkButtonVariant.ghost:
-        return (
-          bg: const Color(0x00000000),
-          fg: t.fgMuted,
-          border: const Color(0x00000000),
-        );
-      case DkButtonVariant.danger:
-        return (
-          bg: t.dangerSubtle,
-          fg: t.danger,
-          border: const Color(0x00000000),
-        );
+  /// seed [SeedButton.variants] 의 색 키(scheme 키 / '#hex' / 'transparent')를
+  /// 현재 테마 [DkTokens] 색으로 해석한다. 변형 정의의 단일 소스는 seed.
+  Color _token(String key, DkTokens t) {
+    switch (key) {
+      case 'transparent':
+        return const Color(0x00000000);
+      case 'primary':
+        return t.primary;
+      case 'primarySubtle':
+        return t.primarySubtle;
+      case 'fg':
+        return t.fg;
+      case 'bg':
+        return t.bg;
+      case 'fgMuted':
+        return t.fgMuted;
+      case 'border':
+        return t.border;
+      case 'danger':
+        return t.danger;
+      case 'dangerSubtle':
+        return t.dangerSubtle;
+      default:
+        if (key.startsWith('#')) {
+          final String s = key.substring(1);
+          final String argb = s.length == 6 ? 'FF$s' : s;
+          return Color(int.parse(argb, radix: 16));
+        }
+        return t.fg;
     }
+  }
+
+  ({Color bg, Color fg, Color border}) _colors(DkTokens t) {
+    final SeedButtonVariant v = SeedButton.variants[widget.variant.name]!;
+    return (
+      bg: _token(v.bg, t),
+      fg: _token(v.fg, t),
+      border: _token(v.border, t),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
-    final _SizeSpec s = _sizes[widget.size]!;
+    final SeedButtonSize s = SeedButton.sizes[widget.size.name]!;
     final bool iconOnly = widget.child == null;
     final c = _colors(t);
 
@@ -114,9 +100,9 @@ class _DkButtonState extends State<DkButton> {
         DefaultTextStyle.merge(
           style: TextStyle(
             fontFamily: 'Pretendard',
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.values[(SeedButton.weight ~/ 100) - 1],
             fontSize: s.fontSize,
-            letterSpacing: s.fontSize * 0.0096,
+            letterSpacing: s.fontSize * SeedButton.letterSpacingEm,
             color: fg,
             height: 1.0,
           ),
@@ -134,11 +120,11 @@ class _DkButtonState extends State<DkButton> {
           : null,
       padding: iconOnly
           ? EdgeInsets.zero
-          : EdgeInsets.symmetric(horizontal: s.padH, vertical: s.padV),
+          : EdgeInsets.symmetric(horizontal: s.padX, vertical: s.padY),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(s.radius),
-        border: Border.all(color: border, width: 1.5),
+        border: Border.all(color: border, width: SeedButton.borderWidth),
       ),
       child: Row(
         mainAxisSize: widget.full ? MainAxisSize.max : MainAxisSize.min,
@@ -164,7 +150,11 @@ class _DkButtonState extends State<DkButton> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 80),
         curve: Curves.easeOut,
-        transform: Matrix4.translationValues(0, _pressed ? 1 : 0, 0),
+        transform: Matrix4.translationValues(
+          0,
+          _pressed ? SeedButton.pressTranslateY : 0,
+          0,
+        ),
         child: content,
       ),
     );
