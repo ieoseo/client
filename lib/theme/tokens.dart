@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:ieoseo/theme/seed_tokens.dart';
 
 import 'tweaks.dart';
 
@@ -108,8 +109,9 @@ class DkShadows {
   );
 }
 
-/// 이어서 디자인 토큰의 단일 출처. 프로토타입 `buildTheme()`의 라이트/다크 값을
-/// 그대로 이식한다. `color-mix`는 [_mix]로 계산.
+/// 이어서 디자인 토큰의 단일 출처. 정적 팔레트(색)는 seed-design 의
+/// [SeedScheme](seed_tokens.dart, vendored)에서 가져오고, primary 계열만
+/// 트윅 값으로 파생한다. `color-mix`는 [_mix]로 계산.
 ///
 /// 트윅(`TweakSettings`)이 바뀌면 [build]로 새 인스턴스를 만들고
 /// [DkTheme]가 트리에 내려보낸다.
@@ -209,92 +211,54 @@ class DkTokens {
   final bool isDark;
 
   /// 트윅 설정으로부터 토큰 세트를 만든다. 프로토타입 `buildTheme(t)` 대응.
+  ///
+  /// 정적 색은 seed-design [SeedScheme]에서 가져오고(앱/웹 단일 소스),
+  /// primary/primaryHover/primarySubtle 만 트윅 primary 로 파생한다.
   factory DkTokens.build(TweakSettings t) {
+    final SeedScheme s = t.dark ? SeedScheme.dark : SeedScheme.light;
     final Color p = Color(t.primary);
     const Color black = Color(0xFF000000);
     const Color white = Color(0xFFFFFFFF);
 
-    if (t.dark) {
-      const Color darkBg = Color(0xFF1C1C1E);
-      return DkTokens(
-        primary: p,
-        primaryHover: _mix(p, black, 88),
-        primarySubtle: _mix(p, darkBg, 26),
-        radius: t.radius,
-        radiusLg: t.radius + 8,
-        bg: darkBg,
-        bgSubtle: const Color(0xFF161617),
-        bgPress: const Color(0xFF2C2C2E),
-        page: const Color(0xFF0E0E0F),
-        fgStrong: white,
-        fg: const Color(0xFFF2F2F4),
-        fgMuted: const Color(0xD1FFFFFF), // rgba(255,255,255,0.82)
-        fgSubtle: const Color(0x8EEBEBF5), // rgba(235,235,245,0.56)
-        fgDisabled: const Color(0x4DEBEBF5), // rgba(235,235,245,0.30)
-        border: const Color(0x1FFFFFFF), // .12
-        borderSubtle: const Color(0x12FFFFFF), // .07
-        borderStrong: const Color(0x42FFFFFF), // .26
-        overlay: const Color(0x99000000), // .6
-        success: const Color(0xFF2BD968),
-        successSubtle: const Color(0x292BD968), // .16
-        successFg: const Color(0xFF37E075),
-        warning: const Color(0xFFFFA726),
-        warningSubtle: const Color(0x29FFA726),
-        warningFg: const Color(0xFFFFB851),
-        danger: const Color(0xFFFF5B5B),
-        dangerSubtle: const Color(0x29FF5B5B),
-        info: const Color(0xFF3AC0FF),
-        infoSubtle: const Color(0x293AC0FF),
-        infoFg: const Color(0xFF5CCBFF),
-        violetSubtle: const Color(0x2E7C61FF), // rgba(124,97,255,0.18)
-        violetFg: const Color(0xFFA892FF),
-        ink: black,
-        onInk: const Color(0xF2FFFFFF), // .95
-        onInkMuted: const Color(0x94FFFFFF), // .58
-        shadows: DkShadows.dark,
-        fontScale: t.fontScale,
-        isDark: true,
-      );
-    }
-
     return DkTokens(
       primary: p,
       primaryHover: _mix(p, black, 88),
-      primarySubtle: _mix(p, white, 11),
+      // 라이트=흰색 11% 혼합, 다크=다크 배경 26% 혼합(프로토타입과 동일).
+      primarySubtle: t.dark ? _mix(p, s.bg, 26) : _mix(p, white, 11),
       radius: t.radius,
       radiusLg: t.radius + 8,
-      bg: white,
-      bgSubtle: const Color(0xFFF7F7F8),
-      bgPress: const Color(0xFFF1F2F4),
-      page: const Color(0xFFF7F7F8),
-      fgStrong: const Color(0xFF0A0A0B),
-      fg: const Color(0xFF1A1B1E),
-      fgMuted: const Color(0xDC2E2F33), // rgba(46,47,51,0.86)
-      fgSubtle: const Color(0x9437383C), // rgba(55,56,60,0.58)
-      fgDisabled: const Color(0x4D37383C), // rgba(55,56,60,0.30)
-      border: const Color(0x3870737C), // rgba(112,115,124,0.22)
-      borderSubtle: const Color(0x1F70737C), // .12
-      borderStrong: const Color(0x6670737C), // .40
-      overlay: const Color(0x6B171719), // rgba(23,23,25,0.42)
-      success: const Color(0xFF00BF40),
-      successSubtle: const Color(0xFFE3FBEC),
-      successFg: const Color(0xFF018A33),
-      warning: const Color(0xFFFF9200),
-      warningSubtle: const Color(0xFFFFF2E0),
-      warningFg: const Color(0xFFB86200),
-      danger: const Color(0xFFFF4242),
-      dangerSubtle: const Color(0xFFFFEBEB),
-      info: const Color(0xFF00AEFF),
-      infoSubtle: const Color(0xFFE3F5FF),
-      infoFg: const Color(0xFF0079C2),
-      violetSubtle: const Color(0xFFF0ECFE),
-      violetFg: const Color(0xFF5B30E8),
-      ink: const Color(0xFF17181C),
-      onInk: const Color(0xF5FFFFFF), // .96
-      onInkMuted: const Color(0x99FFFFFF), // .60
-      shadows: DkShadows.light,
+      bg: s.bg,
+      bgSubtle: s.bgSubtle,
+      bgPress: s.bgPress,
+      page: s.page,
+      fgStrong: s.fgStrong,
+      fg: s.fg,
+      fgMuted: s.fgMuted,
+      fgSubtle: s.fgSubtle,
+      fgDisabled: s.fgDisabled,
+      border: s.border,
+      borderSubtle: s.borderSubtle,
+      borderStrong: s.borderStrong,
+      overlay: s.overlay,
+      success: s.success,
+      successSubtle: s.successSubtle,
+      successFg: s.successFg,
+      warning: s.warning,
+      warningSubtle: s.warningSubtle,
+      warningFg: s.warningFg,
+      danger: s.danger,
+      dangerSubtle: s.dangerSubtle,
+      info: s.info,
+      infoSubtle: s.infoSubtle,
+      infoFg: s.infoFg,
+      violetSubtle: s.violetSubtle,
+      violetFg: s.violetFg,
+      ink: s.ink,
+      onInk: s.onInk,
+      onInkMuted: s.onInkMuted,
+      shadows: t.dark ? DkShadows.dark : DkShadows.light,
       fontScale: t.fontScale,
-      isDark: false,
+      isDark: t.dark,
     );
   }
 
