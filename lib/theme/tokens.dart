@@ -261,6 +261,74 @@ class DkTokens {
 
   /// 기본 UI 폰트 크기(15px)에 트윅 배율을 곱한 값.
   double get baseFontSize => 15 * fontScale;
+
+  /// seed 컴포넌트 스펙의 색 키(scheme 키 / '#RRGGBB' / 'transparent')를
+  /// 현재 토큰 색으로 해석한다. SeedButton/SeedBadge 등 변형·톤이 공유.
+  Color byKey(String key) {
+    switch (key) {
+      case 'transparent':
+        return const Color(0x00000000);
+      case 'primary':
+        return primary;
+      case 'primaryHover':
+        return primaryHover;
+      case 'primarySubtle':
+        return primarySubtle;
+      case 'bg':
+        return bg;
+      case 'bgSubtle':
+        return bgSubtle;
+      case 'bgPress':
+        return bgPress;
+      case 'fgStrong':
+        return fgStrong;
+      case 'fg':
+        return fg;
+      case 'fgMuted':
+        return fgMuted;
+      case 'fgSubtle':
+        return fgSubtle;
+      case 'fgDisabled':
+        return fgDisabled;
+      case 'border':
+        return border;
+      case 'borderSubtle':
+        return borderSubtle;
+      case 'success':
+        return success;
+      case 'successSubtle':
+        return successSubtle;
+      case 'successFg':
+        return successFg;
+      case 'warning':
+        return warning;
+      case 'warningSubtle':
+        return warningSubtle;
+      case 'warningFg':
+        return warningFg;
+      case 'danger':
+        return danger;
+      case 'dangerSubtle':
+        return dangerSubtle;
+      case 'info':
+        return info;
+      case 'infoSubtle':
+        return infoSubtle;
+      case 'infoFg':
+        return infoFg;
+      case 'violetSubtle':
+        return violetSubtle;
+      case 'violetFg':
+        return violetFg;
+      default:
+        if (key.startsWith('#')) {
+          final String s = key.substring(1);
+          final String argb = s.length == 6 ? 'FF$s' : s;
+          return Color(int.parse(argb, radix: 16));
+        }
+        return fg;
+    }
+  }
 }
 
 /// 토큰을 위젯 트리에 내려보내는 InheritedWidget. `DkTheme.of(context)`로 접근.
