@@ -42,45 +42,11 @@ class DkButton extends StatefulWidget {
 class _DkButtonState extends State<DkButton> {
   bool _pressed = false;
 
-  /// seed [SeedButton.variants] 의 색 키(scheme 키 / '#hex' / 'transparent')를
-  /// 현재 테마 [DkTokens] 색으로 해석한다. 변형 정의의 단일 소스는 seed.
-  Color _token(String key, DkTokens t) {
-    switch (key) {
-      case 'transparent':
-        return const Color(0x00000000);
-      case 'primary':
-        return t.primary;
-      case 'primarySubtle':
-        return t.primarySubtle;
-      case 'fg':
-        return t.fg;
-      case 'bg':
-        return t.bg;
-      case 'fgMuted':
-        return t.fgMuted;
-      case 'border':
-        return t.border;
-      case 'danger':
-        return t.danger;
-      case 'dangerSubtle':
-        return t.dangerSubtle;
-      default:
-        if (key.startsWith('#')) {
-          final String s = key.substring(1);
-          final String argb = s.length == 6 ? 'FF$s' : s;
-          return Color(int.parse(argb, radix: 16));
-        }
-        return t.fg;
-    }
-  }
-
+  /// seed [SeedButton.variants] 의 색 키를 현재 테마 색으로 해석.
+  /// 키→색 매핑은 [DkTokens.byKey] 단일 소스.
   ({Color bg, Color fg, Color border}) _colors(DkTokens t) {
     final SeedButtonVariant v = SeedButton.variants[widget.variant.name]!;
-    return (
-      bg: _token(v.bg, t),
-      fg: _token(v.fg, t),
-      border: _token(v.border, t),
-    );
+    return (bg: t.byKey(v.bg), fg: t.byKey(v.fg), border: t.byKey(v.border));
   }
 
   @override

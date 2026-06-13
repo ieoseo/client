@@ -1,17 +1,18 @@
 import 'package:flutter/widgets.dart';
 
+import '../theme/seed_components.dart';
 import '../theme/tokens.dart';
 
 /// 기본 카드. 프로토타입 `Card`.
 ///
-/// 배경 bg, radius `--dk-radius`, padding 18(기본), shadow-1, 1px border-subtle.
-/// [onTap]이 있으면 press 시 살짝 축소(scale .985).
+/// 배경 bg, radius `--dk-radius`, padding seed [SeedCard.padding], shadow-1,
+/// 1px border-subtle. [onTap]이 있으면 press 시 살짝 축소(seed scale).
 class DkCard extends StatefulWidget {
   const DkCard({
     super.key,
     required this.child,
     this.onTap,
-    this.padding = 18,
+    this.padding = SeedCard.padding,
     this.radius,
     this.color,
   });
@@ -39,8 +40,8 @@ class _DkCardState extends State<DkCard> {
     final bool tappable = widget.onTap != null;
 
     final Widget card = AnimatedScale(
-      scale: _pressed && tappable ? 0.985 : 1.0,
-      duration: const Duration(milliseconds: 120),
+      scale: _pressed && tappable ? SeedCard.pressScale : 1.0,
+      duration: const Duration(milliseconds: SeedCard.pressDurationMs),
       curve: const Cubic(0.4, 0, 0.2, 1),
       child: Container(
         padding: EdgeInsets.all(widget.padding),

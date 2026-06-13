@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../theme/seed_components.dart';
 import '../theme/tokens.dart';
 
 /// 세그먼트 항목.
@@ -36,13 +37,15 @@ class DkSegmented<T> extends StatelessWidget {
     final Widget tabs = LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final double thumbWidth = full && constraints.hasBoundedWidth
-            ? (constraints.maxWidth - 6) / options.length
+            ? (constraints.maxWidth - SeedSegmented.pad * 2) / options.length
             : 0;
         return Stack(
           children: <Widget>[
             if (full)
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 260),
+                duration: const Duration(
+                  milliseconds: SeedSegmented.thumbDurationMs,
+                ),
                 curve: const Cubic(0.4, 0, 0.2, 1),
                 top: 0,
                 bottom: 0,
@@ -51,7 +54,9 @@ class DkSegmented<T> extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     color: t.bg,
-                    borderRadius: BorderRadius.circular(9),
+                    borderRadius: BorderRadius.circular(
+                      SeedSegmented.thumbRadius,
+                    ),
                     boxShadow: t.shadows.s1,
                   ),
                 ),
@@ -69,10 +74,10 @@ class DkSegmented<T> extends StatelessWidget {
     );
 
     return Container(
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.all(SeedSegmented.pad),
       decoration: BoxDecoration(
         color: t.bgPress,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(SeedSegmented.radius),
       ),
       child: tabs,
     );
@@ -90,20 +95,23 @@ class DkSegmented<T> extends StatelessWidget {
       onTap: () => onChanged(o.value),
       child: Container(
         alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: SeedSegmented.tabPadX,
+          vertical: SeedSegmented.tabPadY,
+        ),
         decoration: !full && active
             ? BoxDecoration(
                 color: t.bg,
-                borderRadius: BorderRadius.circular(9),
+                borderRadius: BorderRadius.circular(SeedSegmented.thumbRadius),
                 boxShadow: t.shadows.s1,
               )
             : null,
         child: AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: SeedSegmented.textDurationMs),
           style: TextStyle(
             fontFamily: 'Pretendard',
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontWeight: FontWeight.values[(SeedSegmented.weight ~/ 100) - 1],
+            fontSize: SeedSegmented.fontSize,
             color: active ? t.fg : t.fgSubtle,
           ),
           child: Text(o.label),

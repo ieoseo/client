@@ -51,3 +51,53 @@ abstract final class SeedButton {
     'danger': SeedButtonVariant('dangerSubtle', 'danger', 'transparent'),
   };
 }
+
+/// 뱃지 톤 = 의미색 쌍(배경/글자 scheme 키).
+@immutable
+class SeedTone {
+  const SeedTone(this.bg, this.fg);
+  final String bg;
+  final String fg;
+}
+
+/// 뱃지 컴포넌트 스펙(단일 소스). client DkBadge 가 소비.
+abstract final class SeedBadge {
+  static const double padX = 9;
+  static const double padY = 3;
+  static const double radius = 8;
+  static const double fontSize = 12;
+  static const int weight = 600;
+  static const double letterSpacing = 0.12;
+  static const double lineHeight = 1.5;
+  static const double gap = 4;
+
+  static const Map<String, SeedTone> tones = {
+    'neutral': SeedTone('bgPress', 'fgMuted'),
+    'primary': SeedTone('primarySubtle', 'primary'),
+    'success': SeedTone('successSubtle', 'successFg'),
+    'warning': SeedTone('warningSubtle', 'warningFg'),
+    'danger': SeedTone('dangerSubtle', 'danger'),
+    'info': SeedTone('infoSubtle', 'infoFg'),
+    'violet': SeedTone('violetSubtle', 'violetFg'),
+  };
+}
+
+/// 카드 컴포넌트 스펙(단일 소스). radius·shadow·border 는 토큰. client DkCard 가 소비.
+abstract final class SeedCard {
+  static const double padding = 18;
+  static const double pressScale = 0.985;
+  static const int pressDurationMs = 120;
+}
+
+/// 세그먼트 컨트롤 스펙(단일 소스). client DkSegmented 가 소비.
+abstract final class SeedSegmented {
+  static const double pad = 3;
+  static const double radius = 12;
+  static const double thumbRadius = 9;
+  static const double tabPadX = 14;
+  static const double tabPadY = 8;
+  static const double fontSize = 14;
+  static const int weight = 600;
+  static const int thumbDurationMs = 260;
+  static const int textDurationMs = 200;
+}
