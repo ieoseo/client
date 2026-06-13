@@ -805,7 +805,7 @@ class _DebtNudge extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: DkIcon(
-                'hourglass',
+                'carryForward',
                 size: 23,
                 color: t.warningFg,
                 strokeWidth: 1.9,

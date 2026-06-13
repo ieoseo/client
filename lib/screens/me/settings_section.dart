@@ -294,7 +294,9 @@ class SettingsSection extends StatelessWidget {
                 ),
               ),
               SettingRow(
-                icon: 'hourglass',
+                icon: 'carryForward',
+                iconBg: t.warningSubtle,
+                iconColor: t.warningFg,
                 label: '하루 최대 예약 시간',
                 value: _maxLabel(s.maxDailyMinutes),
                 last: true,
