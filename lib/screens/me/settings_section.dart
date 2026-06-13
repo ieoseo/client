@@ -2,7 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../data/api/settings_dto.dart';
+import '../../data/meta.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/dk_badge.dart';
 import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_segmented.dart';
 import 'settings_dialogs.dart';
@@ -106,6 +108,7 @@ class SettingRow extends StatelessWidget {
     this.onTap,
     this.last = false,
     this.danger = false,
+    this.comingSoon = false,
   });
 
   final String? icon;
@@ -118,9 +121,21 @@ class SettingRow extends StatelessWidget {
   final bool last;
   final bool danger;
 
+  /// 준비 중(미구현) 행이면 아이콘·라벨을 뮤트색으로 칠하고 '준비 중' 뱃지를 붙인다.
+  /// 여전히 탭 가능하며, 탭 안내는 [onTap](공통 준비 중 토스트)이 처리한다.
+  final bool comingSoon;
+
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
+    final Color labelColor = danger
+        ? t.danger
+        : comingSoon
+        ? t.fgSubtle
+        : t.fg;
+    final Color resolvedIconColor = comingSoon
+        ? t.fgDisabled
+        : (iconColor ?? t.fgMuted);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -139,13 +154,13 @@ class SettingRow extends StatelessWidget {
                 height: 32,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: iconBg ?? t.bgPress,
+                  color: comingSoon ? t.bgSubtle : (iconBg ?? t.bgPress),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: DkIcon(
                   icon!,
                   size: 18,
-                  color: iconColor ?? t.fgMuted,
+                  color: resolvedIconColor,
                   strokeWidth: 2,
                 ),
               ),
@@ -158,10 +173,15 @@ class SettingRow extends StatelessWidget {
                   fontFamily: 'Pretendard',
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: danger ? t.danger : t.fg,
+                  color: labelColor,
                 ),
               ),
             ),
+            if (comingSoon)
+              const Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: DkBadge(kComingSoonBadgeLabel),
+              ),
             if (value != null)
               Padding(
                 padding: const EdgeInsets.only(left: 8),
@@ -372,7 +392,12 @@ class SettingsSection extends StatelessWidget {
                 label: '캘린더 연동',
                 onTap: onOpenCalendar,
               ),
-              SettingRow(icon: 'bell', label: '알림 설정', onTap: onStub),
+              SettingRow(
+                icon: 'bell',
+                label: '알림 설정',
+                comingSoon: true,
+                onTap: onStub,
+              ),
               SettingRow(
                 icon: dark ? 'moon' : 'sun',
                 label: '다크 모드',
