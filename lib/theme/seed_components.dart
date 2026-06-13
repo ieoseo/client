@@ -36,13 +36,13 @@ abstract final class SeedButton {
   static const double pressTranslateY = 1;
   static const double borderWidth = 1.5;
 
-  static const Map<String, SeedButtonSize> sizes = <String, SeedButtonSize>{
+  static const Map<String, SeedButtonSize> sizes = {
     'sm': SeedButtonSize(40, 14, 8, 13, 10, 6),
     'md': SeedButtonSize(50, 18, 13, 15, 14, 7),
     'lg': SeedButtonSize(56, 22, 16, 16, 16, 8),
   };
 
-  static const Map<String, SeedButtonVariant> variants = <String, SeedButtonVariant>{
+  static const Map<String, SeedButtonVariant> variants = {
     'primary': SeedButtonVariant('primary', '#FFFFFF', 'transparent'),
     'neutral': SeedButtonVariant('fg', 'bg', 'transparent'),
     'outline': SeedButtonVariant('transparent', 'fg', 'border'),
