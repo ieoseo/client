@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.1.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.0.1...ieoseo-client-v0.1.0) (2026-06-13)
+
+
+### Features
+
+* Google 캘린더 연동 서버 OAuth 클라이언트 배선 (Phase B) ([#13](https://github.com/ieoseo/client/issues/13)) ([2db6647](https://github.com/ieoseo/client/commit/2db66475e36364e8c015b2792d1d041e39e2bd73)), closes [#9](https://github.com/ieoseo/client/issues/9)
+* 나 탭→프로필 개편(아바타·구독 일정 관리 coming-soon) ([#20](https://github.com/ieoseo/client/issues/20)) ([3d24b13](https://github.com/ieoseo/client/commit/3d24b1317146a1416c34efc6ca233e6a5072adae)), closes [#19](https://github.com/ieoseo/client/issues/19)
+* 로그인 화면에 Google·Kakao 소셜 버튼 노출 ([#7](https://github.com/ieoseo/client/issues/7)) ([3aba229](https://github.com/ieoseo/client/commit/3aba2290a78a07e0ae85f30079debe442f29eac9)), closes [#6](https://github.com/ieoseo/client/issues/6)
+* 마이페이지 연동 계정 관리(연결/해제) ([#12](https://github.com/ieoseo/client/issues/12)) ([54df52b](https://github.com/ieoseo/client/commit/54df52bdbb254ace5f92b181f88bcf33bed1c8b8)), closes [#10](https://github.com/ieoseo/client/issues/10)
+* 미룬 시간·하루 최대 예약 아이콘을 달력+이월 화살표로 교체 ([#27](https://github.com/ieoseo/client/issues/27)) ([1ad04bb](https://github.com/ieoseo/client/commit/1ad04bb9d3a8a22af0a026b69e7595117cccea75)), closes [#26](https://github.com/ieoseo/client/issues/26)
+* 선택 칩 DkChoiceChip 추출 + seed 소비 ([#38](https://github.com/ieoseo/client/issues/38)) ([e682c52](https://github.com/ieoseo/client/commit/e682c52555af0c39957d62c89209b3b58e63afb1))
+* 준비 중 기능 회색 어포던스 + 공통 안내 통일 ([#25](https://github.com/ieoseo/client/issues/25)) ([64ad61a](https://github.com/ieoseo/client/commit/64ad61a7d90c81ed002a8093f2f7778da07acbfe)), closes [#24](https://github.com/ieoseo/client/issues/24)
+* 클라이언트 인증 Supabase Auth로 전환 ([#4](https://github.com/ieoseo/client/issues/4)) ([f324b37](https://github.com/ieoseo/client/commit/f324b37b15c5b69b300440589b3b4ed534114232))
+
+
+### Bug Fixes
+
+* iOS 소셜 로그인 딥링크 복귀 흐름 안정화 ([#11](https://github.com/ieoseo/client/issues/11)) ([3b66a5a](https://github.com/ieoseo/client/commit/3b66a5a7799002f9da547fca213a0d218c25d871)), closes [#8](https://github.com/ieoseo/client/issues/8)
+* 로그인 흐름 — API base URL env 외부화 + OAuth 복귀 로딩 ([#21](https://github.com/ieoseo/client/issues/21)) ([a887589](https://github.com/ieoseo/client/commit/a887589504dbd7c7d89e03d3bb171e6ab8d57f6c))
+* 빈 주 리뷰 화면 막대 높이 0 division 크래시 가드 ([#23](https://github.com/ieoseo/client/issues/23)) ([859b38b](https://github.com/ieoseo/client/commit/859b38b115796edb42614850511d5e8ce47b0555)), closes [#22](https://github.com/ieoseo/client/issues/22)
+* 운영 하드코딩 데이터 제거(주간 리뷰 실데이터 파생) + 미룬 시간 아이콘 ([#18](https://github.com/ieoseo/client/issues/18)) ([7b6ba79](https://github.com/ieoseo/client/commit/7b6ba79da6067af93b6eaeb5a875bb5fcce387e7))
+
 ## [1.1.0](https://github.com/pkdee/daykit/compare/client-v1.0.0...client-v1.1.0) (2026-06-05)
 
 
