@@ -11,6 +11,7 @@ import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_segmented.dart';
 import '../../widgets/dk_sheet.dart';
 import '../me/settings_section.dart';
+import 'date_picker_sheet.dart';
 import 'sheet_fields.dart';
 
 /// 이벤트 추가/상세 시트 본문. 프로토타입 `EventSheet`.
@@ -44,14 +45,15 @@ class _EventSheetBodyState extends State<EventSheetBody> {
   late final TextEditingController _title = TextEditingController(
     text: widget.event?.title ?? '',
   );
+  // 기본값은 오늘 기준 상대(과거 고정 날짜 제거): 목표일 4주 뒤, 기간 오늘~5일.
   late final TextEditingController _date = TextEditingController(
-    text: widget.event?.date ?? '2026-06-29',
+    text: widget.event?.date ?? ymd(addDays(kToday, 28)),
   );
   late final TextEditingController _start = TextEditingController(
-    text: widget.event?.start ?? '2026-06-08',
+    text: widget.event?.start ?? ymd(kToday),
   );
   late final TextEditingController _end = TextEditingController(
-    text: widget.event?.end ?? '2026-06-12',
+    text: widget.event?.end ?? ymd(addDays(kToday, 4)),
   );
   late final TextEditingController _memo = TextEditingController(
     text: widget.event?.memo ?? '',
@@ -81,6 +83,50 @@ class _EventSheetBodyState extends State<EventSheetBody> {
       pinned: _pinned,
       memo: _memo.text.trim(),
       color: widget.event?.color ?? 'cool',
+    );
+  }
+
+  /// [controller] 의 날짜를 달력 시트로 골라 반영한다(텍스트 직접 입력 대신).
+  Future<void> _pickInto(TextEditingController controller) async {
+    final String? picked = await showDkDatePicker(
+      context,
+      initial: controller.text,
+    );
+    if (picked != null && mounted) {
+      setState(() => controller.text = picked);
+    }
+  }
+
+  /// 탭하면 달력 피커를 여는 날짜 표시 필드.
+  Widget _dateField(DkTokens t, TextEditingController controller, Key key) {
+    return GestureDetector(
+      key: key,
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _pickInto(controller),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: t.bg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: t.border, width: 1.5),
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                fmtDate(controller.text),
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: t.fg,
+                ),
+              ),
+            ),
+            DkIcon('calendar', size: 18, color: t.fgMuted, strokeWidth: 2),
+          ],
+        ),
+      ),
     );
   }
 
@@ -119,14 +165,26 @@ class _EventSheetBodyState extends State<EventSheetBody> {
           ),
         ),
         DkField(
-          label: _type == DkEventType.single ? '목표일' : '기간',
+          label: _type == DkEventType.single ? '목표일' : '기간 (시작 ~ 종료)',
           child: _type == DkEventType.single
-              ? DkTextInput(controller: _date)
+              ? _dateField(t, _date, const ValueKey<String>('event-date-field'))
               : Row(
                   children: <Widget>[
-                    Expanded(child: DkTextInput(controller: _start)),
+                    Expanded(
+                      child: _dateField(
+                        t,
+                        _start,
+                        const ValueKey<String>('event-start-field'),
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: DkTextInput(controller: _end)),
+                    Expanded(
+                      child: _dateField(
+                        t,
+                        _end,
+                        const ValueKey<String>('event-end-field'),
+                      ),
+                    ),
                   ],
                 ),
         ),

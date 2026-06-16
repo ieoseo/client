@@ -44,6 +44,15 @@ void main() {
     await _pumpTall(
       tester,
       TaskSheetBody(
+        // 결정적 테스트를 위해 예정일을 월요일로 고정(신규 기본은 '오늘'이라 시간 의존).
+        task: const DkTask(
+          id: 't',
+          title: '고정',
+          mins: 30,
+          date: '2026-06-01',
+          state: DkTaskState.pending,
+          category: '어학',
+        ),
         isNew: true,
         onClose: () {},
         onSubmit: (DkTask t) => submitted = t,
@@ -56,7 +65,7 @@ void main() {
     await tester.tap(find.text('주간'));
     await tester.pump();
     // 토글 없이 제출하면 기본값은 임의 월·수·금 프리셋이 아니라 "예정일의 요일" 하나다.
-    // 신규 시트의 기본 예정일 2026-06-01 은 월요일(DateTime.weekday=1).
+    // 예정일 2026-06-01 은 월요일(DateTime.weekday=1).
     await tester.tap(find.text('추가하기'));
     await tester.pump();
 

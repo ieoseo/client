@@ -428,13 +428,25 @@ class _MainScaffoldState extends State<MainScaffold>
         children: <Widget>[
           Column(
             children: <Widget>[
+              // FAB 는 본문(탭바 위) 영역 안에 둔다 → 하단 탭바를 절대 가리지 않고,
+              // 본문 스크롤의 bottom 패딩이 콘텐츠 가림도 막는다(이슈: FAB 겹침).
               Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: KeyedSubtree(
-                    key: ValueKey<DkTab>(_tab),
-                    child: _buildTabBody(),
-                  ),
+                child: Stack(
+                  children: <Widget>[
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: KeyedSubtree(
+                        key: ValueKey<DkTab>(_tab),
+                        child: _buildTabBody(),
+                      ),
+                    ),
+                    if (_showsFab)
+                      Positioned(
+                        right: 18,
+                        bottom: 16,
+                        child: DkFab(onPressed: _addTask),
+                      ),
+                  ],
                 ),
               ),
               DkTabBar(
@@ -443,12 +455,6 @@ class _MainScaffoldState extends State<MainScaffold>
               ),
             ],
           ),
-          if (_showsFab)
-            Positioned(
-              right: 18,
-              bottom: 92,
-              child: DkFab(onPressed: _addTask),
-            ),
           DkToastHost(key: _toastKey),
         ],
       ),
@@ -558,7 +564,6 @@ class _MainScaffoldState extends State<MainScaffold>
         );
       case DkTab.focus:
         return FocusScreen(
-          pomodoro: _c.repository.pomodoro(),
           focusStats: _focusStats(),
           settings: _s.settings,
           onSaveSettings: _saveSettings,

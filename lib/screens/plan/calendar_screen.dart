@@ -5,6 +5,7 @@ import '../../data/meta.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_badge.dart';
+import '../../widgets/dk_brand_mark.dart';
 import '../../widgets/dk_card.dart';
 import '../../widgets/dk_empty.dart';
 import '../../widgets/dk_icon.dart';
@@ -127,16 +128,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Widget _legend(DkTokens t, DkSource s) {
     final DkSourceMeta m = sourceMeta(s);
-    final Color color = s == DkSource.app ? t.primary : m.color;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Container(
-          width: 9,
-          height: 9,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 5),
+        // 색점 대신 정식 브랜드 로고(이어서/Google/Apple/Notion).
+        DkBrandMark(brand: _brandKey(s), size: 16),
+        const SizedBox(width: 6),
         Text(
           m.label,
           style: TextStyle(
@@ -150,6 +147,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 }
+
+/// 캘린더 출처 → 브랜드 마크 키(`DkBrandMark`). app 출처는 이어서 로고.
+String _brandKey(DkSource s) => switch (s) {
+  DkSource.app => 'ieoseo',
+  DkSource.google => 'google',
+  DkSource.apple => 'apple',
+  DkSource.notion => 'notion',
+};
 
 /// 월 그리드(2026년 6월 고정). 셀에 출처 점 최대 3개.
 class _MonthGrid extends StatelessWidget {
@@ -307,7 +312,9 @@ Color _dotColor(DkTokens t, DayItem it) {
   if (it.kind == DayItemKind.external) {
     return it.source == DkSource.app ? t.primary : sourceMeta(it.source).color;
   }
-  return DkHue.byName(it.colorName).color;
+  // 이어서 출처(태스크·이벤트)는 카테고리별 색이 아니라 단일 이어서 색으로 통일한다.
+  // (범례의 '이어서 = 파랑'과 일치 — 한 날에 카테고리가 섞여도 색이 갈리지 않게.)
+  return t.primary;
 }
 
 /// 선택일 항목 리스트. 외부면 "출처 · 읽기전용" 뱃지.
