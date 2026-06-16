@@ -43,6 +43,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
   _CalView _view = _CalView.month;
   String _sel = ymd(kToday);
 
+  /// 표시 중인 월(선택과 독립). 이전/다음 달로 이동할 수 있게 별도 상태로 둔다.
+  DateTime _month = DateTime(kToday.year, kToday.month);
+
+  void _shiftMonth(int delta) =>
+      setState(() => _month = DateTime(_month.year, _month.month + delta));
+
+  /// 오늘로 복귀: 표시 월·선택을 오늘로 맞춘다.
+  void _goToday() {
+    setState(() {
+      _month = DateTime(kToday.year, kToday.month);
+      _sel = ymd(kToday);
+    });
+  }
+
   void _openItem(DayItem it) {
     if (it.task != null) {
       widget.onOpenTask(it.task!);
@@ -78,11 +92,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
             child: DkCard(
               padding: 16,
               child: _MonthGrid(
+                month: _month,
                 selected: _sel,
                 tasks: widget.tasks,
                 events: widget.events,
                 externals: widget.externals,
                 onSelect: (String k) => setState(() => _sel = k),
+                onPrev: () => _shiftMonth(-1),
+                onNext: () => _shiftMonth(1),
               ),
             ),
           ),
@@ -96,7 +113,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: DkSectionHead(
             title: '${d.month}월 ${d.day}일 (${kWeekdaysKo[d.weekday % 7]})',
-            action: _sel == ymd(kToday) ? '오늘' : null,
+            action: '오늘',
+            onAction: _goToday,
           ),
         ),
         Padding(
@@ -125,27 +143,50 @@ String _brandKey(DkSource s) => switch (s) {
   DkSource.notion => 'notion',
 };
 
-/// 월 그리드(2026년 6월 고정). 셀에 출처 점 최대 3개.
+/// 월 그리드. 상단에 이전/다음 달 이동 헤더. 셀에 출처 점 최대 3개.
 class _MonthGrid extends StatelessWidget {
   const _MonthGrid({
+    required this.month,
     required this.selected,
     required this.tasks,
     required this.events,
     required this.externals,
     required this.onSelect,
+    required this.onPrev,
+    required this.onNext,
   });
 
+  /// 표시할 월(해당 월의 1일 등 아무 날이어도 됨 — year/month 만 사용).
+  final DateTime month;
   final String selected;
   final List<DkTask> tasks;
   final List<DkEvent> events;
   final List<DkExternal> externals;
   final ValueChanged<String> onSelect;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+
+  Widget _navArrow(DkTokens t, Key key, String icon, VoidCallback onTap) {
+    return GestureDetector(
+      key: key,
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 34,
+        height: 34,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: t.bgSubtle,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: DkIcon(icon, size: 18, color: t.fgMuted, strokeWidth: 2.2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
-    // 표시 월은 선택된 날짜에서 파생(독립 리터럴 금지).
-    final DateTime month = parseYmd(selected);
     final List<int?> cells = monthCells(month.year, month.month);
     final String todayKey = ymd(kToday);
     final String monthPrefix =
@@ -153,6 +194,27 @@ class _MonthGrid extends StatelessWidget {
 
     return Column(
       children: <Widget>[
+        // 월 이동 헤더(이전 ‹ · YYYY년 M월 · 다음 ›).
+        Row(
+          children: <Widget>[
+            _navArrow(t, const ValueKey<String>('cal-prev'), 'chevL', onPrev),
+            Expanded(
+              child: Center(
+                child: Text(
+                  '${month.year}년 ${kMonthsKo[month.month - 1]}',
+                  style: TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: t.fgStrong,
+                  ),
+                ),
+              ),
+            ),
+            _navArrow(t, const ValueKey<String>('cal-next'), 'chevR', onNext),
+          ],
+        ),
+        const SizedBox(height: 12),
         Row(
           children: <Widget>[
             for (int i = 0; i < 7; i++)
