@@ -9,7 +9,6 @@ import '../../data/models.dart';
 import '../../parts/app_header.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_button.dart';
-import '../../widgets/dk_coming_soon.dart';
 import '../../widgets/dk_feedback.dart';
 import '../../widgets/dk_icon.dart';
 import 'linked_accounts_section.dart';
@@ -191,11 +190,11 @@ class MeScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
       child: Row(
         children: <Widget>[
-          // 아바타: 중립 인물 placeholder(배경사진 설정의 향후 진입점). 준비 중
-          // 트리트먼트(뮤트 + '준비 중' 뱃지)로 감싸고, 탭하면 통합 준비 중 안내
-          // 토스트([onStub])를 띄운다.
-          DkComingSoon(
+          // 아바타: 중립 인물 placeholder(배경사진 설정의 향후 진입점). '준비 중' 배지는
+          // 빼고, 탭하면 통합 준비 중 안내 토스트([onStub])만 띄운다.
+          GestureDetector(
             key: const ValueKey<String>('profile-avatar'),
+            behavior: HitTestBehavior.opaque,
             onTap: onStub,
             child: Container(
               width: 60,
