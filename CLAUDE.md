@@ -36,7 +36,7 @@
 - **주간 리뷰는 실데이터 파생**: server 엔드포인트가 없지만 조작 상수(`kWeekReview`) 대신 로드된 task/debt 에서 `buildWeekReview`(`screens/review/week_review_builder.dart`)로 계산한다. 실제 출처가 없는 필드(카테고리 없으면 분포, insight)는 빈 값/0/중립 문구로 둔다(지어내지 않음). `ApiRepository.weekReview()` 는 직접 호출 시 `UnsupportedError`. `kWeekReview` 는 `MockRepository`/위젯 테스트 데모용으로만 남긴다.
 - **Google 캘린더 연동(이슈 #9 Phase B)**: 나>설정>캘린더 연동에서 연결 시 server `/calendar/connect/google/url`로 동의 URL을 받아 **외부 브라우저(`url_launcher`)** 로 연다(placeholder 토큰 미사용). 서버가 토큰 교환·저장 후 `app.ieoseo://calendar-callback` 로 복귀 → `main_scaffold` 의 `WidgetsBindingObserver`(resume)가 연결 재로딩. Android 는 해당 host intent-filter 추가, iOS 는 scheme 매칭으로 처리. **전제: 서버 env(`GOOGLE_*`) + Google Cloud 설정.**
 - 도메인 권위는 server. 클라이언트 D-Day/포모도로 계산은 표현/데모용.
-- 계약 차이(메모): server `DebtResponse`에는 `title`/`fromLabel`이 없다 → `DkDebtDto`는 제목을 비워 매핑(표시 제목은 후속에서 태스크 조인). un-complete 전용 액션이 없어 완료 취소는 PUT으로 today 복귀를 표현. 자동 이월(`/debts/{id}/auto-carry`)은 미배선.
+- 계약(메모): server `DebtResponse` 가 `title`/`fromLabel` 을 제공 → `DkDebtDto` 가 `title→title`/`fromLabel→fromLabel` 로 매핑(별도 태스크 조인 불필요). 완료 취소는 전용 **`POST /tasks/{id}/reopen`**(DONE→TODAY) 으로 처리하고 `toggleComplete` 가 이를 호출한다(PUT 은 state 를 안 바꿔 무효였음). 자동 이월 `autoCarryDebt` 는 **`POST /debts/{id}/auto-carry`** 로 배선됨.
 
 ## 인증 (Supabase Auth — 소셜 전용, ADR-0014·0023)
 - **소셜 전용(ADR-0023)**: 소셜(**Kakao·Google**, Apple 후속) 로그인만. 이메일 가입/로그인은 제거(향후 필요 시 Supabase 가 그대로 지원하므로 UI·게이트웨이 메서드만 복원하면 됨). 로그인·세션·토큰은 `supabase_flutter` 가 담당하고, server 는 Supabase JWT 를 JWKS 로 **검증만** 한다(토큰 발급 엔드포인트 없음).
