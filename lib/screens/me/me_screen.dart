@@ -180,7 +180,8 @@ class MeScreen extends StatelessWidget {
           onLogout: onLogout,
           onWithdraw: onWithdraw,
         ),
-        const SizedBox(height: 100),
+        // 프로필 탭은 FAB 가 없어 큰 하단 여백이 필요 없다(탭바와의 빈 공간 축소).
+        const SizedBox(height: 24),
       ],
     );
   }

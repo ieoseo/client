@@ -74,13 +74,13 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
   late final Set<int> _weeklyDays =
       (widget.task?.recurrence.weeklyDays.isNotEmpty ?? false)
       ? <int>{...widget.task!.recurrence.weeklyDays}
-      : <int>{_weekdayOfYmd(widget.task?.date ?? '2026-06-01')};
+      : <int>{_weekdayOfYmd(widget.task?.date ?? ymd(kToday))};
 
   late final TextEditingController _title = TextEditingController(
     text: widget.task?.title ?? '',
   );
   late final TextEditingController _date = TextEditingController(
-    text: widget.task?.date ?? '2026-06-01',
+    text: widget.task?.date ?? ymd(kToday),
   );
 
   @override

@@ -54,7 +54,8 @@ class FocusController extends ChangeNotifier {
     _left = startLeft ?? _modeMins(mode) * 60;
   }
 
-  final DkPomodoro pomodoro;
+  /// 포모도로 시간 설정. 집중 탭 설정이 바뀌면 [setPomodoro] 로 갱신한다(서버 설정 권위).
+  DkPomodoro pomodoro;
   final void Function(FocusController)? _onPersist;
 
   FocusMode _mode;
@@ -167,6 +168,23 @@ class FocusController extends ChangeNotifier {
   void setSkin(FocusSkin s) {
     _skin = s;
     _persist();
+    notifyListeners();
+  }
+
+  /// 포모도로 시간 설정 반영(집중 탭 설정 변경). 진행 중이 아니면 현재 모드의 새 시간으로
+  /// 리셋해 즉시 보이게 한다. 변화가 없으면 아무 일도 하지 않는다.
+  void setPomodoro(DkPomodoro next) {
+    if (next.focus == pomodoro.focus &&
+        next.shortBreak == pomodoro.shortBreak &&
+        next.longBreak == pomodoro.longBreak &&
+        next.longEvery == pomodoro.longEvery) {
+      return;
+    }
+    pomodoro = next;
+    if (!_running) {
+      _left = _modeMins(_mode) * 60;
+      _done = false;
+    }
     notifyListeners();
   }
 

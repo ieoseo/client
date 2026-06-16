@@ -27,7 +27,6 @@ const String _prefsKey = 'dk_focus';
 class FocusScreen extends StatefulWidget {
   const FocusScreen({
     super.key,
-    required this.pomodoro,
     required this.focusStats,
     required this.settings,
     required this.onSaveSettings,
@@ -39,10 +38,9 @@ class FocusScreen extends StatefulWidget {
     this.unread = 0,
   });
 
-  final DkPomodoro pomodoro;
   final DkFocusStats focusStats;
 
-  /// 서버 설정(이슈 #56). 포모도로 시간·완료음 설정을 집중 탭에서 조정한다(ADR 없음, UI 정리).
+  /// 서버 설정(이슈 #56). 뽀모도로 시간(타이머의 단일 출처)·완료음을 집중 탭에서 조정한다.
   final DkSettings settings;
   final ValueChanged<DkSettings> onSaveSettings;
 
@@ -65,16 +63,30 @@ class _FocusScreenState extends State<FocusScreen> {
   late final FocusController _c;
   bool _wasDone = false;
 
+  /// 타이머 시간의 단일 출처: 서버 설정에서 파생(긴 휴식 주기는 기본 4유지).
+  DkPomodoro get _pomodoro => DkPomodoro(
+    focus: widget.settings.pomodoroFocus,
+    shortBreak: widget.settings.pomodoroShortBreak,
+    longBreak: widget.settings.pomodoroLongBreak,
+  );
+
   @override
   void initState() {
     super.initState();
     _c = FocusController(
-      pomodoro: widget.pomodoro,
+      pomodoro: _pomodoro,
       startSessions: widget.focusStats.todaySessions,
       onPersist: _persist,
     );
     _c.addListener(_onChange);
     _load();
+  }
+
+  @override
+  void didUpdateWidget(FocusScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 설정에서 뽀모도로 시간을 바꾸면 타이머에 즉시 반영한다(진행 중이 아니면 리셋).
+    _c.setPomodoro(_pomodoro);
   }
 
   @override
@@ -133,11 +145,11 @@ class _FocusScreenState extends State<FocusScreen> {
     FocusMode.long => t.infoFg,
   };
 
-  /// 포모도로 설정 시트(이슈 #55 — 프로필에서 집중 탭으로 이동).
+  /// 뽀모도로 설정 시트(이슈 #55 — 프로필에서 집중 탭으로 이동).
   void _openPomodoroSettings() {
     showDkSheet<void>(
       context,
-      title: '포모도로 설정',
+      title: '뽀모도로 설정',
       child: _PomodoroSettingsSheet(
         settings: widget.settings,
         onSave: widget.onSaveSettings,
@@ -163,7 +175,7 @@ class _FocusScreenState extends State<FocusScreen> {
       children: <Widget>[
         AppHeader(
           title: '집중',
-          subtitle: '포모도로로 실제로 실행해요',
+          subtitle: '뽀모도로로 실제로 실행해요',
           unread: widget.unread,
           onBell: widget.onBell,
           right: GestureDetector(
@@ -511,7 +523,7 @@ class _FocusScreenState extends State<FocusScreen> {
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  '누적 ${fmtMins(_c.sessions * widget.pomodoro.focus)} 집중 · 4회마다 긴 휴식을 권해요',
+                  '누적 ${fmtMins(_c.sessions * widget.settings.pomodoroFocus)} 집중 · 4회마다 긴 휴식을 권해요',
                   style: TextStyle(
                     fontFamily: 'Pretendard',
                     fontSize: 12.5,

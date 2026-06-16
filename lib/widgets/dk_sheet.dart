@@ -25,70 +25,77 @@ class DkSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
     final double maxHeightFactor = full ? 0.94 : 0.86;
+    // 소프트 키보드 높이. 패널을 그만큼 위로 올리고 가용 높이에서 빼서, 입력 필드가
+    // 자판에 가리지 않게 한다(닉네임·태스크 등 모든 입력 시트 공통).
+    final double keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final double available = MediaQuery.sizeOf(context).height - keyboard;
 
-    return SafeArea(
-      top: false,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * maxHeightFactor,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: t.bg,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const SizedBox(height: 10),
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: t.borderStrong,
-                  borderRadius: BorderRadius.circular(99),
-                ),
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboard),
+      child: SafeArea(
+        top: false,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: available * maxHeightFactor),
+          child: Container(
+            decoration: BoxDecoration(
+              color: t.bg,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
               ),
-              if (title != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          title!,
-                          style: TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontSize: 19,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.38,
-                            color: t.fgStrong,
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.of(context).maybePop(),
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: t.bgPress,
-                            borderRadius: BorderRadius.circular(99),
-                          ),
-                          child: DkIcon('x', size: 20, color: t.fgMuted),
-                        ),
-                      ),
-                    ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const SizedBox(height: 10),
+                Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: t.borderStrong,
+                    borderRadius: BorderRadius.circular(99),
                   ),
                 ),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                  child: child,
+                if (title != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            title!,
+                            style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              fontSize: 19,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.38,
+                              color: t.fgStrong,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).maybePop(),
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: t.bgPress,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: DkIcon('x', size: 20, color: t.fgMuted),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                    child: child,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

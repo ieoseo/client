@@ -308,8 +308,8 @@ class SettingsSection extends StatelessWidget {
                     }
                   },
                   options: const <DkSegment<String>>[
-                    DkSegment<String>('MON', 'M'),
-                    DkSegment<String>('SUN', 'S'),
+                    DkSegment<String>('MON', '월'),
+                    DkSegment<String>('SUN', '일'),
                   ],
                 ),
               ),

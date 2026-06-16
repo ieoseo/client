@@ -3,8 +3,15 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/tokens.dart';
 
-/// 브랜드(심플) 아이콘이 있는 provider 키. 자산: `assets/provider/<key>.{svg,png}`.
-const Set<String> kBrandKeys = <String>{'google', 'kakao', 'apple'};
+/// 브랜드(심플) 아이콘이 있는 provider 키. 자산: `assets/provider/<key>.{svg,png}`
+/// (이어서 앱 출처는 런처 아이콘 마스터를 재사용).
+const Set<String> kBrandKeys = <String>{
+  'google',
+  'kakao',
+  'apple',
+  'notion',
+  'ieoseo',
+};
 
 /// 소셜·캘린더 provider 의 브랜드 마크(이슈 #59). 텍스트 이니셜/색점 대신 실제 로고를
 /// 렌더한다 — google·apple 은 SVG(flutter_svg), kakao 는 PNG. seed-design 의
@@ -59,6 +66,33 @@ class DkBrandMark extends StatelessWidget {
               Color(0xFFFFFFFF),
               BlendMode.srcIn,
             ),
+          ),
+        );
+      case 'notion':
+        // 단색 N 글리프(currentColor) → 흰 배경 + 검정 글리프(브랜드 기본).
+        return _framed(
+          bg: const Color(0xFFFFFFFF),
+          border: t.border,
+          radius: radius,
+          child: SvgPicture.asset(
+            'assets/provider/notion.svg',
+            width: size * 0.6,
+            height: size * 0.6,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFF000000),
+              BlendMode.srcIn,
+            ),
+          ),
+        );
+      case 'ieoseo':
+        // 이어서 앱 출처: 런처 아이콘 마스터(브랜드 로고)를 둥근 사각으로 클립.
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(radius),
+          child: Image.asset(
+            'assets/icon/ieoseo-icon-1024.png',
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
           ),
         );
       default:
