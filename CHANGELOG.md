@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.0.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.1.0...ieoseo-client-v1.0.0) (2026-06-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* 이메일 로그인/가입 제거. 로그인은 Google·Kakao 만(Apple 후속).
+
+### Features
+
+* 연동 계정·캘린더에 브랜드(심플) 아이콘 ([#60](https://github.com/ieoseo/client/issues/60)) ([05f9e27](https://github.com/ieoseo/client/commit/05f9e27a55ab56bbeb9e634338c0b3c116e2a5f4)), closes [#59](https://github.com/ieoseo/client/issues/59)
+* 이메일 로그인 제거(소셜 전용으로 단순화) ([#49](https://github.com/ieoseo/client/issues/49)) ([1a68b91](https://github.com/ieoseo/client/commit/1a68b9114c24be24917061e2c78952e027303ff7)), closes [#48](https://github.com/ieoseo/client/issues/48)
+* 이벤트 기간 단일 달력 범위 선택(시작~종료 하이라이트) ([#75](https://github.com/ieoseo/client/issues/75)) ([f988a18](https://github.com/ieoseo/client/commit/f988a18b380b60842832344a2c08656c5d6d80f2)), closes [#74](https://github.com/ieoseo/client/issues/74)
+* 태스크 예정일 달력 피커 ([#58](https://github.com/ieoseo/client/issues/58)) ([2c9febd](https://github.com/ieoseo/client/commit/2c9febd3213b6002ef142cd6c94c9574820c5f77)), closes [#57](https://github.com/ieoseo/client/issues/57)
+* 태스크 카테고리 색점 → 아이콘 ([#62](https://github.com/ieoseo/client/issues/62)) ([37d46e5](https://github.com/ieoseo/client/commit/37d46e5677ac4d447b20192f4b197016ede11638)), closes [#61](https://github.com/ieoseo/client/issues/61)
+* 플랜 캘린더 월 이동 + 오늘 복귀 ([#71](https://github.com/ieoseo/client/issues/71)) ([e99c99e](https://github.com/ieoseo/client/commit/e99c99e84ff2201f78f6424f4ae3e86f0591a76e)), closes [#70](https://github.com/ieoseo/client/issues/70)
+
+
+### Bug Fixes
+
+* Play 내부 트랙 versionCode를 4로 상향 ([#40](https://github.com/ieoseo/client/issues/40)) ([df2472c](https://github.com/ieoseo/client/commit/df2472cfeb1d050e0fe386c57ddfa6326ab5d22c)), closes [#39](https://github.com/ieoseo/client/issues/39)
+* 릴리스 빌드에 앱설정 env(dart-define) 주입해 스플래시 멈춤 해소 ([#44](https://github.com/ieoseo/client/issues/44)) ([7748e4f](https://github.com/ieoseo/client/commit/7748e4f6b4d2257b49ff746c0ac1c578c93e433a)), closes [#43](https://github.com/ieoseo/client/issues/43)
+* 안드로이드 UI 버그 2건(탭바 겹침 + 키보드 재표시) ([#47](https://github.com/ieoseo/client/issues/47)) ([1b2f4e6](https://github.com/ieoseo/client/commit/1b2f4e6377cac4fbc3eab479b81b544cf52a9f5a)), closes [#46](https://github.com/ieoseo/client/issues/46)
+* 안드로이드 뒤로가기 + 포모도로 설정 집중 탭 이동 ([#56](https://github.com/ieoseo/client/issues/56)) ([540040e](https://github.com/ieoseo/client/commit/540040e4d746f3848b9c70fe6d54314ca3eea0f1))
+* 앱 전체 '오늘'을 고정값(2026-06-01)에서 실제 날짜로 ([#63](https://github.com/ieoseo/client/issues/63)) ([86a357d](https://github.com/ieoseo/client/commit/86a357d47b3269f885db4004e06bdbbba21edef2)), closes [#52](https://github.com/ieoseo/client/issues/52)
+* 오늘·플랜·집중·프로필 UI 버그 일괄 수정 ([#67](https://github.com/ieoseo/client/issues/67)) ([2531a90](https://github.com/ieoseo/client/commit/2531a90315d3a8674cbed96276c0675a07cdbb2c)), closes [#66](https://github.com/ieoseo/client/issues/66)
+* 완료 취소(체크 해제) 실제 반영 — reopen 호출 ([#73](https://github.com/ieoseo/client/issues/73)) ([81ff928](https://github.com/ieoseo/client/commit/81ff928b9c3f423837919d841d440816be8af90d)), closes [#72](https://github.com/ieoseo/client/issues/72)
+* 캘린더 출처 표시 정리 + 릴리스 artifact 제거(vc8) ([#69](https://github.com/ieoseo/client/issues/69)) ([50bfd1a](https://github.com/ieoseo/client/commit/50bfd1a1b3f5c43535aefa8bdc39aa101624b00d)), closes [#68](https://github.com/ieoseo/client/issues/68)
+* 코드 감사 후속 — 날짜 옮기기 실제 연결·롤백·copyWith 등 ([#77](https://github.com/ieoseo/client/issues/77)) ([c5c1785](https://github.com/ieoseo/client/commit/c5c178593e8d8f829ca82729775711e6de670d82)), closes [#76](https://github.com/ieoseo/client/issues/76)
+* 플랜/프로필/태스크 빠른 버그·정리 ([#53](https://github.com/ieoseo/client/issues/53)) ([666f87e](https://github.com/ieoseo/client/commit/666f87ebc9ee2c4f8044eab5db4392fc6a284188)), closes [#51](https://github.com/ieoseo/client/issues/51)
+
 ## [0.1.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.0.1...ieoseo-client-v0.1.0) (2026-06-13)
 
 
