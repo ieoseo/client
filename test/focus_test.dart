@@ -1,3 +1,4 @@
+import 'package:ieoseo/data/api/settings_dto.dart';
 import 'package:ieoseo/data/models.dart';
 import 'package:ieoseo/screens/focus/focus_screen.dart';
 import 'package:ieoseo/screens/focus/skins.dart';
@@ -11,6 +12,8 @@ FocusScreen _screen({DkTask? linked}) {
   return FocusScreen(
     pomodoro: const DkPomodoro(),
     focusStats: const DkFocusStats(todaySessions: 3, todayMinutes: 75, goal: 6),
+    settings: const DkSettings(),
+    onSaveSettings: (_) {},
     linkedTask: linked,
     onClearTask: () {},
     onBell: () {},
@@ -38,6 +41,21 @@ void main() {
     expect(find.text('25:00'), findsOneWidget); // 기본 링 스킨 시간
     expect(find.text('오늘 집중'), findsOneWidget);
     expect(find.byType(SkinRing), findsOneWidget);
+  });
+
+  testWidgets('헤더 톱니 → 포모도로 설정 시트(프로필에서 이동, #55)', (WidgetTester tester) async {
+    await _pumpTall(tester, _screen());
+
+    expect(
+      find.byKey(const ValueKey<String>('focus-settings')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey<String>('focus-settings')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('포모도로 설정'), findsOneWidget);
+    expect(find.text('집중 시간'), findsOneWidget);
+    expect(find.text('완료음'), findsOneWidget);
   });
 
   testWidgets('스킨을 미니멀로 전환하면 SkinMinimal로 바뀐다', (WidgetTester tester) async {

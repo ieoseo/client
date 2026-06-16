@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/api/settings_dto.dart';
 import '../../data/format.dart';
 import '../../data/models.dart';
 import '../../parts/app_header.dart';
@@ -11,6 +12,9 @@ import '../../widgets/dk_button.dart';
 import '../../widgets/dk_card.dart';
 import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_segmented.dart';
+import '../../widgets/dk_sheet.dart';
+import '../me/settings_dialogs.dart';
+import '../me/settings_section.dart';
 import 'focus_controller.dart';
 import 'skins.dart';
 
@@ -25,6 +29,8 @@ class FocusScreen extends StatefulWidget {
     super.key,
     required this.pomodoro,
     required this.focusStats,
+    required this.settings,
+    required this.onSaveSettings,
     this.linkedTask,
     required this.onClearTask,
     required this.onBell,
@@ -35,6 +41,11 @@ class FocusScreen extends StatefulWidget {
 
   final DkPomodoro pomodoro;
   final DkFocusStats focusStats;
+
+  /// 서버 설정(이슈 #56). 포모도로 시간·완료음 설정을 집중 탭에서 조정한다(ADR 없음, UI 정리).
+  final DkSettings settings;
+  final ValueChanged<DkSettings> onSaveSettings;
+
   final DkTask? linkedTask;
 
   /// 안 읽은 알림 수(헤더 벨 점 표시용, 이슈 #46).
@@ -122,6 +133,18 @@ class _FocusScreenState extends State<FocusScreen> {
     FocusMode.long => t.infoFg,
   };
 
+  /// 포모도로 설정 시트(이슈 #55 — 프로필에서 집중 탭으로 이동).
+  void _openPomodoroSettings() {
+    showDkSheet<void>(
+      context,
+      title: '포모도로 설정',
+      child: _PomodoroSettingsSheet(
+        settings: widget.settings,
+        onSave: widget.onSaveSettings,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
@@ -143,6 +166,25 @@ class _FocusScreenState extends State<FocusScreen> {
           subtitle: '포모도로로 실제로 실행해요',
           unread: widget.unread,
           onBell: widget.onBell,
+          right: GestureDetector(
+            key: const ValueKey<String>('focus-settings'),
+            onTap: _openPomodoroSettings,
+            child: Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: t.primarySubtle,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: DkIcon(
+                'sliders',
+                size: 22,
+                color: t.primary,
+                strokeWidth: 2.2,
+              ),
+            ),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
@@ -482,6 +524,83 @@ class _FocusScreenState extends State<FocusScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 집중 탭의 포모도로 설정 시트(이슈 #55 — 프로필에서 이동). 시트는 컨트롤러를 리스닝하지
+/// 않으므로 로컬 [_s] 미러로 즉시 반영하고 [onSave]로 낙관적 저장한다.
+class _PomodoroSettingsSheet extends StatefulWidget {
+  const _PomodoroSettingsSheet({required this.settings, required this.onSave});
+
+  final DkSettings settings;
+  final ValueChanged<DkSettings> onSave;
+
+  @override
+  State<_PomodoroSettingsSheet> createState() => _PomodoroSettingsSheetState();
+}
+
+class _PomodoroSettingsSheetState extends State<_PomodoroSettingsSheet> {
+  late DkSettings _s = widget.settings;
+
+  void _update(DkSettings next) {
+    if (!mounted) return;
+    setState(() => _s = next);
+    widget.onSave(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final DkTokens t = DkTheme.of(context);
+    return SettingGroup(
+      children: <Widget>[
+        SettingRow(
+          icon: 'focus',
+          iconBg: t.primarySubtle,
+          iconColor: t.primary,
+          label: '집중 시간',
+          value: '${_s.pomodoroFocus}분',
+          onTap: () async {
+            final int? mins = await showMinutePicker(
+              context,
+              title: '집중 시간',
+              current: _s.pomodoroFocus,
+              options: const <int>[15, 20, 25, 30, 45, 50, 60],
+            );
+            if (mins != null && mins != _s.pomodoroFocus) {
+              _update(_s.copyWith(pomodoroFocus: mins));
+            }
+          },
+        ),
+        SettingRow(
+          icon: 'coffee',
+          iconBg: t.successSubtle,
+          iconColor: t.successFg,
+          label: '휴식 시간',
+          value: '${_s.pomodoroShortBreak} / ${_s.pomodoroLongBreak}분',
+          last: false,
+          onTap: () async {
+            final int? shortMins = await showMinutePicker(
+              context,
+              title: '짧은 휴식',
+              current: _s.pomodoroShortBreak,
+              options: const <int>[3, 5, 10],
+            );
+            if (shortMins != null && shortMins != _s.pomodoroShortBreak) {
+              _update(_s.copyWith(pomodoroShortBreak: shortMins));
+            }
+          },
+        ),
+        SettingRow(
+          icon: 'bell',
+          label: '완료음',
+          last: true,
+          right: DkToggle(
+            value: _s.completionSound,
+            onChanged: (bool v) => _update(_s.copyWith(completionSound: v)),
+          ),
+        ),
+      ],
     );
   }
 }
