@@ -14,7 +14,6 @@ import 'data/settings_controller.dart';
 import 'observability/sentry_config.dart';
 import 'screens/login.dart';
 import 'screens/main_scaffold.dart';
-import 'screens/nickname_setup.dart';
 import 'screens/onboarding.dart';
 import 'screens/splash.dart';
 import 'theme/tokens.dart';
@@ -191,13 +190,6 @@ class _IeoseoAppState extends State<IeoseoApp> {
 
     // 인증되면 진입 흐름과 무관하게 main으로 전환(로그인/복원 공통 게이트).
     if (_auth.status == AuthStatus.authenticated && _auth.user != null) {
-      // 이메일 가입 직후엔 닉네임 설정 화면을 먼저 보여준다.
-      if (_auth.justSignedUp) {
-        return Container(
-          color: tokens.page,
-          child: NicknameSetupScreen(auth: _auth),
-        );
-      }
       body = MainScaffold(
         controller: _data,
         notif: _notif,

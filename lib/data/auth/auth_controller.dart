@@ -61,11 +61,6 @@ class AuthController extends ChangeNotifier {
   /// 동시 provisioning(중복 `/auth/me`) 방지 가드.
   bool _provisioning = false;
 
-  /// 직전에 이메일 회원가입을 했는지(가입 직후 닉네임 설정 화면을 띄우는 신호).
-  /// 닉네임 저장([updateProfile]) 성공 시 해제된다.
-  bool _justSignedUp = false;
-  bool get justSignedUp => _justSignedUp;
-
   /// 인증 헤더·401 refresh 가 붙은 공유 [ApiClient]. 데이터 레이어가 재사용(이슈 #35).
   ApiClient get apiClient => _client;
 
@@ -123,32 +118,6 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 이메일 회원가입(ADR-0014). Supabase `signUp`(Confirm email OFF → 즉시 세션) →
-  /// server `/auth/me` provisioning. 성공 시 [justSignedUp] 이 true 가 되어 진입 게이트가
-  /// 닉네임 설정 화면을 띄운다. 실패는 [AuthException]/[Exception] 전파(UI 표시).
-  Future<void> emailSignUp({
-    required String email,
-    required String password,
-  }) async {
-    _justSignedUp = true;
-    try {
-      await _gateway.signUpWithEmail(email: email, password: password);
-      await _provisionAndAuthenticate();
-    } catch (_) {
-      _justSignedUp = false;
-      rethrow;
-    }
-  }
-
-  /// 이메일 로그인. Supabase `signInWithPassword` → `/auth/me`. 닉네임 화면 없이 main.
-  Future<void> emailSignIn({
-    required String email,
-    required String password,
-  }) async {
-    await _gateway.signInWithEmail(email: email, password: password);
-    await _provisionAndAuthenticate();
-  }
-
   /// OAuth 딥링크 복귀로 세션이 생긴 뒤 server provisioning(이미 인증/진행 중이면 무시).
   Future<void> _onExternalSignIn() async {
     if (_status == AuthStatus.authenticated || _provisioning) return;
@@ -185,7 +154,6 @@ class AuthController extends ChangeNotifier {
   Future<void> updateProfile({required String nickname}) async {
     final AuthUser updated = await _api.updateProfile(nickname: nickname);
     _user = updated;
-    _justSignedUp = false; // 닉네임 설정 완료 → 가입 직후 플래그 해제.
     notifyListeners();
   }
 
