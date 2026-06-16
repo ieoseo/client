@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 
 import '../theme/tokens.dart';
@@ -34,12 +36,15 @@ class DkTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
+    // edge-to-edge(Android 15+ 강제)에서 시스템 내비게이션 바와 겹치지 않도록
+    // 하단 패딩에 시스템 inset 을 반영한다. 시스템 바가 없으면 디자인값 22 유지.
+    final double safeBottom = MediaQuery.viewPaddingOf(context).bottom;
     return Container(
       decoration: BoxDecoration(
         color: t.bg,
         border: Border(top: BorderSide(color: t.border)),
       ),
-      padding: const EdgeInsets.only(top: 8, bottom: 22),
+      padding: EdgeInsets.only(top: 8, bottom: math.max(22, safeBottom + 8)),
       child: Row(
         children: <Widget>[
           for (final _TabSpec spec in _tabs)

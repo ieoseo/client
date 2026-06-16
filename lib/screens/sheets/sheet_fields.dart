@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../../theme/tokens.dart';
 
@@ -107,33 +107,30 @@ class _DkTextInputState extends State<DkTextInput> {
             : null,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      child: Stack(
-        children: <Widget>[
-          if (widget.placeholder != null && controller.text.isEmpty)
-            Text(
-              widget.placeholder!,
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: t.fgSubtle,
-              ),
-            ),
-          EditableText(
-            controller: controller,
-            focusNode: _node,
-            style: TextStyle(
-              fontFamily: 'Pretendard',
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: t.fg,
-            ),
-            cursorColor: t.primary,
-            backgroundCursorColor: t.bgPress,
-            maxLines: widget.minHeight != null ? null : 1,
-            onChanged: (_) => setState(() {}),
+      // raw EditableText 대신 TextField 사용: 탭→키보드 재표시, 커서 이동,
+      // 선택·붙여넣기를 표준 처리한다. InputDecoration.collapsed 로 Material
+      // 장식을 없애 기존 커스텀 박스(테두리·포커스 링) 외형을 그대로 유지한다.
+      child: TextField(
+        controller: controller,
+        focusNode: _node,
+        maxLines: widget.minHeight != null ? null : 1,
+        cursorColor: t.primary,
+        style: TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          color: t.fg,
+        ),
+        decoration: InputDecoration.collapsed(
+          hintText: widget.placeholder ?? '',
+          hintStyle: TextStyle(
+            fontFamily: 'Pretendard',
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: t.fgSubtle,
           ),
-        ],
+        ),
+        onChanged: (_) => setState(() {}),
       ),
     );
   }
