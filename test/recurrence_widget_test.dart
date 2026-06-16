@@ -55,13 +55,14 @@ void main() {
     // 반복 세그먼트에서 '주간' 선택.
     await tester.tap(find.text('주간'));
     await tester.pump();
-    // 요일 칩(월·수·금 데모 프리셋)이 떠 있어야 하고, 제출 시 반복 규칙이 담겨야 한다.
+    // 토글 없이 제출하면 기본값은 임의 월·수·금 프리셋이 아니라 "예정일의 요일" 하나다.
+    // 신규 시트의 기본 예정일 2026-06-01 은 월요일(DateTime.weekday=1).
     await tester.tap(find.text('추가하기'));
     await tester.pump();
 
     expect(submitted, isNotNull);
     expect(submitted!.recurrence.frequency, DkRecurrenceFreq.weekly);
-    expect(submitted!.recurrence.weeklyDays, isNotEmpty);
+    expect(submitted!.recurrence.weeklyDays, <int>{1});
   });
 
   testWidgets('반복 태스크 행은 repeat 뱃지를 보인다', (WidgetTester tester) async {

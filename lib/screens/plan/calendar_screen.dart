@@ -72,28 +72,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ],
           ),
         ),
-        // 동기화 상태
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: <Widget>[
-              DkIcon('sync', size: 15, color: t.success, strokeWidth: 2),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Google · Apple · Notion 연동됨 · 방금 동기화',
-                  style: TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: t.fgSubtle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 6),
         if (_view == _CalView.month)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),

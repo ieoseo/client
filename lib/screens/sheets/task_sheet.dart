@@ -43,8 +43,9 @@ class TaskSheetBody extends StatefulWidget {
 
 enum _Repeat { none, weekly, monthly, yearly }
 
-/// 주간 반복 기본 프리셋(월·수·금). `DateTime.weekday`(월=1 … 일=7) 기준.
-const Set<int> _kDefaultWeeklyDays = <int>{1, 3, 5};
+/// 예정일(YYYY-MM-DD)이 속한 요일(`DateTime.weekday` 월=1 … 일=7). 파싱 실패 시 kToday 기준.
+/// 주간 반복 기본값은 임의 프리셋(과거 월·수·금)이 아니라 "그 태스크의 요일" 하나다.
+int _weekdayOfYmd(String s) => (DateTime.tryParse(s.trim()) ?? kToday).weekday;
 
 DkRecurrenceFreq _toFreq(_Repeat r) => switch (r) {
   _Repeat.none => DkRecurrenceFreq.none,
@@ -67,11 +68,12 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
     widget.task?.recurrence.frequency ?? DkRecurrenceFreq.none,
   );
 
-  /// 주간 반복 선택 요일(`DateTime.weekday` 월=1 … 일=7). 기존 규칙이 있으면 복원, 없으면 기본 프리셋.
+  /// 주간 반복 선택 요일(`DateTime.weekday` 월=1 … 일=7). 기존 규칙이 있으면 복원,
+  /// 없으면 예정일의 요일 하나를 기본 선택(임의 월·수·금 프리셋 제거).
   late final Set<int> _weeklyDays =
       (widget.task?.recurrence.weeklyDays.isNotEmpty ?? false)
       ? <int>{...widget.task!.recurrence.weeklyDays}
-      : <int>{..._kDefaultWeeklyDays};
+      : <int>{_weekdayOfYmd(widget.task?.date ?? '2026-06-01')};
 
   late final TextEditingController _title = TextEditingController(
     text: widget.task?.title ?? '',
@@ -95,7 +97,9 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
       DkRecurrenceFreq.none => DkRecurrence.none,
       DkRecurrenceFreq.weekly => DkRecurrence(
         frequency: DkRecurrenceFreq.weekly,
-        weeklyDays: _weeklyDays.isEmpty ? _kDefaultWeeklyDays : _weeklyDays,
+        weeklyDays: _weeklyDays.isEmpty
+            ? <int>{_weekdayOfYmd(_date.text)}
+            : _weeklyDays,
       ),
       DkRecurrenceFreq.monthly => DkRecurrence(
         frequency: DkRecurrenceFreq.monthly,

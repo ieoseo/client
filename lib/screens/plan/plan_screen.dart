@@ -2,8 +2,6 @@ import 'package:flutter/widgets.dart';
 
 import '../../data/models.dart';
 import '../../parts/app_header.dart';
-import '../../theme/tokens.dart';
-import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_segmented.dart';
 import 'calendar_screen.dart';
 import 'task_screen.dart';
@@ -58,7 +56,6 @@ class _PlanScreenState extends State<PlanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final DkTokens t = DkTheme.of(context);
     return ListView(
       padding: EdgeInsets.zero,
       children: <Widget>[
@@ -67,26 +64,6 @@ class _PlanScreenState extends State<PlanScreen> {
           subtitle: '일정과 할 일을 한 곳에서',
           unread: widget.unread,
           onBell: widget.onBell,
-          right: GestureDetector(
-            onTap: _view == _PlanView.calendar
-                ? widget.onAddEvent
-                : widget.onAddTask,
-            child: Container(
-              width: 44,
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: t.primarySubtle,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: DkIcon(
-                'plus',
-                size: 22,
-                color: t.primary,
-                strokeWidth: 2.3,
-              ),
-            ),
-          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),

@@ -33,12 +33,13 @@ Future<void> _pumpTall(WidgetTester tester, Widget child) async {
 }
 
 void main() {
-  testWidgets('기본은 캘린더 뷰: 동기화 줄과 MonthGrid', (WidgetTester tester) async {
+  testWidgets('기본은 캘린더 뷰: MonthGrid', (WidgetTester tester) async {
     await _pumpTall(tester, _screen());
 
     expect(find.text('플랜'), findsOneWidget);
     expect(find.byType(CalendarScreen), findsOneWidget);
-    expect(find.textContaining('연동됨'), findsOneWidget);
+    // 가짜 '연동됨·방금 동기화' 문구는 제거됨(실제 연동 상태 미반영이라).
+    expect(find.textContaining('연동됨'), findsNothing);
   });
 
   testWidgets('할 일 세그먼트로 전환하면 TaskScreen이 보인다', (WidgetTester tester) async {
