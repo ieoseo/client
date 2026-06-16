@@ -43,9 +43,7 @@ void main() {
     expect(find.byType(SkinRing), findsOneWidget);
   });
 
-  testWidgets('헤더 톱니 → 포모도로 설정 시트(프로필에서 이동, #55)', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('헤더 톱니 → 포모도로 설정 시트(프로필에서 이동, #55)', (WidgetTester tester) async {
     await _pumpTall(tester, _screen());
 
     expect(
