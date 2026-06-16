@@ -61,6 +61,16 @@ const Map<String, String> kCategoryHue = <String, String>{
   '기타': 'cool',
 };
 
+/// 카테고리명 → seed 아이콘 이름(이슈 #61). 색점 대신 의미에 맞는 아이콘을 표시한다.
+const Map<String, String> kCategoryIcon = <String, String>{
+  '자격증': 'graduationCap',
+  '어학': 'languages',
+  '취업': 'briefcase',
+  '건강': 'heartPulse',
+  '공부': 'bookOpen',
+  '기타': 'more',
+};
+
 /// 합성 그림자(soft). 프로토타입 `--dk-shadow-1/2/3`.
 @immutable
 class DkShadows {
