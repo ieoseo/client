@@ -41,8 +41,11 @@ abstract class IeoseoRepository {
   /// 완료 처리(server: POST /tasks/{id}/complete). [actualMinutes] 실제 소요(분).
   Future<DkTask> completeTask(String id, {int? actualMinutes});
 
-  /// 완료 토글. 완료 상태면 수정(PUT)으로 되돌리고, 아니면 complete 한다.
-  /// (server 에 별도 un-complete 액션이 없어 PUT 으로 today 복귀를 표현.)
+  /// 완료 취소(reopen, server: POST /tasks/{id}/reopen). DONE → TODAY 로 되돌리고
+  /// 실제 소요 기록을 비운다(체크 토글 UX).
+  Future<DkTask> reopenTask(String id);
+
+  /// 완료 토글. 완료 상태면 [reopenTask] 로 되돌리고, 아니면 [completeTask] 한다.
   Future<DkTask> toggleComplete(DkTask task);
 
   /// 수동 이월(server: POST /tasks/{id}/carry). [toDate] ymd.
@@ -182,9 +185,18 @@ class MockRepository implements IeoseoRepository {
   }
 
   @override
+  Future<DkTask> reopenTask(String id) async {
+    // 데모용: 상태만 today 로 되돌린다(actualMins 클리어는 server 권위 — 실연동에서 처리).
+    final DkTask reopened = _tasks
+        .firstWhere((DkTask t) => t.id == id)
+        .copyWith(state: DkTaskState.today);
+    return updateTask(reopened);
+  }
+
+  @override
   Future<DkTask> toggleComplete(DkTask task) {
     if (task.state == DkTaskState.done) {
-      return updateTask(task.copyWith(state: DkTaskState.today));
+      return reopenTask(task.id);
     }
     return completeTask(task.id, actualMinutes: task.actualMins);
   }
