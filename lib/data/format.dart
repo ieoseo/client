@@ -1,12 +1,14 @@
 /// 이어서 날짜·시간 포매팅 헬퍼. 프로토타입 `daykit-data.jsx`의 함수들을 이식.
-///
-/// "오늘"은 주간 뷰 + D-Day 계산이 안정적으로 보이도록 2026-06-01(월)에 고정한다.
 library;
 
 import 'models.dart';
 
-/// 고정된 "오늘"(2026년 6월 1일 월요일).
-final DateTime kToday = DateTime(2026, 6, 1);
+/// 앱의 "오늘"(자정 정규화한 실제 현재 날짜). D-Day·주간 뷰·캘린더 기준(이슈 #52).
+/// 단위 테스트는 시간 의존을 피하려 함수에 명시적 기준 날짜를 넘긴다(이 getter 직접 의존 금지).
+DateTime get kToday {
+  final DateTime now = DateTime.now();
+  return DateTime(now.year, now.month, now.day);
+}
 
 /// 요일 라벨(일~토).
 const List<String> kWeekdaysKo = <String>['일', '월', '화', '수', '목', '금', '토'];

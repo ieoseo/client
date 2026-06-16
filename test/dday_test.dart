@@ -14,7 +14,7 @@ void main() {
         date: '2026-06-29',
       );
 
-      final DkDdayInfo info = ddayInfo(ev, kToday);
+      final DkDdayInfo info = ddayInfo(ev, DateTime(2026, 6, 1));
 
       expect(info.diff, 28);
       expect(info.label, 'D-28');
@@ -30,7 +30,7 @@ void main() {
         date: '2026-06-01',
       );
 
-      final DkDdayInfo info = ddayInfo(ev, kToday);
+      final DkDdayInfo info = ddayInfo(ev, DateTime(2026, 6, 1));
 
       expect(info.diff, 0);
       expect(info.label, 'D-DAY');
@@ -46,7 +46,7 @@ void main() {
         date: '2026-05-29',
       );
 
-      final DkDdayInfo info = ddayInfo(ev, kToday);
+      final DkDdayInfo info = ddayInfo(ev, DateTime(2026, 6, 1));
 
       expect(info.diff, -3);
       expect(info.label, 'D+3');
@@ -63,7 +63,7 @@ void main() {
         end: '2026-07-09',
       );
 
-      final DkDdayInfo info = ddayInfo(ev, kToday);
+      final DkDdayInfo info = ddayInfo(ev, DateTime(2026, 6, 1));
 
       // 전체 99일 중 61일 경과 → 약 62%.
       expect(info.total, 99);
@@ -82,7 +82,7 @@ void main() {
         end: '2026-06-12',
       );
 
-      final DkDdayInfo info = ddayInfo(ev, kToday);
+      final DkDdayInfo info = ddayInfo(ev, DateTime(2026, 6, 1));
 
       expect(info.toStart, 7);
       expect(info.label, '시작 D-7');
