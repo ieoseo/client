@@ -334,59 +334,6 @@ class SettingsSection extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           SettingGroup(
-            title: '집중 (포모도로)',
-            children: <Widget>[
-              SettingRow(
-                icon: 'focus',
-                iconBg: t.primarySubtle,
-                iconColor: t.primary,
-                label: '집중 시간',
-                value: '${s.pomodoroFocus}분',
-                onTap: () async {
-                  final int? mins = await showMinutePicker(
-                    context,
-                    title: '집중 시간',
-                    current: s.pomodoroFocus,
-                    options: const <int>[15, 20, 25, 30, 45, 50, 60],
-                  );
-                  if (mins != null && mins != s.pomodoroFocus) {
-                    onSaveSettings(s.copyWith(pomodoroFocus: mins));
-                  }
-                },
-              ),
-              SettingRow(
-                icon: 'coffee',
-                iconBg: t.successSubtle,
-                iconColor: t.successFg,
-                label: '휴식 시간',
-                value: '${s.pomodoroShortBreak} / ${s.pomodoroLongBreak}분',
-                last: false,
-                onTap: () async {
-                  final int? shortMins = await showMinutePicker(
-                    context,
-                    title: '짧은 휴식',
-                    current: s.pomodoroShortBreak,
-                    options: const <int>[3, 5, 10],
-                  );
-                  if (shortMins != null && shortMins != s.pomodoroShortBreak) {
-                    onSaveSettings(s.copyWith(pomodoroShortBreak: shortMins));
-                  }
-                },
-              ),
-              SettingRow(
-                icon: 'bell',
-                label: '완료음',
-                last: true,
-                right: DkToggle(
-                  value: s.completionSound,
-                  onChanged: (bool v) =>
-                      onSaveSettings(s.copyWith(completionSound: v)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          SettingGroup(
             title: '연동 · 알림',
             children: <Widget>[
               SettingRow(

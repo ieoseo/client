@@ -371,8 +371,29 @@ class _MainScaffoldState extends State<MainScaffold>
 
   bool get _showsFab => _tab == DkTab.today || _tab == DkTab.plan;
 
+  /// 안드로이드 시스템 뒤로가기 처리(이슈 #54). 서브화면이 열려 있으면 닫고, 그 외엔
+  /// today 가 아닌 탭이면 today 로 복귀한다. today + 서브 없음일 때만 앱 종료를 허용한다.
+  void _handleBack() {
+    if (_sub != _Sub.none) {
+      setState(() => _sub = _Sub.none);
+    } else if (_tab != DkTab.today) {
+      setState(() => _tab = DkTab.today);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    return PopScope<Object?>(
+      canPop: _sub == _Sub.none && _tab == DkTab.today,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        _handleBack();
+      },
+      child: _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
 
     if (_sub != _Sub.none) {
@@ -539,6 +560,8 @@ class _MainScaffoldState extends State<MainScaffold>
         return FocusScreen(
           pomodoro: _c.repository.pomodoro(),
           focusStats: _focusStats(),
+          settings: _s.settings,
+          onSaveSettings: _saveSettings,
           linkedTask: _linkedTask,
           unread: unread,
           onClearTask: () => setState(() => _linkedTask = null),
