@@ -10,7 +10,7 @@ void main() {
     await tester.pumpWidget(
       wrapForTest(
         LinkedAccountsSection(
-          linkedProviders: const <String>{'email', 'kakao'},
+          linkedProviders: const <String>{'google', 'kakao'},
           onLink: (_) async {},
           onUnlink: (_) async {},
         ),
@@ -20,7 +20,8 @@ void main() {
     expect(find.text('연동 계정'), findsOneWidget);
     expect(find.text('Google'), findsOneWidget);
     expect(find.text('카카오'), findsOneWidget);
-    expect(find.text('이메일'), findsOneWidget); // email 연동 표시
+    // 이메일 로그인 제거(ADR-0023) → 이메일 행 없음.
+    expect(find.text('이메일'), findsNothing);
   });
 
   testWidgets('미연동 provider 는 "연결" 버튼을 누르면 onLink 호출', (

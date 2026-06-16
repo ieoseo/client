@@ -5,6 +5,7 @@ import '../../data/meta.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_badge.dart';
+import '../../widgets/dk_brand_mark.dart';
 import '../../widgets/dk_button.dart';
 import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_section.dart';
@@ -144,23 +145,27 @@ class CalendarSyncScreen extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Container(
-                width: 36,
-                height: 36,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: meta.color.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Container(
-                  width: 12,
-                  height: 12,
+              // 브랜드 아이콘이 있는 소스(google/apple)는 로고, 그 외(notion 등)는 색점.
+              if (kBrandKeys.contains(conn.source.name))
+                DkBrandMark(brand: conn.source.name, size: 36)
+              else
+                Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: meta.color,
-                    shape: BoxShape.circle,
+                    color: meta.color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: meta.color,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

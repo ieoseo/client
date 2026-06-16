@@ -88,8 +88,10 @@ flutter:
   uses-material-design: true
 
   # 브랜드 로고. 앱 내부 DkLogo 가 런타임에 표시한다(런처 아이콘 마스터와 동일 PNG).
+  # provider/: 소셜·캘린더 브랜드(심플) 아이콘 — seed-design dist/svg/provider 소비(이슈 #59).
   assets:
     - assets/icon/ieoseo-icon-1024.png
+    - assets/provider/
 
   # UI/본문은 Pretendard, 큰 숫자/브랜드는 WantedSans. 디자인시스템-토큰.md §1 참조.
   fonts:

@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
-import 'package:ieoseo/theme/seed_tokens.dart';
 
 import '../../data/auth/social_auth.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/dk_brand_mark.dart';
 import '../../widgets/dk_button.dart';
 
 /// 나 탭 '연동 계정' 섹션(이슈 #10, ADR-0014).
@@ -71,7 +71,6 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
-    final bool hasEmail = widget.linkedProviders.contains('email');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -102,15 +101,6 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
             ),
           ),
           const SizedBox(height: 14),
-          if (hasEmail) ...<Widget>[
-            _row(
-              t,
-              label: '이메일',
-              mark: _Mark(bg: t.bgSubtle, fg: t.fgMuted, initial: '@'),
-              trailing: _statusChip(t, '연결됨'),
-            ),
-            const SizedBox(height: 10),
-          ],
           for (final SocialProvider p in LinkedAccountsSection.manageable) ...[
             _providerRow(t, p),
             if (p != LinkedAccountsSection.manageable.last)
@@ -135,7 +125,7 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
   Widget _providerRow(DkTokens t, SocialProvider p) {
     final bool linked = _isLinked(p);
     final bool busy = _busy == p;
-    final (String label, Color bg, Color fg) = _brand(p);
+    final String label = _brand(p);
 
     final Widget action;
     if (busy) {
@@ -161,7 +151,7 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
     return _row(
       t,
       label: label,
-      mark: _Mark(bg: bg, fg: fg, initial: label.substring(0, 1)),
+      mark: DkBrandMark(brand: p.wireName, size: 36),
       trailing: action,
     );
   }
@@ -169,29 +159,12 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
   Widget _row(
     DkTokens t, {
     required String label,
-    required _Mark mark,
+    required Widget mark,
     required Widget trailing,
   }) {
     return Row(
       children: <Widget>[
-        Container(
-          width: 36,
-          height: 36,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: mark.bg,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            mark.initial,
-            style: TextStyle(
-              fontFamily: 'Pretendard',
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: mark.fg,
-            ),
-          ),
-        ),
+        mark,
         const SizedBox(width: 12),
         Expanded(
           child: Text(
@@ -228,26 +201,10 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
     );
   }
 
-  /// provider → (표시명, 마크 배경, 마크 글자색).
-  (String, Color, Color) _brand(SocialProvider p) => switch (p) {
-    SocialProvider.google => (
-      'Google',
-      const Color(0xFFFFFFFF),
-      const Color(0xFF1F1F1F),
-    ),
-    SocialProvider.kakao => ('카카오', SeedSource.kakao, const Color(0xFF191600)),
-    SocialProvider.apple => (
-      'Apple',
-      SeedSource.apple,
-      const Color(0xFFFFFFFF),
-    ),
+  /// provider → 표시명.
+  String _brand(SocialProvider p) => switch (p) {
+    SocialProvider.google => 'Google',
+    SocialProvider.kakao => '카카오',
+    SocialProvider.apple => 'Apple',
   };
-}
-
-/// 행 좌측 마크 표현값.
-class _Mark {
-  const _Mark({required this.bg, required this.fg, required this.initial});
-  final Color bg;
-  final Color fg;
-  final String initial;
 }
