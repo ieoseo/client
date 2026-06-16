@@ -8,6 +8,7 @@ import '../../widgets/dk_choice_chip.dart';
 import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_segmented.dart';
 import '../../widgets/dk_sheet.dart';
+import 'date_picker_sheet.dart';
 import 'sheet_fields.dart';
 
 const List<int> _minOptions = <int>[15, 30, 45, 60, 90, 120];
@@ -125,6 +126,47 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
     recurrence: _recurrence(),
   );
 
+  /// 예정일 달력 시트를 열어 선택값을 _date 에 반영한다(이슈 #57).
+  Future<void> _pickDate() async {
+    final String? picked = await showDkDatePicker(context, initial: _date.text);
+    if (picked != null && mounted) {
+      setState(() => _date.text = picked);
+    }
+  }
+
+  /// 예정일 표시 필드. 탭하면 달력 피커를 연다(텍스트 직접 입력 대신).
+  Widget _dateField(DkTokens t) {
+    return GestureDetector(
+      key: const ValueKey<String>('task-date-field'),
+      behavior: HitTestBehavior.opaque,
+      onTap: _pickDate,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: t.bg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: t.border, width: 1.5),
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                fmtDate(_date.text),
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: t.fg,
+                ),
+              ),
+            ),
+            DkIcon('calendar', size: 18, color: t.fgMuted, strokeWidth: 2),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
@@ -188,10 +230,7 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
             onChanged: (String c) => setState(() => _cat = c),
           ),
         ),
-        DkField(
-          label: '예정일',
-          child: DkTextInput(controller: _date),
-        ),
+        DkField(label: '예정일', child: _dateField(t)),
         DkField(
           label: '반복',
           child: DkSegmented<_Repeat>(
