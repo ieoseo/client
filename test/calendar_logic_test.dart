@@ -1,14 +1,18 @@
+import 'package:ieoseo/data/format.dart';
 import 'package:ieoseo/data/mock_data.dart';
 import 'package:ieoseo/data/models.dart';
 import 'package:ieoseo/screens/plan/calendar_logic.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// mock 데이터가 kToday 상대(이슈 #52)라, 쿼리 날짜도 같은 오프셋으로 만든다.
+String _d(int offset) => ymd(addDays(kToday, offset));
 
 void main() {
   group('dayItems', () {
     test('해당 날짜의 태스크·이벤트·외부 일정을 모은다', () {
       // 2026-06-01: 태스크 6건(t1~t6).
       final List<DayItem> items = dayItems(
-        '2026-06-01',
+        _d(0),
         tasks: kTasks,
         events: kEvents,
         externals: kExternal,
@@ -19,7 +23,7 @@ void main() {
     test('T1 이벤트는 목표일에 노출된다', () {
       // e2 토익 2026-06-13.
       final List<DayItem> items = dayItems(
-        '2026-06-13',
+        _d(12),
         tasks: kTasks,
         events: kEvents,
         externals: kExternal,
@@ -35,7 +39,7 @@ void main() {
     test('T3 기간 이벤트는 시작·종료일에 시작/마감 라벨로', () {
       // e3 접수 start 2026-06-08 end 2026-06-12.
       final List<DayItem> start = dayItems(
-        '2026-06-08',
+        _d(7),
         tasks: kTasks,
         events: kEvents,
         externals: kExternal,
@@ -43,7 +47,7 @@ void main() {
       expect(start.any((DayItem i) => i.title.contains('시작')), true);
 
       final List<DayItem> end = dayItems(
-        '2026-06-12',
+        _d(11),
         tasks: kTasks,
         events: kEvents,
         externals: kExternal,
@@ -54,7 +58,7 @@ void main() {
     test('외부 일정은 출처와 시각을 가진다', () {
       // x1 Google 2026-06-02 10:00.
       final List<DayItem> items = dayItems(
-        '2026-06-02',
+        _d(1),
         tasks: kTasks,
         events: kEvents,
         externals: kExternal,
@@ -68,7 +72,7 @@ void main() {
 
     test('빈 날짜는 빈 목록', () {
       final List<DayItem> items = dayItems(
-        '2026-06-20',
+        _d(19),
         tasks: kTasks,
         events: kEvents,
         externals: kExternal,

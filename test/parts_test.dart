@@ -1,3 +1,4 @@
+import 'package:ieoseo/data/format.dart';
 import 'package:ieoseo/data/models.dart';
 import 'package:ieoseo/parts/app_header.dart';
 import 'package:ieoseo/parts/dday_hero.dart';
@@ -16,12 +17,13 @@ const DkTask _task = DkTask(
   category: '공부',
 );
 
-const DkEvent _event = DkEvent(
+/// kToday +28일(이슈 #52). 'D-28' 단언이 실제 오늘과 무관히 성립하도록 상대 날짜로 만든다.
+DkEvent get _event => DkEvent(
   id: 'e',
   type: DkEventType.single,
   title: '정보처리기사 실기',
   category: '자격증',
-  date: '2026-06-29',
+  date: ymd(addDays(kToday, 28)),
   pinned: true,
   color: 'blue',
 );
@@ -74,15 +76,16 @@ void main() {
 
   testWidgets('DdayHero는 제목과 D-라벨을 렌더하고 탭을 알린다', (WidgetTester tester) async {
     DkEvent? opened;
+    final DkEvent event = _event;
     await tester.pumpWidget(
-      wrapForTest(DdayHero(event: _event, onOpen: (DkEvent e) => opened = e)),
+      wrapForTest(DdayHero(event: event, onOpen: (DkEvent e) => opened = e)),
     );
 
     expect(find.text('정보처리기사 실기'), findsOneWidget);
     expect(find.text('D-28'), findsOneWidget);
 
     await tester.tap(find.byType(DdayHero));
-    expect(opened, _event);
+    expect(opened, event);
   });
 
   testWidgets('MetricBar는 완료율과 안내문을 계산한다', (WidgetTester tester) async {
