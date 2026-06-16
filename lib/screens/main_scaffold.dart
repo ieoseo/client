@@ -201,6 +201,9 @@ class _MainScaffoldState extends State<MainScaffold>
       _toast(success, icon: successIcon, tone: successTone);
     } on ApiException catch (e) {
       _toast(e.message, icon: 'x', tone: DkTone.danger);
+    } on Exception {
+      // 네트워크/파싱 등 ApiException 외 예외도 사용자에게 알린다(조용한 실패 방지).
+      _toast('문제가 생겼어요. 잠시 후 다시 시도해 주세요.', icon: 'x', tone: DkTone.danger);
     }
   }
 
@@ -244,6 +247,12 @@ class _MainScaffoldState extends State<MainScaffold>
       onSubmit: (DkTask draft) =>
           _run(() => _c.updateTask(draft), success: '태스크를 저장했어요'),
       onFocus: _startFocus,
+      onCarry: (DkTask t, String toDate) => _run(
+        () => _c.carryTask(t.id, toDate: toDate),
+        success: '${fmtDate(toDate)}로 옮겼어요',
+        successIcon: 'repeat',
+        successTone: DkTone.info,
+      ),
       onToast: _toastNamed,
     );
   }

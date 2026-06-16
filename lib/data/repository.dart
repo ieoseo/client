@@ -1,3 +1,4 @@
+import 'format.dart';
 import 'meta.dart';
 import 'mock_data.dart';
 import 'models.dart';
@@ -157,10 +158,11 @@ class MockRepository implements IeoseoRepository {
 
   @override
   Future<DkTask> createTask(DkTask draft) async {
-    final DkTask created = draft.copyWith(
-      id: _newId('t'),
-      state: DkTaskState.today,
-    );
+    // server 와 동일하게: 예정일이 오늘이거나 과거면 TODAY(당일 완료 가능), 미래면 PENDING.
+    final DkTaskState state = parseYmd(draft.date).isAfter(kToday)
+        ? DkTaskState.pending
+        : DkTaskState.today;
+    final DkTask created = draft.copyWith(id: _newId('t'), state: state);
     _tasks = <DkTask>[..._tasks, created];
     return created;
   }
@@ -186,10 +188,9 @@ class MockRepository implements IeoseoRepository {
 
   @override
   Future<DkTask> reopenTask(String id) async {
-    // 데모용: 상태만 today 로 되돌린다(actualMins 클리어는 server 권위 — 실연동에서 처리).
     final DkTask reopened = _tasks
         .firstWhere((DkTask t) => t.id == id)
-        .copyWith(state: DkTaskState.today);
+        .copyWith(state: DkTaskState.today, actualMins: null);
     return updateTask(reopened);
   }
 
@@ -231,10 +232,13 @@ class MockRepository implements IeoseoRepository {
 
   @override
   Future<DkDebt> autoCarryDebt(String id) async {
-    // 실제 우선순위 산출은 server 권위. 목은 데모용 고정 대상일(가장 여유 있는 날).
+    // 실제 우선순위 산출은 server 권위. 목은 데모용 대상일(오늘 기준 상대, 과거 고정 제거).
     final DkDebt updated = _debts
         .firstWhere((DkDebt d) => d.id == id)
-        .copyWith(status: DkDebtStatus.assigned, assignedTo: '2026-06-06');
+        .copyWith(
+          status: DkDebtStatus.assigned,
+          assignedTo: ymd(addDays(kToday, 6)),
+        );
     _debts = _debts.map((DkDebt d) => d.id == id ? updated : d).toList();
     return updated;
   }

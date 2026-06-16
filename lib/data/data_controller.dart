@@ -70,7 +70,7 @@ class DataController extends ChangeNotifier {
     try {
       final DkTask server = await _repo.toggleComplete(task);
       _replaceTask(server);
-    } on ApiException {
+    } on Exception {
       _tasks = snapshot;
       notifyListeners();
       rethrow;
@@ -99,7 +99,7 @@ class DataController extends ChangeNotifier {
     notifyListeners();
     try {
       await _repo.deleteTask(id);
-    } on ApiException {
+    } on Exception {
       _tasks = snapshot;
       notifyListeners();
       rethrow;
@@ -137,7 +137,7 @@ class DataController extends ChangeNotifier {
     notifyListeners();
     try {
       await _repo.deleteEvent(id);
-    } on ApiException {
+    } on Exception {
       _events = snapshot;
       notifyListeners();
       rethrow;
@@ -166,7 +166,7 @@ class DataController extends ChangeNotifier {
     notifyListeners();
     try {
       await _repo.abandonDebt(id);
-    } on ApiException {
+    } on Exception {
       _debts = snapshot;
       notifyListeners();
       rethrow;
