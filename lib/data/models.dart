@@ -1,5 +1,9 @@
 import 'package:flutter/foundation.dart';
 
+/// copyWith 센티넬 — "인자 미지정"과 "null 로 비우기"를 구분하기 위한 표식.
+/// (`field ?? this.field` 패턴은 nullable 필드를 null 로 설정하지 못한다.)
+const Object _unset = Object();
+
 /// D-Day 이벤트 타입. server 코드 `T1_DDAY | T2_PROGRESS | T3_PERIOD_DDAY`.
 /// - [single] (T1): 단일 D-Day.
 /// - [progress] (T2): 기간 진행률(%).
@@ -281,6 +285,9 @@ class DkTask {
   bool get isCarried =>
       state == DkTaskState.carried || state == DkTaskState.overdue;
 
+  /// nullable 필드(actualMins/eventId/fromDate/fromLabel)는 센티넬([_unset])로 받아
+  /// **null 로 비우기**도 가능하게 한다(`field ?? this.field` 패턴은 null 설정을 못 함).
+  /// 인자를 생략하면 기존 값 유지, `null` 을 명시하면 비운다.
   DkTask copyWith({
     String? id,
     String? title,
@@ -288,10 +295,10 @@ class DkTask {
     String? date,
     DkTaskState? state,
     String? category,
-    int? actualMins,
-    String? eventId,
-    String? fromDate,
-    String? fromLabel,
+    Object? actualMins = _unset,
+    Object? eventId = _unset,
+    Object? fromDate = _unset,
+    Object? fromLabel = _unset,
     DkRecurrence? recurrence,
   }) {
     return DkTask(
@@ -301,10 +308,16 @@ class DkTask {
       date: date ?? this.date,
       state: state ?? this.state,
       category: category ?? this.category,
-      actualMins: actualMins ?? this.actualMins,
-      eventId: eventId ?? this.eventId,
-      fromDate: fromDate ?? this.fromDate,
-      fromLabel: fromLabel ?? this.fromLabel,
+      actualMins: identical(actualMins, _unset)
+          ? this.actualMins
+          : actualMins as int?,
+      eventId: identical(eventId, _unset) ? this.eventId : eventId as String?,
+      fromDate: identical(fromDate, _unset)
+          ? this.fromDate
+          : fromDate as String?,
+      fromLabel: identical(fromLabel, _unset)
+          ? this.fromLabel
+          : fromLabel as String?,
       recurrence: recurrence ?? this.recurrence,
     );
   }
