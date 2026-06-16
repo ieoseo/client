@@ -9,14 +9,12 @@ import 'package:ieoseo/data/auth/supabase_auth_gateway.dart';
 /// - [accessToken] 초기값으로 세션 유무([hasSession])를 흉내낸다.
 /// - [signInWithOAuth]은 [oauthError] 가 있으면 던지고, 없으면 세션을 만든 뒤
 ///   [onSignedIn] 이벤트를 발행한다(딥링크 복귀 시뮬레이션).
-/// - [signUpWithEmail]/[signInWithEmail]은 [emailError] 가 있으면 던지고, 없으면 세션 생성.
 /// - [refreshAccessToken]은 [refreshResult] 를 반환한다(null=실패).
 /// - [signOut]은 세션을 비우고 [signedOut] 을 기록한다.
 class FakeSupabaseGateway implements SupabaseAuthGateway {
   FakeSupabaseGateway({
     String? accessToken,
     this.oauthError,
-    this.emailError,
     this.refreshResult,
     this.grantedAccessToken = 'supabase-access',
     this.linkError,
@@ -48,17 +46,11 @@ class FakeSupabaseGateway implements SupabaseAuthGateway {
   /// 지정하면 [signInWithOAuth] 가 이 예외를 던진다.
   final Object? oauthError;
 
-  /// 지정하면 [signUpWithEmail]/[signInWithEmail] 이 이 예외를 던진다.
-  final Object? emailError;
-
   /// [refreshAccessToken] 결과(null=실패).
   final String? refreshResult;
 
   /// 로그인 성공 후 세션 access 토큰 값.
   final String grantedAccessToken;
-
-  /// 이메일 가입/로그인 호출 이력(검증용).
-  final List<String> emailCalls = <String>[];
 
   /// OAuth 시작에 전달된 provider 이력(검증용).
   final List<SocialProvider> oauthCalls = <SocialProvider>[];
@@ -86,28 +78,6 @@ class FakeSupabaseGateway implements SupabaseAuthGateway {
     // 딥링크 복귀로 세션이 생긴 상황을 시뮬레이션.
     _accessToken = grantedAccessToken;
     _signedInController.add(null);
-  }
-
-  @override
-  Future<void> signUpWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    emailCalls.add('signup:$email');
-    final Object? err = emailError;
-    if (err != null) throw err;
-    _accessToken = grantedAccessToken;
-  }
-
-  @override
-  Future<void> signInWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    emailCalls.add('login:$email');
-    final Object? err = emailError;
-    if (err != null) throw err;
-    _accessToken = grantedAccessToken;
   }
 
   @override

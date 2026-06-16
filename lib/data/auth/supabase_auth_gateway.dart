@@ -28,18 +28,6 @@ abstract class SupabaseAuthGateway {
   /// 세션 완성은 비동기다 — 완료는 [onSignedIn] 으로 통지된다(ADR-0014).
   Future<void> signInWithOAuth(SocialProvider provider);
 
-  /// 이메일+비밀번호 회원가입(`signUp`). Confirm email OFF 면 즉시 세션이 생긴다.
-  Future<void> signUpWithEmail({
-    required String email,
-    required String password,
-  });
-
-  /// 이메일+비밀번호 로그인(`signInWithPassword`).
-  Future<void> signInWithEmail({
-    required String email,
-    required String password,
-  });
-
   /// 세션 토큰 재발급(401 재시도용). 성공 시 새 access, 실패 시 null.
   Future<String?> refreshAccessToken();
 
@@ -128,22 +116,6 @@ class SupabaseAuthGatewayImpl implements SupabaseAuthGateway {
       scopes: scopes,
       authScreenLaunchMode: _authLaunchMode,
     );
-  }
-
-  @override
-  Future<void> signUpWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    await _auth.signUp(email: email, password: password);
-  }
-
-  @override
-  Future<void> signInWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    await _auth.signInWithPassword(email: email, password: password);
   }
 
   @override
