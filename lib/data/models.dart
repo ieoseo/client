@@ -1,5 +1,9 @@
 import 'package:flutter/foundation.dart';
 
+/// copyWith 센티넬 — "인자 미지정"과 "null 로 비우기"를 구분하기 위한 표식.
+/// (`field ?? this.field` 패턴은 nullable 필드를 null 로 설정하지 못한다.)
+const Object _unset = Object();
+
 /// D-Day 이벤트 타입. server 코드 `T1_DDAY | T2_PROGRESS | T3_PERIOD_DDAY`.
 /// - [single] (T1): 단일 D-Day.
 /// - [progress] (T2): 기간 진행률(%).
@@ -205,14 +209,16 @@ class DkEvent {
   final String color;
   final List<int> remindDays;
 
+  /// nullable 날짜 필드(date/start/end)는 센티넬([_unset])로 받아 **null 로 비우기**도
+  /// 가능하게 한다(`field ?? this.field` 패턴은 null 설정을 못 함). 예: T1↔T2 전환 시 date 비우기.
   DkEvent copyWith({
     String? id,
     DkEventType? type,
     String? title,
     String? category,
-    String? date,
-    String? start,
-    String? end,
+    Object? date = _unset,
+    Object? start = _unset,
+    Object? end = _unset,
     bool? pinned,
     String? memo,
     String? color,
@@ -223,9 +229,9 @@ class DkEvent {
       type: type ?? this.type,
       title: title ?? this.title,
       category: category ?? this.category,
-      date: date ?? this.date,
-      start: start ?? this.start,
-      end: end ?? this.end,
+      date: identical(date, _unset) ? this.date : date as String?,
+      start: identical(start, _unset) ? this.start : start as String?,
+      end: identical(end, _unset) ? this.end : end as String?,
       pinned: pinned ?? this.pinned,
       memo: memo ?? this.memo,
       color: color ?? this.color,
@@ -281,6 +287,9 @@ class DkTask {
   bool get isCarried =>
       state == DkTaskState.carried || state == DkTaskState.overdue;
 
+  /// nullable 필드(actualMins/eventId/fromDate/fromLabel)는 센티넬([_unset])로 받아
+  /// **null 로 비우기**도 가능하게 한다(`field ?? this.field` 패턴은 null 설정을 못 함).
+  /// 인자를 생략하면 기존 값 유지, `null` 을 명시하면 비운다.
   DkTask copyWith({
     String? id,
     String? title,
@@ -288,10 +297,10 @@ class DkTask {
     String? date,
     DkTaskState? state,
     String? category,
-    int? actualMins,
-    String? eventId,
-    String? fromDate,
-    String? fromLabel,
+    Object? actualMins = _unset,
+    Object? eventId = _unset,
+    Object? fromDate = _unset,
+    Object? fromLabel = _unset,
     DkRecurrence? recurrence,
   }) {
     return DkTask(
@@ -301,10 +310,16 @@ class DkTask {
       date: date ?? this.date,
       state: state ?? this.state,
       category: category ?? this.category,
-      actualMins: actualMins ?? this.actualMins,
-      eventId: eventId ?? this.eventId,
-      fromDate: fromDate ?? this.fromDate,
-      fromLabel: fromLabel ?? this.fromLabel,
+      actualMins: identical(actualMins, _unset)
+          ? this.actualMins
+          : actualMins as int?,
+      eventId: identical(eventId, _unset) ? this.eventId : eventId as String?,
+      fromDate: identical(fromDate, _unset)
+          ? this.fromDate
+          : fromDate as String?,
+      fromLabel: identical(fromLabel, _unset)
+          ? this.fromLabel
+          : fromLabel as String?,
       recurrence: recurrence ?? this.recurrence,
     );
   }
@@ -333,14 +348,16 @@ class DkDebt {
   final String? assignedTo;
   final String? fromLabel;
 
+  /// nullable 필드(assignedTo/fromLabel)는 센티넬([_unset])로 받아 **null 로 비우기**도
+  /// 가능하게 한다(`field ?? this.field` 패턴은 null 설정을 못 함). 예: 배정 해제 시 assignedTo 비우기.
   DkDebt copyWith({
     String? id,
     String? title,
     int? mins,
     String? fromDate,
     DkDebtStatus? status,
-    String? assignedTo,
-    String? fromLabel,
+    Object? assignedTo = _unset,
+    Object? fromLabel = _unset,
   }) {
     return DkDebt(
       id: id ?? this.id,
@@ -348,8 +365,12 @@ class DkDebt {
       mins: mins ?? this.mins,
       fromDate: fromDate ?? this.fromDate,
       status: status ?? this.status,
-      assignedTo: assignedTo ?? this.assignedTo,
-      fromLabel: fromLabel ?? this.fromLabel,
+      assignedTo: identical(assignedTo, _unset)
+          ? this.assignedTo
+          : assignedTo as String?,
+      fromLabel: identical(fromLabel, _unset)
+          ? this.fromLabel
+          : fromLabel as String?,
     );
   }
 }

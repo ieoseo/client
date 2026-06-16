@@ -23,6 +23,7 @@ class TaskSheetBody extends StatefulWidget {
     this.onToggle,
     this.onDelete,
     this.onFocus,
+    this.onCarry,
     this.onSubmit,
     required this.onToast,
   });
@@ -33,6 +34,9 @@ class TaskSheetBody extends StatefulWidget {
   final ValueChanged<DkTask>? onToggle;
   final ValueChanged<DkTask>? onDelete;
   final ValueChanged<DkTask>? onFocus;
+
+  /// 날짜 옮기기(수동 이월). 선택한 날짜로 server 이월(carry)을 호출한다.
+  final Future<void> Function(DkTask task, String toDate)? onCarry;
 
   /// 추가/저장 제출. 폼 값으로 만든 초안(신규는 id 빈 문자열)을 전달한다.
   final ValueChanged<DkTask>? onSubmit;
@@ -71,7 +75,7 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
 
   /// 주간 반복 선택 요일(`DateTime.weekday` 월=1 … 일=7). 기존 규칙이 있으면 복원,
   /// 없으면 예정일의 요일 하나를 기본 선택(임의 월·수·금 프리셋 제거).
-  late final Set<int> _weeklyDays =
+  late Set<int> _weeklyDays =
       (widget.task?.recurrence.weeklyDays.isNotEmpty ?? false)
       ? <int>{...widget.task!.recurrence.weeklyDays}
       : <int>{_weekdayOfYmd(widget.task?.date ?? ymd(kToday))};
@@ -125,6 +129,15 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
     eventId: widget.task?.eventId,
     recurrence: _recurrence(),
   );
+
+  /// 날짜 옮기기(수동 이월): 달력으로 대상일을 고르고 server 이월(carry)을 호출한다.
+  /// (이전엔 성공 토스트만 띄우고 실제 API 를 호출하지 않던 가짜 동작을 고침.)
+  Future<void> _carry(DkTask task) async {
+    final String? picked = await showDkDatePicker(context, initial: task.date);
+    if (picked == null || !mounted) return;
+    await widget.onCarry?.call(task, picked);
+    widget.onClose();
+  }
 
   /// 예정일 달력 시트를 열어 선택값을 _date 에 반영한다(이슈 #57).
   Future<void> _pickDate() async {
@@ -280,10 +293,7 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
                   size: DkButtonSize.lg,
                   variant: DkButtonVariant.outline,
                   full: true,
-                  onPressed: () {
-                    widget.onToast('가장 여유 있는 날로 옮겼어요', 'repeat', 'info');
-                    widget.onClose();
-                  },
+                  onPressed: () => _carry(task),
                   leading: DkIcon(
                     'repeat',
                     size: 18,
@@ -326,7 +336,10 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
             fontSize: 13,
             expand: true,
             onTap: () => setState(() {
-              if (!_weeklyDays.add(num)) _weeklyDays.remove(num);
+              // 불변 패턴: 기존 Set 을 변형하지 않고 새 Set 으로 교체한다.
+              _weeklyDays = _weeklyDays.contains(num)
+                  ? (_weeklyDays.toSet()..remove(num))
+                  : (_weeklyDays.toSet()..add(num));
             }),
           ),
         ),
@@ -389,6 +402,7 @@ Future<void> showTaskSheet(
   ValueChanged<DkTask>? onToggle,
   ValueChanged<DkTask>? onDelete,
   ValueChanged<DkTask>? onFocus,
+  Future<void> Function(DkTask task, String toDate)? onCarry,
   ValueChanged<DkTask>? onSubmit,
   required void Function(String message, String icon, String tone) onToast,
 }) {
@@ -404,6 +418,7 @@ Future<void> showTaskSheet(
         onToggle: onToggle,
         onDelete: onDelete,
         onFocus: onFocus,
+        onCarry: onCarry,
         onSubmit: onSubmit,
         onToast: onToast,
       ),

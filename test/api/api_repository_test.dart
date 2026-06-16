@@ -131,6 +131,19 @@ void main() {
       expect(done.state, DkTaskState.done);
     });
 
+    test('reopenTask: reopen 응답의 TODAY 상태를 파싱한다(완료 취소)', () async {
+      final h = harness();
+      h.adapter.onPost(
+        '/tasks/t-1/reopen',
+        (s) => s.reply(200, ok(taskJson('t-1', state: 'TODAY'))),
+        data: Matchers.any,
+      );
+
+      final DkTask reopened = await h.repo.reopenTask('t-1');
+
+      expect(reopened.state, DkTaskState.today);
+    });
+
     test('carryTask: carry 응답의 CARRIED 상태를 파싱한다', () async {
       final h = harness();
       h.adapter.onPost(

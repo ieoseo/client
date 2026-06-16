@@ -113,6 +113,8 @@ class _FocusScreenState extends State<FocusScreen> {
 
   Future<void> _load() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // await 사이 dispose 됐으면 컨트롤러를 건드리지 않는다(notifyListeners assertion 방지).
+    if (!mounted) return;
     final String? raw = prefs.getString(_prefsKey);
     if (raw == null) return;
     try {

@@ -1,3 +1,4 @@
+import 'format.dart';
 import 'meta.dart';
 import 'mock_data.dart';
 import 'models.dart';
@@ -41,8 +42,11 @@ abstract class IeoseoRepository {
   /// 완료 처리(server: POST /tasks/{id}/complete). [actualMinutes] 실제 소요(분).
   Future<DkTask> completeTask(String id, {int? actualMinutes});
 
-  /// 완료 토글. 완료 상태면 수정(PUT)으로 되돌리고, 아니면 complete 한다.
-  /// (server 에 별도 un-complete 액션이 없어 PUT 으로 today 복귀를 표현.)
+  /// 완료 취소(reopen, server: POST /tasks/{id}/reopen). DONE → TODAY 로 되돌리고
+  /// 실제 소요 기록을 비운다(체크 토글 UX).
+  Future<DkTask> reopenTask(String id);
+
+  /// 완료 토글. 완료 상태면 [reopenTask] 로 되돌리고, 아니면 [completeTask] 한다.
   Future<DkTask> toggleComplete(DkTask task);
 
   /// 수동 이월(server: POST /tasks/{id}/carry). [toDate] ymd.
@@ -154,10 +158,11 @@ class MockRepository implements IeoseoRepository {
 
   @override
   Future<DkTask> createTask(DkTask draft) async {
-    final DkTask created = draft.copyWith(
-      id: _newId('t'),
-      state: DkTaskState.today,
-    );
+    // server 와 동일하게: 예정일이 오늘이거나 과거면 TODAY(당일 완료 가능), 미래면 PENDING.
+    final DkTaskState state = parseYmd(draft.date).isAfter(kToday)
+        ? DkTaskState.pending
+        : DkTaskState.today;
+    final DkTask created = draft.copyWith(id: _newId('t'), state: state);
     _tasks = <DkTask>[..._tasks, created];
     return created;
   }
@@ -182,9 +187,17 @@ class MockRepository implements IeoseoRepository {
   }
 
   @override
+  Future<DkTask> reopenTask(String id) async {
+    final DkTask reopened = _tasks
+        .firstWhere((DkTask t) => t.id == id)
+        .copyWith(state: DkTaskState.today, actualMins: null);
+    return updateTask(reopened);
+  }
+
+  @override
   Future<DkTask> toggleComplete(DkTask task) {
     if (task.state == DkTaskState.done) {
-      return updateTask(task.copyWith(state: DkTaskState.today));
+      return reopenTask(task.id);
     }
     return completeTask(task.id, actualMinutes: task.actualMins);
   }
@@ -219,10 +232,13 @@ class MockRepository implements IeoseoRepository {
 
   @override
   Future<DkDebt> autoCarryDebt(String id) async {
-    // 실제 우선순위 산출은 server 권위. 목은 데모용 고정 대상일(가장 여유 있는 날).
+    // 실제 우선순위 산출은 server 권위. 목은 데모용 대상일(오늘 기준 상대, 과거 고정 제거).
     final DkDebt updated = _debts
         .firstWhere((DkDebt d) => d.id == id)
-        .copyWith(status: DkDebtStatus.assigned, assignedTo: '2026-06-06');
+        .copyWith(
+          status: DkDebtStatus.assigned,
+          assignedTo: ymd(addDays(kToday, 6)),
+        );
     _debts = _debts.map((DkDebt d) => d.id == id ? updated : d).toList();
     return updated;
   }

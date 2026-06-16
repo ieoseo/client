@@ -3,20 +3,21 @@
 # - Play 업로드는 PLAY_SERVICE_ACCOUNT_JSON secret 이 있을 때만(없으면 안전 skip).
 # - ARM mac 은 Android AOT 릴리스 빌드 불가 → x64(ubuntu) 에서 빌드한다.
 #
-# 트리거: Release Please 가 만드는 vX.Y.Z 태그 push, 또는 수동 실행.
+# 트리거: 수동 실행 전용(workflow_dispatch).
+# Release Please 의 client 태그는 `ieoseo-client-vX.Y.Z` 형태라 옛 `v*` push 트리거는
+# 절대 매칭되지 않아(죽은 트리거였음) 제거했다. 배포는 릴리스 PR 머지 후 사람이
+# 이 워크플로를 수동 실행해 Play 에 올린다(배포 통제 단순화).
 #
 # 필요한 repo secrets(Settings → Secrets and variables → Actions):
 #   ANDROID_KEYSTORE_BASE64   = base64 < ieoseo-upload.jks
 #   ANDROID_KEYSTORE_PASSWORD = 키스토어 비밀번호(=키 비밀번호)
 #   ANDROID_KEY_ALIAS         = upload
 #   PLAY_SERVICE_ACCOUNT_JSON = Google Play Console 서비스 계정 JSON(전체 내용)
+#   SUPABASE_URL / SUPABASE_ANON_KEY / API_BASE_URL = 운영 dart-define 주입값(필수)
 name: release-client
 
 on:
-  push:
-    tags:
-      - "v*"
-  workflow_dispatch: {} # 수동 실행 버튼
+  workflow_dispatch: {} # 수동 실행 전용
 
 jobs:
   build-and-upload:
@@ -27,6 +28,23 @@ jobs:
       HAS_PLAY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
     steps:
       - uses: actions/checkout@v4
+
+      # 운영 dart-define 값이 비어 있으면 잘못된 서버를 가리키는 AAB 가 만들어져
+      # Play 에 그대로 올라갈 수 있다. 빌드 전에 빠르게 실패시켜 오배포를 막는다.
+      - name: Verify required production secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          missing=""
+          [ -z "$SUPABASE_URL" ] && missing="$missing SUPABASE_URL"
+          [ -z "$SUPABASE_ANON_KEY" ] && missing="$missing SUPABASE_ANON_KEY"
+          [ -z "$API_BASE_URL" ] && missing="$missing API_BASE_URL"
+          if [ -n "$missing" ]; then
+            echo "::error::필수 운영 secret 누락 →$missing (repo Settings → Secrets 에 등록 후 재실행)"
+            exit 1
+          fi
 
       - uses: subosito/flutter-action@v2
         with:

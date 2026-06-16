@@ -102,10 +102,16 @@ class ApiRepository implements IeoseoRepository {
   }
 
   @override
+  Future<DkTask> reopenTask(String id) async {
+    final dynamic data = await _client.post('/tasks/$id/reopen');
+    return DkTaskDto.fromJson(_asMap(data));
+  }
+
+  @override
   Future<DkTask> toggleComplete(DkTask task) {
-    // server 에 un-complete 액션이 없어 완료 취소는 PUT 으로 today 복귀를 표현.
+    // 완료 취소는 전용 reopen 엔드포인트로 DONE → TODAY 전이(PUT 은 state 를 안 바꿔 무효).
     if (task.state == DkTaskState.done) {
-      return updateTask(task.copyWith(state: DkTaskState.today));
+      return reopenTask(task.id);
     }
     return completeTask(task.id, actualMinutes: task.actualMins);
   }
