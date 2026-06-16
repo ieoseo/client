@@ -4,7 +4,6 @@ import '../../data/format.dart';
 import '../../data/meta.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
-import '../../widgets/dk_badge.dart';
 import '../../widgets/dk_brand_mark.dart';
 import '../../widgets/dk_card.dart';
 import '../../widgets/dk_empty.dart';
@@ -54,7 +53,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final DkTokens t = DkTheme.of(context);
     final DateTime d = parseYmd(_sel);
 
     return Column(
@@ -111,38 +109,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
             onOpen: _openItem,
           ),
         ),
-        const SizedBox(height: 18),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(22, 0, 22, 120),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: <Widget>[
-              for (final DkSource s in kSourceOrder) _legend(t, s),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _legend(DkTokens t, DkSource s) {
-    final DkSourceMeta m = sourceMeta(s);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        // 색점 대신 정식 브랜드 로고(이어서/Google/Apple/Notion).
-        DkBrandMark(brand: _brandKey(s), size: 16),
-        const SizedBox(width: 6),
-        Text(
-          m.label,
-          style: TextStyle(
-            fontFamily: 'Pretendard',
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: t.fgSubtle,
-          ),
-        ),
+        // FAB 가림 방지용 하단 여백(하단 출처 로고 범례는 제거 — 출처 구분은
+        // 아래 일정 행의 브랜드 아이콘으로만 한다).
+        const SizedBox(height: 120),
       ],
     );
   }
@@ -423,18 +392,9 @@ class _DayList extends StatelessWidget {
                       ),
                       if (it.source != DkSource.app) ...<Widget>[
                         const SizedBox(width: 8),
-                        DkBadge(
-                          '${sourceMeta(it.source).label} · 읽기전용',
-                          tone: DkTone.neutral,
-                          leading: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
+                        // 외부 연동 캘린더(Google/Apple/Notion)만 브랜드 아이콘으로 출처 표시.
+                        // (이어서 출처는 표시 안 함, '읽기전용' 텍스트·색점 제거.)
+                        DkBrandMark(brand: _brandKey(it.source), size: 16),
                       ],
                     ],
                   ),

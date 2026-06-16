@@ -65,12 +65,9 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
 
-      - name: Upload AAB artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-aab
-          path: build/app/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
+      # AAB 를 워크플로 artifact 로 올리지 않는다 — public 저장소에선 누구나 내려받을 수 있어
+      # 불필요한 노출이 된다. Play 업로드는 빌드 산출물 파일을 같은 잡에서 직접 사용하므로
+      # artifact 가 필요 없다(디버깅이 필요하면 짧은 retention 으로 일시 추가).
 
       # Play 내부테스트 업로드 — 서비스 계정 secret 있을 때만.
       - name: Upload to Google Play (internal)
