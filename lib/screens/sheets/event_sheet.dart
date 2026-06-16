@@ -12,6 +12,7 @@ import '../../widgets/dk_segmented.dart';
 import '../../widgets/dk_sheet.dart';
 import '../me/settings_section.dart';
 import 'date_picker_sheet.dart';
+import 'date_range_picker_sheet.dart';
 import 'sheet_fields.dart';
 
 /// 이벤트 추가/상세 시트 본문. 프로토타입 `EventSheet`.
@@ -130,6 +131,54 @@ class _EventSheetBodyState extends State<EventSheetBody> {
     );
   }
 
+  /// 기간(시작~종료)을 단일 달력 범위 선택 시트로 고른다.
+  Future<void> _pickRange() async {
+    final ({String start, String end})? picked = await showDkDateRangePicker(
+      context,
+      initialStart: _start.text,
+      initialEnd: _end.text,
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _start.text = picked.start;
+        _end.text = picked.end;
+      });
+    }
+  }
+
+  /// 탭하면 범위 달력을 여는 "시작 ~ 종료" 표시 필드.
+  Widget _rangeField(DkTokens t) {
+    return GestureDetector(
+      key: const ValueKey<String>('event-range-field'),
+      behavior: HitTestBehavior.opaque,
+      onTap: _pickRange,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: t.bg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: t.border, width: 1.5),
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                '${fmtDate(_start.text)}  ~  ${fmtDate(_end.text)}',
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: t.fg,
+                ),
+              ),
+            ),
+            DkIcon('calendar', size: 18, color: t.fgMuted, strokeWidth: 2),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
@@ -168,25 +217,7 @@ class _EventSheetBodyState extends State<EventSheetBody> {
           label: _type == DkEventType.single ? '목표일' : '기간 (시작 ~ 종료)',
           child: _type == DkEventType.single
               ? _dateField(t, _date, const ValueKey<String>('event-date-field'))
-              : Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: _dateField(
-                        t,
-                        _start,
-                        const ValueKey<String>('event-start-field'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _dateField(
-                        t,
-                        _end,
-                        const ValueKey<String>('event-end-field'),
-                      ),
-                    ),
-                  ],
-                ),
+              : _rangeField(t),
         ),
         DkField(
           label: '메모',
