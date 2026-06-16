@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/tokens.dart';
+import '../../widgets/dk_icon.dart';
 
 /// 폼 필드(라벨 + 콘텐츠 + 힌트). 프로토타입 `Field`.
 class DkField extends StatelessWidget {
@@ -174,10 +175,11 @@ class DkCategoryPills extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(color: h.color, shape: BoxShape.circle),
+            DkIcon(
+              kCategoryIcon[cat] ?? 'more',
+              size: 15,
+              color: on ? h.color : t.fgMuted,
+              strokeWidth: 2,
             ),
             const SizedBox(width: 5),
             Text(
