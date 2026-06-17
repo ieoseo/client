@@ -165,6 +165,37 @@ void main() {
       expect(body.containsKey('state'), isFalse);
       expect(body.containsKey('id'), isFalse);
     });
+
+    test('범위 태스크 startDate 를 파싱하고 생성 본문에 담는다(#50)', () {
+      final DkTask task = DkTaskDto.fromJson(<String, dynamic>{
+        'id': 't-r',
+        'title': '여행 준비',
+        'estimatedMinutes': 120,
+        'date': '2026-06-07',
+        'startDate': '2026-06-04',
+        'state': 'TODAY',
+        'category': '개인',
+      });
+
+      expect(task.startDate, '2026-06-04');
+      expect(task.date, '2026-06-07');
+      expect(task.isRange, isTrue);
+      expect(DkTaskDto.toCreateJson(task)['startDate'], '2026-06-04');
+    });
+
+    test('단일 태스크는 startDate 가 null 이고 생성 본문에서 생략된다(#50)', () {
+      final DkTask task = DkTaskDto.fromJson(<String, dynamic>{
+        'id': 't-s',
+        'title': '단어 30개',
+        'estimatedMinutes': 30,
+        'date': '2026-06-04',
+        'state': 'TODAY',
+      });
+
+      expect(task.startDate, isNull);
+      expect(task.isRange, isFalse);
+      expect(DkTaskDto.toCreateJson(task).containsKey('startDate'), isFalse);
+    });
   });
 
   group('DkDebtDto', () {

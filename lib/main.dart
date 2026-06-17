@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,6 +19,7 @@ import 'screens/main_scaffold.dart';
 import 'screens/onboarding.dart';
 import 'screens/splash.dart';
 import 'theme/tokens.dart';
+import 'theme/tweak_store.dart';
 import 'theme/tweaks.dart';
 
 /// 앱 진입점. Sentry DSN(`--dart-define=SENTRY_DSN`)이 설정돼 있으면 Sentry 로 감싸
@@ -104,6 +107,7 @@ class IeoseoApp extends StatefulWidget {
 
 class _IeoseoAppState extends State<IeoseoApp> {
   TweakSettings _tweaks = const TweakSettings();
+  final TweakStore _tweakStore = const TweakStore();
   AppPhase _phase = AppPhase.splash;
 
   late final AuthController _auth;
@@ -129,6 +133,14 @@ class _IeoseoAppState extends State<IeoseoApp> {
     _auth.addListener(_onAuthChanged);
     // 저장 토큰 복원 시도(결과는 status로 반영, _onAuthChanged가 수신).
     _auth.tryRestore();
+    // 저장된 화면 설정(다크모드 등)을 복원한다 — 앱 재시작에도 유지.
+    unawaited(_loadTweaks());
+  }
+
+  /// 로컬에 저장된 [TweakSettings](다크모드 포함)를 읽어 반영한다.
+  Future<void> _loadTweaks() async {
+    final TweakSettings loaded = await _tweakStore.load();
+    if (mounted) setState(() => _tweaks = loaded);
   }
 
   @override
@@ -139,7 +151,11 @@ class _IeoseoAppState extends State<IeoseoApp> {
 
   void _onAuthChanged() => setState(() {});
 
-  void _setTweaks(TweakSettings next) => setState(() => _tweaks = next);
+  void _setTweaks(TweakSettings next) {
+    setState(() => _tweaks = next);
+    // 변경 즉시 로컬에 저장 — 다음 실행에 복원된다(다크모드 초기화 버그 해소).
+    unawaited(_tweakStore.save(next));
+  }
 
   @override
   Widget build(BuildContext context) {
