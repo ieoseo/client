@@ -9,6 +9,7 @@ import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_segmented.dart';
 import '../../widgets/dk_sheet.dart';
 import 'date_picker_sheet.dart';
+import 'date_range_picker_sheet.dart';
 import 'sheet_fields.dart';
 
 const List<int> _minOptions = <int>[15, 30, 45, 60, 90, 120];
@@ -87,6 +88,12 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
     text: widget.task?.date ?? ymd(kToday),
   );
 
+  /// 범위 시작일(`YYYY-MM-DD`). null 이면 단일. 종료/마감일은 [_date](#50).
+  late String? _startDate = widget.task?.startDate;
+
+  /// 기간(범위) 모드 여부. 켜면 시작~종료, 끄면 하루.
+  late bool _rangeMode = widget.task?.isRange ?? false;
+
   @override
   void dispose() {
     _title.dispose();
@@ -126,6 +133,8 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
     date: _date.text.trim(),
     state: widget.task?.state ?? DkTaskState.pending,
     category: _cat,
+    // 기간 모드면 시작일을 함께, 단일이면 null(범위 해제).
+    startDate: _rangeMode ? (_startDate ?? _date.text.trim()) : null,
     eventId: widget.task?.eventId,
     recurrence: _recurrence(),
   );
@@ -147,36 +156,84 @@ class _TaskSheetBodyState extends State<TaskSheetBody> {
     }
   }
 
-  /// 예정일 표시 필드. 탭하면 달력 피커를 연다(텍스트 직접 입력 대신).
+  /// 기간(범위) 달력 시트를 열어 시작~종료를 고른다(#50). 종료는 _date(마감 앵커)에 반영.
+  Future<void> _pickRange() async {
+    final ({String start, String end})? picked = await showDkDateRangePicker(
+      context,
+      initialStart: _startDate ?? _date.text,
+      initialEnd: _date.text,
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _startDate = picked.start;
+        _date.text = picked.end;
+      });
+    }
+  }
+
+  /// 하루↔기간 모드 전환. 기간으로 켜면 시작일을 현재 날짜로 기본 채우고 범위 피커를 연다.
+  /// 하루로 끄면 시작일을 비워 단일 태스크로 되돌린다.
+  Future<void> _setRangeMode(bool on) async {
+    if (on == _rangeMode) return;
+    setState(() {
+      _rangeMode = on;
+      _startDate = on ? (_startDate ?? _date.text) : null;
+    });
+    if (on) await _pickRange();
+  }
+
+  /// 마감일 표시 텍스트. 단일은 그날, 기간은 `시작 ~ 종료`(#50).
+  String get _dateLabel => _rangeMode
+      ? '${fmtDate(_startDate ?? _date.text)} ~ ${fmtDate(_date.text)}'
+      : fmtDate(_date.text);
+
+  /// 예정일 필드. 위에 하루/기간 토글, 아래 탭하면 달력(단일/범위) 피커를 연다.
   Widget _dateField(DkTokens t) {
-    return GestureDetector(
-      key: const ValueKey<String>('task-date-field'),
-      behavior: HitTestBehavior.opaque,
-      onTap: _pickDate,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        decoration: BoxDecoration(
-          color: t.bg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: t.border, width: 1.5),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: DkSegmented<bool>(
+            full: true,
+            value: _rangeMode,
+            onChanged: _setRangeMode,
+            options: const <DkSegment<bool>>[
+              DkSegment<bool>(false, '하루'),
+              DkSegment<bool>(true, '기간'),
+            ],
+          ),
         ),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: Text(
-                fmtDate(_date.text),
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: t.fg,
-                ),
-              ),
+        GestureDetector(
+          key: const ValueKey<String>('task-date-field'),
+          behavior: HitTestBehavior.opaque,
+          onTap: _rangeMode ? _pickRange : _pickDate,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            decoration: BoxDecoration(
+              color: t.bg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: t.border, width: 1.5),
             ),
-            DkIcon('calendar', size: 18, color: t.fgMuted, strokeWidth: 2),
-          ],
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    _dateLabel,
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: t.fg,
+                    ),
+                  ),
+                ),
+                DkIcon('calendar', size: 18, color: t.fgMuted, strokeWidth: 2),
+              ],
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 

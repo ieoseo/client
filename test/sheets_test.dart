@@ -29,6 +29,39 @@ void main() {
     expect(find.text('추가하기'), findsOneWidget);
   });
 
+  testWidgets('태스크 시트는 하루/기간 날짜 토글을 보인다(#50)', (WidgetTester tester) async {
+    await _pumpTall(
+      tester,
+      TaskSheetBody(isNew: true, onClose: () {}, onToast: (_, _, _) {}),
+    );
+
+    expect(find.text('하루'), findsOneWidget);
+    expect(find.text('기간'), findsOneWidget);
+  });
+
+  testWidgets('범위 태스크 편집 시 시작~종료를 보인다(#50)', (WidgetTester tester) async {
+    await _pumpTall(
+      tester,
+      TaskSheetBody(
+        task: const DkTask(
+          id: 't-r',
+          title: '여행 준비',
+          mins: 120,
+          date: '2026-06-07',
+          startDate: '2026-06-04',
+          state: DkTaskState.today,
+          category: '개인',
+        ),
+        isNew: false,
+        onClose: () {},
+        onToast: (_, _, _) {},
+      ),
+    );
+
+    // 범위 모드라 날짜 필드에 "시작 ~ 종료" 구분자가 보인다.
+    expect(find.textContaining(' ~ '), findsOneWidget);
+  });
+
   testWidgets('태스크 상세는 완료 처리를 호출한다', (WidgetTester tester) async {
     DkTask? toggled;
     await _pumpTall(

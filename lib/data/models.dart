@@ -250,6 +250,7 @@ class DkTask {
     required this.date,
     required this.state,
     required this.category,
+    this.startDate,
     this.actualMins,
     this.eventId,
     this.fromDate,
@@ -263,10 +264,13 @@ class DkTask {
   /// 예상 소요 시간(분).
   final int mins;
 
-  /// 예정일 `YYYY-MM-DD`.
+  /// 마감/종료일 `YYYY-MM-DD`. 항상 존재하는 앵커(단일=그날, 범위=종료). server 권위(ADR-0026).
   final String date;
   final DkTaskState state;
   final String category;
+
+  /// 범위 태스크 시작일 `YYYY-MM-DD`(#50). null 이면 단일 날짜. 있으면 `startDate ~ date`.
+  final String? startDate;
 
   /// 실제 소요 시간(분).
   final int? actualMins;
@@ -287,9 +291,12 @@ class DkTask {
   bool get isCarried =>
       state == DkTaskState.carried || state == DkTaskState.overdue;
 
-  /// nullable 필드(actualMins/eventId/fromDate/fromLabel)는 센티넬([_unset])로 받아
+  /// 범위 태스크 여부(시작일이 있으면 범위, #50).
+  bool get isRange => startDate != null;
+
+  /// nullable 필드(startDate/actualMins/eventId/fromDate/fromLabel)는 센티넬([_unset])로 받아
   /// **null 로 비우기**도 가능하게 한다(`field ?? this.field` 패턴은 null 설정을 못 함).
-  /// 인자를 생략하면 기존 값 유지, `null` 을 명시하면 비운다.
+  /// 인자를 생략하면 기존 값 유지, `null` 을 명시하면 비운다(범위→단일 전환 시 startDate=null).
   DkTask copyWith({
     String? id,
     String? title,
@@ -297,6 +304,7 @@ class DkTask {
     String? date,
     DkTaskState? state,
     String? category,
+    Object? startDate = _unset,
     Object? actualMins = _unset,
     Object? eventId = _unset,
     Object? fromDate = _unset,
@@ -310,6 +318,9 @@ class DkTask {
       date: date ?? this.date,
       state: state ?? this.state,
       category: category ?? this.category,
+      startDate: identical(startDate, _unset)
+          ? this.startDate
+          : startDate as String?,
       actualMins: identical(actualMins, _unset)
           ? this.actualMins
           : actualMins as int?,
