@@ -25,6 +25,7 @@ import 'focus/focus_screen.dart';
 import 'me/calendar_sync_screen.dart';
 import 'me/me_screen.dart';
 import 'plan/plan_screen.dart';
+import 'plan/plan_summary.dart';
 import 'review/review_screen.dart';
 import 'review/week_review_builder.dart';
 import 'sheets/event_sheet.dart';
@@ -640,19 +641,8 @@ class _MainScaffoldState extends State<MainScaffold>
   //     로드된 실제 task 에서 계산하거나 0 으로 둔다(하드코딩 제거). ──
 
   /// 주간 요약: 실제 task 의 전체/완료 수 + 미룬 시간 합계로 계산.
-  DkWeekSummary _weekSummary() {
-    final List<DkTask> tasks = _c.tasks;
-    final double planned = tasks.length.toDouble();
-    final double done = tasks
-        .where((DkTask t) => t.state == DkTaskState.done)
-        .length
-        .toDouble();
-    return DkWeekSummary(
-      planned: planned,
-      done: done,
-      debt: _debtTotal().toDouble(),
-    );
-  }
+  DkWeekSummary _weekSummary() =>
+      buildPlanSummary(tasks: _c.tasks, debtMinutes: _debtTotal());
 
   /// 집중 통계: 집중 기록 저장/조회 기능이 아직 없어 0(목표는 기본 상수).
   DkFocusStats _focusStats() => const DkFocusStats(
