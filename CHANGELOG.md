@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/ieoseo/client/compare/ieoseo-client-v1.0.0...ieoseo-client-v1.1.0) (2026-06-17)
+
+
+### Features
+
+* 태스크 범위(시작~종료) 날짜 — client ([#50](https://github.com/ieoseo/client/issues/50)) ([#82](https://github.com/ieoseo/client/issues/82)) ([dbdde7d](https://github.com/ieoseo/client/commit/dbdde7d154b34b9b52bb50d6422c27842a42e313))
+
+
+### Bug Fixes
+
+* 플랜 계획 시간 합계 + 다크모드 영속화 ([#83](https://github.com/ieoseo/client/issues/83)) ([f552861](https://github.com/ieoseo/client/commit/f552861a427477e9ce2ca0448a6e5a1ff974c432))
+
 ## [1.0.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.1.0...ieoseo-client-v1.0.0) (2026-06-16)
 
 
