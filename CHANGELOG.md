@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/ieoseo/client/compare/ieoseo-client-v1.1.0...ieoseo-client-v0.5.0) (2026-06-17)
+
+
+### Miscellaneous Chores
+
+* 릴리스 버전을 0.5.0 으로 지정 ([58d886d](https://github.com/ieoseo/client/commit/58d886d43df86254e4858b9c687db9a466daaec6))
+
 ## [1.1.0](https://github.com/ieoseo/client/compare/ieoseo-client-v1.0.0...ieoseo-client-v1.1.0) (2026-06-17)
 
 
