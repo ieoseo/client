@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.1](https://github.com/ieoseo/client/compare/ieoseo-client-v0.6.0...ieoseo-client-v0.6.1) (2026-06-19)
+
+
+### Features
+
+* 캘린더 오늘버튼·주/일 슬라이드 + 범위 표시 + D-day 수치 ([#94](https://github.com/ieoseo/client/issues/94)) ([f45c458](https://github.com/ieoseo/client/commit/f45c458db044841206a0c69ccf6e5c33c285a4bf))
+
+
+### Miscellaneous Chores
+
+* 0.6.1 패치 릴리스로 지정 ([7f72dfa](https://github.com/ieoseo/client/commit/7f72dfa3a713c816a41762143e0e8ffb6b59718c))
+
 ## [0.6.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.5.1...ieoseo-client-v0.6.0) (2026-06-19)
 
 
