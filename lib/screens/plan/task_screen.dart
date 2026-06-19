@@ -160,7 +160,7 @@ class _TaskScreenState extends State<TaskScreen> {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: DkIcon(
-                'hourglass',
+                'carryForward',
                 size: 24,
                 color: t.warningFg,
                 strokeWidth: 1.9,

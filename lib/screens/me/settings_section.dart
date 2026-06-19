@@ -6,7 +6,6 @@ import '../../data/meta.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_badge.dart';
 import '../../widgets/dk_icon.dart';
-import '../../widgets/dk_segmented.dart';
 import 'settings_dialogs.dart';
 
 /// 토글 스위치. 프로토타입 `Toggle`: 48×28 pill(on=primary), 노브 24 흰색.
@@ -104,6 +103,7 @@ class SettingRow extends StatelessWidget {
     this.iconColor,
     required this.label,
     this.value,
+    this.valueColor,
     this.right,
     this.onTap,
     this.last = false,
@@ -116,6 +116,9 @@ class SettingRow extends StatelessWidget {
   final Color? iconColor;
   final String label;
   final String? value;
+
+  /// [value] 텍스트 색(예: 일요일 빨강). null이면 기본 뮤트색.
+  final Color? valueColor;
   final Widget? right;
   final VoidCallback? onTap;
   final bool last;
@@ -191,7 +194,7 @@ class SettingRow extends StatelessWidget {
                     fontFamily: 'Pretendard',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: t.fgSubtle,
+                    color: valueColor ?? t.fgSubtle,
                   ),
                 ),
               ),
@@ -300,18 +303,18 @@ class SettingsSection extends StatelessWidget {
               SettingRow(
                 icon: 'calendar',
                 label: '주간 시작 요일',
-                right: DkSegmented<String>(
-                  value: s.weekStart,
-                  onChanged: (String v) {
-                    if (v != s.weekStart) {
-                      onSaveSettings(s.copyWith(weekStart: v));
-                    }
-                  },
-                  options: const <DkSegment<String>>[
-                    DkSegment<String>('MON', '월'),
-                    DkSegment<String>('SUN', '일'),
-                  ],
-                ),
+                // 드롭다운(탭→선택 피커). 기본 월요일, 일요일은 빨간색 강조.
+                value: s.weekStart == 'SUN' ? '일요일' : '월요일',
+                valueColor: s.weekStart == 'SUN' ? t.danger : null,
+                onTap: () async {
+                  final String? v = await showWeekStartPicker(
+                    context,
+                    current: s.weekStart,
+                  );
+                  if (v != null && v != s.weekStart) {
+                    onSaveSettings(s.copyWith(weekStart: v));
+                  }
+                },
               ),
               SettingRow(
                 icon: 'carryForward',
