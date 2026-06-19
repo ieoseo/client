@@ -5,6 +5,7 @@ import '../data/api/api_exception.dart';
 import '../data/auth/auth_controller.dart';
 import '../data/auth/social_auth.dart';
 import '../theme/tokens.dart';
+import '../widgets/dk_brand_mark.dart';
 import '../widgets/dk_logo.dart';
 
 /// 로그인 화면에 노출할 소셜 provider(ADR-0014, ADR-0023).
@@ -39,12 +40,16 @@ class _SocialSpec {
     this.label,
     this.bg,
     this.fg, {
+    required this.brand,
     this.bordered = false,
   });
   final SocialProvider provider;
   final String label;
   final Color bg;
   final Color fg;
+
+  /// 브랜드 로고 키([DkBrandMark]): 'kakao' / 'google'.
+  final String brand;
   final bool bordered;
 }
 
@@ -89,12 +94,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 '카카오로 계속하기',
                 SeedSource.kakao,
                 Color(0xFF191600),
+                brand: 'kakao',
               ),
               _SocialSpec(
                 SocialProvider.google,
                 'Google로 계속하기',
                 t.bg,
                 t.fg,
+                brand: 'google',
                 bordered: true,
               ),
             ]
@@ -172,14 +179,21 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           child: isBusy
               ? _SocialSpinner(color: s.fg)
-              : Text(
-                  s.label,
-                  style: TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: s.fg,
-                  ),
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    DkBrandMark(brand: s.brand, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      s.label,
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: s.fg,
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ),
