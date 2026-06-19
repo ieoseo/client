@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../../data/dday.dart';
 import '../../data/format.dart';
 import '../../data/meta.dart';
 import '../../data/models.dart';
@@ -57,6 +58,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
   }
 
+  /// 선택일을 [delta]일만큼 이동(주간=±7, 일간=±1).
+  void _shiftDays(int delta) {
+    setState(() => _sel = ymd(addDays(parseYmd(_sel), delta)));
+  }
+
+  /// 좌우 스와이프 → [unit]일 단위 이동(왼쪽=다음, 오른쪽=이전).
+  void _onSwipe(DragEndDetails d, int unit) {
+    final double v = d.primaryVelocity ?? 0;
+    if (v < -200) {
+      _shiftDays(unit);
+    } else if (v > 200) {
+      _shiftDays(-unit);
+    }
+  }
+
   void _openItem(DayItem it) {
     if (it.task != null) {
       widget.onOpenTask(it.task!);
@@ -100,31 +116,56 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 onSelect: (String k) => setState(() => _sel = k),
                 onPrev: () => _shiftMonth(-1),
                 onNext: () => _shiftMonth(1),
+                onToday: _goToday,
               ),
             ),
           ),
-        if (_view == _CalView.week)
-          WeekStrip(
-            selected: _sel,
-            onSelect: (String k) => setState(() => _sel = k),
+        // 주간: 주 단위 네비(±7) + 오늘, 좌우 스와이프로 주 이동.
+        if (_view == _CalView.week) ...<Widget>[
+          _CalNav(
+            onPrev: () => _shiftDays(-7),
+            onNext: () => _shiftDays(7),
+            onToday: _goToday,
+          ),
+          const SizedBox(height: 6),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragEnd: (DragEndDetails e) => _onSwipe(e, 7),
+            child: WeekStrip(
+              selected: _sel,
+              onSelect: (String k) => setState(() => _sel = k),
+            ),
+          ),
+        ],
+        // 일간: 하루 단위 네비(±1) + 오늘(스와이프는 아래 일정 영역에서 ±1).
+        if (_view == _CalView.day)
+          _CalNav(
+            onPrev: () => _shiftDays(-1),
+            onNext: () => _shiftDays(1),
+            onToday: _goToday,
           ),
         const SizedBox(height: 18),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
+          // 섹션헤드의 '오늘' 버튼은 제거(각 뷰 네비로 이동) — 날짜 제목만.
           child: DkSectionHead(
             title: '${d.month}월 ${d.day}일 (${kWeekdaysKo[d.weekday % 7]})',
-            action: '오늘',
-            onAction: _goToday,
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: _DayList(
-            dateStr: _sel,
-            tasks: widget.tasks,
-            events: widget.events,
-            externals: widget.externals,
-            onOpen: _openItem,
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragEnd: _view == _CalView.day
+              ? (DragEndDetails e) => _onSwipe(e, 1)
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _DayList(
+              dateStr: _sel,
+              tasks: widget.tasks,
+              events: widget.events,
+              externals: widget.externals,
+              onOpen: _openItem,
+            ),
           ),
         ),
         // FAB 가림 방지용 하단 여백(하단 출처 로고 범례는 제거 — 출처 구분은
@@ -143,6 +184,76 @@ String _brandKey(DkSource s) => switch (s) {
   DkSource.notion => 'notion',
 };
 
+/// '오늘' 칩 버튼(primary-subtle). 월/주/일 뷰 네비에서 공유한다.
+Widget _todayChip(DkTokens t, VoidCallback onTap) {
+  return GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: t.primarySubtle,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        '오늘',
+        style: TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 13.5,
+          fontWeight: FontWeight.w700,
+          color: t.primary,
+        ),
+      ),
+    ),
+  );
+}
+
+/// 주간/일간 뷰 네비: 이전 ‹ · 오늘 · 다음 ›.
+class _CalNav extends StatelessWidget {
+  const _CalNav({
+    required this.onPrev,
+    required this.onNext,
+    required this.onToday,
+  });
+
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+  final VoidCallback onToday;
+
+  @override
+  Widget build(BuildContext context) {
+    final DkTokens t = DkTheme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: <Widget>[
+          _arrow(t, const ValueKey<String>('calnav-prev'), 'chevL', onPrev),
+          Expanded(child: Center(child: _todayChip(t, onToday))),
+          _arrow(t, const ValueKey<String>('calnav-next'), 'chevR', onNext),
+        ],
+      ),
+    );
+  }
+
+  Widget _arrow(DkTokens t, Key key, String icon, VoidCallback onTap) {
+    return GestureDetector(
+      key: key,
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: 34,
+        height: 34,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: t.bgSubtle,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: DkIcon(icon, size: 18, color: t.fgMuted, strokeWidth: 2.2),
+      ),
+    );
+  }
+}
+
 /// 월 그리드. 상단에 이전/다음 달 이동 헤더. 셀에 출처 점 최대 3개.
 class _MonthGrid extends StatelessWidget {
   const _MonthGrid({
@@ -154,6 +265,7 @@ class _MonthGrid extends StatelessWidget {
     required this.onSelect,
     required this.onPrev,
     required this.onNext,
+    required this.onToday,
   });
 
   /// 표시할 월(해당 월의 1일 등 아무 날이어도 됨 — year/month 만 사용).
@@ -165,6 +277,7 @@ class _MonthGrid extends StatelessWidget {
   final ValueChanged<String> onSelect;
   final VoidCallback onPrev;
   final VoidCallback onNext;
+  final VoidCallback onToday;
 
   Widget _navArrow(DkTokens t, Key key, String icon, VoidCallback onTap) {
     return GestureDetector(
@@ -211,6 +324,8 @@ class _MonthGrid extends StatelessWidget {
                 ),
               ),
             ),
+            _todayChip(t, onToday),
+            const SizedBox(width: 8),
             _navArrow(t, const ValueKey<String>('cal-next'), 'chevR', onNext),
           ],
         ),
@@ -395,7 +510,7 @@ class _DayList extends StatelessWidget {
     final bool done = it.taskState == DkTaskState.done;
     final Color color = _dotColor(t, it);
     final String meta = it.isEvent
-        ? 'D-Day'
+        ? (it.event != null ? ddayInfo(it.event!).label : 'D-Day')
         : it.kind == DayItemKind.task
         ? fmtMins(it.mins ?? 0)
         : (it.time ?? '');
