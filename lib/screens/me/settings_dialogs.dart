@@ -125,6 +125,23 @@ Future<int?> showMaxMinutesPicker(
   );
 }
 
+/// 주간 시작 요일 선택(월/일). 일요일은 빨간색으로 강조한다. 'MON'/'SUN' 반환, 취소면 null.
+Future<String?> showWeekStartPicker(
+  BuildContext context, {
+  required String current,
+}) {
+  final DkTokens t = DkTheme.of(context);
+  return _showOptionPicker<String>(
+    context,
+    title: '주간 시작 요일',
+    current: current,
+    options: <_Option<String>>[
+      const _Option<String>('MON', '월요일'),
+      _Option<String>('SUN', '일요일', color: t.danger),
+    ],
+  );
+}
+
 /// 분 단위 값(포모도로 등) 선택. 선택한 분을 반환, 취소면 null.
 Future<int?> showMinutePicker(
   BuildContext context, {
@@ -171,9 +188,12 @@ Future<void> confirmWithdraw(
 // --- 내부 헬퍼 ---
 
 class _Option<T> {
-  const _Option(this.value, this.label);
+  const _Option(this.value, this.label, {this.color});
   final T value;
   final String label;
+
+  /// 라벨 강조색(선택 여부와 무관, 예: 일요일 빨강). null이면 기본 톤.
+  final Color? color;
 }
 
 Future<T?> _showOptionPicker<T>(
@@ -215,7 +235,10 @@ Future<T?> _showOptionPicker<T>(
                       fontFamily: 'Pretendard',
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: opt.value == current ? t.primary : t.fg,
+                      // 옵션 강조색(예: 일요일 빨강)이 있으면 선택 여부와 무관하게 우선.
+                      color:
+                          opt.color ??
+                          (opt.value == current ? t.primary : t.fg),
                     ),
                   ),
                 ),

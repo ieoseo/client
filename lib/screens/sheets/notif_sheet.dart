@@ -11,7 +11,7 @@ import '../../widgets/dk_sheet.dart';
 /// 알림 종류별 아이콘·톤 매핑(표현은 client 권한). server 는 [DkNotifType] 만 내려준다.
 ({String icon, DkTone tone}) _appearance(DkNotifType type) => switch (type) {
   DkNotifType.dday => (icon: 'target', tone: DkTone.primary),
-  DkNotifType.debtCreated => (icon: 'hourglass', tone: DkTone.warning),
+  DkNotifType.debtCreated => (icon: 'carryForward', tone: DkTone.warning),
   DkNotifType.debtWarning => (icon: 'flame', tone: DkTone.danger),
   DkNotifType.streak => (icon: 'trophy', tone: DkTone.success),
 };

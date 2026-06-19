@@ -50,7 +50,6 @@ const Map<String, String> kSeedIcons = <String, String>{
       'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
   'trophy':
       'M6 9H4.5a2.5 2.5 0 0 1 0-5H6 M18 9h1.5a2.5 2.5 0 0 0 0-5H18 M6 4h12v5a6 6 0 0 1-12 0V4Z M9 18h6 M10 18v-3 M14 18v-3 M8 21h8',
-  'hourglass': 'M6 3h12 M6 21h12 M8 3c0 4 8 5 8 9s-8 5-8 9 M16 3c0 4-8 5-8 9',
   'alert':
       'M12 9v4 M12 17h.01 M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
   'chart': 'M3 3v18h18 M7 14l3-3 3 3 4-5',
