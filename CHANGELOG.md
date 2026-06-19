@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/ieoseo/client/compare/ieoseo-client-v0.5.0...ieoseo-client-v0.5.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* 로그인 로딩 화면·주간 시작 요일 드롭다운·미룬시간 아이콘 통일 ([#88](https://github.com/ieoseo/client/issues/88)) ([bf11f53](https://github.com/ieoseo/client/commit/bf11f5309d090171254a898b7c85c06da96dcaf2))
+
 ## [0.5.0](https://github.com/ieoseo/client/compare/ieoseo-client-v1.1.0...ieoseo-client-v0.5.0) (2026-06-17)
 
 
