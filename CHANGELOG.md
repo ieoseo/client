@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.5.1...ieoseo-client-v0.6.0) (2026-06-19)
+
+
+### Features
+
+* 소셜 로그인 버튼 로고 + 데이터 로딩 스켈레톤 ([#91](https://github.com/ieoseo/client/issues/91)) ([73dae11](https://github.com/ieoseo/client/commit/73dae11c3f74fb039ead19af15355d5469a6a71f))
+
 ## [0.5.1](https://github.com/ieoseo/client/compare/ieoseo-client-v0.5.0...ieoseo-client-v0.5.1) (2026-06-19)
 
 
