@@ -25,6 +25,7 @@ import 'focus/focus_screen.dart';
 import 'me/calendar_sync_screen.dart';
 import 'me/me_screen.dart';
 import 'plan/plan_screen.dart';
+import 'loading_skeleton.dart';
 import 'plan/plan_summary.dart';
 import 'review/review_screen.dart';
 import 'review/week_review_builder.dart';
@@ -412,21 +413,9 @@ class _MainScaffoldState extends State<MainScaffold>
 
     final bool empty = _c.tasks.isEmpty && _c.events.isEmpty;
 
-    // 초기 로딩(데이터 없음) / 오류 게이트.
+    // 초기 로딩(데이터 없음): 밋밋한 텍스트 대신 콘텐츠 윤곽 스켈레톤(토스·당근 패턴).
     if (_c.isLoading && empty) {
-      return Container(
-        color: t.page,
-        alignment: Alignment.center,
-        child: Text(
-          '불러오는 중…',
-          style: TextStyle(
-            fontFamily: 'Pretendard',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: t.fgMuted,
-          ),
-        ),
-      );
+      return const AppLoadingSkeleton();
     }
     if (_c.error != null && empty) {
       return Container(color: t.page, child: _errorState(t));
