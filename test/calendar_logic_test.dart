@@ -55,6 +55,41 @@ void main() {
       expect(end.any((DayItem i) => i.title.contains('마감')), true);
     });
 
+    test('기간 이벤트는 시작~종료 사이 날에도 찍힌다(#범위표시)', () {
+      // e3 접수: start _d(7) ~ end _d(11). 중간 _d(9) 에도 노출.
+      final List<DayItem> mid = dayItems(
+        _d(9),
+        tasks: kTasks,
+        events: kEvents,
+        externals: kExternal,
+      );
+      expect(mid.any((DayItem i) => i.kind == DayItemKind.event), true);
+    });
+
+    test('범위 태스크는 startDate~date 모든 날에 찍힌다(#50)', () {
+      final DkTask range = DkTask(
+        id: 'r',
+        title: '발표 준비',
+        mins: 90,
+        date: _d(5), // 마감(앵커)
+        startDate: _d(2), // 시작
+        state: DkTaskState.today,
+        category: '공부',
+      );
+      bool hasTask(int off) => dayItems(
+        _d(off),
+        tasks: <DkTask>[range],
+        events: const <DkEvent>[],
+        externals: const <DkExternal>[],
+      ).any((DayItem i) => i.kind == DayItemKind.task);
+
+      expect(hasTask(2), true); // 시작
+      expect(hasTask(3), true); // 중간
+      expect(hasTask(5), true); // 종료
+      expect(hasTask(1), false); // 범위 밖(이전)
+      expect(hasTask(6), false); // 범위 밖(이후)
+    });
+
     test('외부 일정은 출처와 시각을 가진다', () {
       // x1 Google 2026-06-02 10:00.
       final List<DayItem> items = dayItems(
