@@ -42,6 +42,10 @@ class DayItem {
   bool get isEvent => kind == DayItemKind.event;
 }
 
+/// [day]가 [start]~[end] 구간(양끝 포함)에 드는지. ymd 문자열 사전식 비교(= 시간순).
+bool _within(String day, String start, String end) =>
+    day.compareTo(start) >= 0 && day.compareTo(end) <= 0;
+
 /// [dateStr](`YYYY-MM-DD`) 하루의 태스크·이벤트·외부 일정을 모은다.
 /// 프로토타입 `dayItems`.
 List<DayItem> dayItems(
@@ -52,7 +56,13 @@ List<DayItem> dayItems(
 }) {
   final List<DayItem> items = <DayItem>[];
 
-  for (final DkTask t in tasks.where((DkTask t) => t.date == dateStr)) {
+  // 범위 태스크(startDate~date)·기간 이벤트(start~end)는 **구간 전체**에 찍힌다(#50, 캘린더 범위 표시).
+  // ymd 문자열은 사전식 비교 = 시간순이라 그대로 범위 판정에 쓴다.
+  for (final DkTask t in tasks) {
+    final bool match = t.startDate != null
+        ? _within(dateStr, t.startDate!, t.date)
+        : t.date == dateStr;
+    if (!match) continue;
     items.add(
       DayItem(
         kind: DayItemKind.task,
@@ -76,11 +86,19 @@ List<DayItem> dayItems(
         ),
       );
     } else if (e.type == DkEventType.period &&
-        (e.start == dateStr || e.end == dateStr)) {
+        e.start != null &&
+        e.end != null &&
+        _within(dateStr, e.start!, e.end!)) {
+      // 시작일/종료일은 라벨로 구분, 사이 날은 제목만.
+      final String suffix = dateStr == e.start
+          ? ' 시작'
+          : dateStr == e.end
+          ? ' 마감'
+          : '';
       items.add(
         DayItem(
           kind: DayItemKind.event,
-          title: '${e.title} ${e.start == dateStr ? '시작' : '마감'}',
+          title: '${e.title}$suffix',
           colorName: e.color,
           event: e,
         ),
