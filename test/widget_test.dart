@@ -84,7 +84,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 미인증 → 로그인(소셜) 화면.
-    expect(find.text('이어서 시작하기'), findsOneWidget);
+    expect(find.text('오늘을 이어서,\n매일을 끝까지'), findsOneWidget);
   });
 
   testWidgets('세션이 유효하면 곧장 main으로 진입한다', (WidgetTester tester) async {
@@ -104,7 +104,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // main 탭바(오늘 탭)가 보이고 인증 화면은 없다.
-    expect(find.text('이어서 시작하기'), findsNothing);
+    expect(find.text('오늘을 이어서,\n매일을 끝까지'), findsNothing);
     expect(find.text('오늘'), findsWidgets);
   });
 }

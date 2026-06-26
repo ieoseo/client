@@ -10,10 +10,12 @@ import '../widgets/dk_logo.dart';
 
 /// 로그인 화면에 노출할 소셜 provider(ADR-0014, ADR-0023).
 ///
-/// 이 집합에 있는 provider 만 로그인 버튼으로 노출한다. Apple 은 후속이라 제외.
+/// 이 집합에 있는 provider 만 로그인 버튼으로 노출한다. DayKit 핸드오프대로 카카오·Google·
+/// Apple 3종을 노출한다(Apple 실동작은 Supabase Apple provider 설정이 선행 전제).
 const Set<SocialProvider> kVisibleSocialProviders = <SocialProvider>{
-  SocialProvider.google,
   SocialProvider.kakao,
+  SocialProvider.google,
+  SocialProvider.apple,
 };
 
 /// 로그인 화면(소셜 전용, ADR-0023).
@@ -91,18 +93,25 @@ class _LoginScreenState extends State<LoginScreen> {
         <_SocialSpec>[
               const _SocialSpec(
                 SocialProvider.kakao,
-                '카카오로 계속하기',
+                '카카오로 시작하기',
                 SeedSource.kakao,
                 Color(0xFF191600),
                 brand: 'kakao',
               ),
               _SocialSpec(
                 SocialProvider.google,
-                'Google로 계속하기',
+                'Google로 시작하기',
                 t.bg,
                 t.fg,
                 brand: 'google',
                 bordered: true,
+              ),
+              const _SocialSpec(
+                SocialProvider.apple,
+                'Apple로 시작하기',
+                Color(0xFF000000),
+                Color(0xFFFFFFFF),
+                brand: 'apple',
               ),
             ]
             .where(
@@ -113,49 +122,34 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       color: t.bg,
       child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              const SizedBox(height: 52),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: DkLogo(size: 42),
-              ),
-              const SizedBox(height: 26),
-              Text(
-                '이어서 시작하기',
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.78,
-                  color: t.fgStrong,
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Expanded(child: Center(child: _Hero())),
+                      if (_error != null) ...<Widget>[
+                        _ErrorBanner(message: _error!),
+                        const SizedBox(height: 12),
+                      ],
+                      for (int i = 0; i < social.length; i++) ...<Widget>[
+                        if (i > 0) const SizedBox(height: 10),
+                        _socialButton(social[i]),
+                      ],
+                      const SizedBox(height: 18),
+                      const _LegalNote(),
+                      const SizedBox(height: 34),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                '소셜 계정으로 간편하게 시작해요.',
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w500,
-                  color: t.fgSubtle,
-                ),
-              ),
-              const SizedBox(height: 28),
-              if (_error != null) ...<Widget>[
-                _ErrorBanner(message: _error!),
-                const SizedBox(height: 12),
-              ],
-              for (final _SocialSpec s in social) ...<Widget>[
-                _socialButton(s),
-                const SizedBox(height: 10),
-              ],
-              const SizedBox(height: 32),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -164,39 +158,121 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _socialButton(_SocialSpec s) {
     final DkTokens t = DkTheme.of(context);
     final bool isBusy = _socialBusy == s.provider;
+    // 디자인(DayKit): 글리프는 좌측 18 절대 위치, 라벨/진행문구는 버튼 중앙.
     return GestureDetector(
       key: ValueKey<String>('social-${s.provider.wireName}'),
       onTap: _busy ? null : () => _socialSignIn(s.provider),
       child: Opacity(
         opacity: _busy && !isBusy ? 0.5 : 1,
         child: Container(
-          height: 52,
-          alignment: Alignment.center,
+          height: 54,
           decoration: BoxDecoration(
             color: s.bg,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(15),
             border: s.bordered ? Border.all(color: t.border, width: 1.5) : null,
           ),
-          child: isBusy
-              ? _SocialSpinner(color: s.fg)
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    DkBrandMark(brand: s.brand, size: 20),
-                    const SizedBox(width: 10),
-                    Text(
-                      s.label,
-                      style: TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: s.fg,
-                      ),
-                    ),
-                  ],
+          child: Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              Text(
+                isBusy ? '연결 중…' : s.label,
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.155,
+                  color: s.fg,
                 ),
+              ),
+              PositionedDirectional(
+                start: 18,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: isBusy
+                      ? _SocialSpinner(color: s.fg)
+                      : DkBrandMark(brand: s.brand, size: 20),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// 로그인 히어로 브랜드 블록. 로고 + 카피를 중앙 정렬한다(DayKit 핸드오프).
+class _Hero extends StatelessWidget {
+  const _Hero();
+
+  @override
+  Widget build(BuildContext context) {
+    final DkTokens t = DkTheme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        const DkLogo(size: 56),
+        const SizedBox(height: 22),
+        Text(
+          '오늘을 이어서,\n매일을 끝까지',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'Pretendard',
+            fontSize: 25,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.75,
+            height: 1.3,
+            color: t.fgStrong,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'D-Day · 할 일 · 집중을 하나로.\n3초 만에 시작해요.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'Pretendard',
+            fontSize: 14.5,
+            fontWeight: FontWeight.w500,
+            height: 1.55,
+            color: t.fgSubtle,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 약관·개인정보처리방침 동의 고지(DayKit 핸드오프). 강조어는 fgMuted.
+class _LegalNote extends StatelessWidget {
+  const _LegalNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final DkTokens t = DkTheme.of(context);
+    final TextStyle base = TextStyle(
+      fontFamily: 'Pretendard',
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      height: 1.6,
+      color: t.fgSubtle,
+    );
+    final TextStyle emphasis = base.copyWith(
+      fontWeight: FontWeight.w600,
+      color: t.fgMuted,
+    );
+    return Text.rich(
+      TextSpan(
+        style: base,
+        children: <InlineSpan>[
+          const TextSpan(text: '로그인 시 '),
+          TextSpan(text: '이용약관', style: emphasis),
+          const TextSpan(text: '과 '),
+          TextSpan(text: '개인정보처리방침', style: emphasis),
+          const TextSpan(text: '에\n동의하는 것으로 간주됩니다.'),
+        ],
+      ),
+      textAlign: TextAlign.center,
     );
   }
 }

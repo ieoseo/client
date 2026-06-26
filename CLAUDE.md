@@ -39,7 +39,7 @@
 - 계약(메모): server `DebtResponse` 가 `title`/`fromLabel` 을 제공 → `DkDebtDto` 가 `title→title`/`fromLabel→fromLabel` 로 매핑(별도 태스크 조인 불필요). 완료 취소는 전용 **`POST /tasks/{id}/reopen`**(DONE→TODAY) 으로 처리하고 `toggleComplete` 가 이를 호출한다(PUT 은 state 를 안 바꿔 무효였음). 자동 이월 `autoCarryDebt` 는 **`POST /debts/{id}/auto-carry`** 로 배선됨.
 
 ## 인증 (Supabase Auth — 소셜 전용, ADR-0014·0023)
-- **소셜 전용(ADR-0023)**: 소셜(**Kakao·Google**, Apple 후속) 로그인만. 이메일 가입/로그인은 제거(향후 필요 시 Supabase 가 그대로 지원하므로 UI·게이트웨이 메서드만 복원하면 됨). 로그인·세션·토큰은 `supabase_flutter` 가 담당하고, server 는 Supabase JWT 를 JWKS 로 **검증만** 한다(토큰 발급 엔드포인트 없음).
+- **소셜 전용(ADR-0023)**: 소셜(**카카오·Google·Apple**) 로그인만. 로그인 화면은 DayKit 핸드오프대로 3개 버튼을 노출한다(`kVisibleSocialProviders`). Apple 버튼의 실동작은 Supabase Apple provider 설정이 선행 전제다. 이메일 가입/로그인은 제거(향후 필요 시 Supabase 가 그대로 지원하므로 UI·게이트웨이 메서드만 복원하면 됨). 로그인·세션·토큰은 `supabase_flutter` 가 담당하고, server 는 Supabase JWT 를 JWKS 로 **검증만** 한다(토큰 발급 엔드포인트 없음).
 - **소셜은 전부 웹 OAuth(ADR-0014)**: `signInWithOAuth(provider, redirectTo: app.ieoseo://login-callback)`(브라우저 + 딥링크) → 복귀 시 `onAuthStateChange(signedIn)` → server `/auth/me` provisioning. **인증은 Supabase(web client)가 처리** → 앱 내 client id·네이티브 SDK(google_sign_in 등) 불필요. (Google 네이티브 idToken 방식을 쓰려면 Android/iOS OAuth 클라이언트가 필요해 채택 안 함.)
 - **닉네임**: 소셜 가입 시 provider 닉네임을 `/auth/me` provisioning 으로 받고, 변경은 프로필의 `updateProfile`(PATCH `/auth/me`)로 처리. (이메일 가입 직후 닉네임 설정 화면 `NicknameSetupScreen` 은 ADR-0023 으로 제거.)
 - **연동 계정 관리(이슈 #10)**: 나 탭 `LinkedAccountsSection` 에서 연동 provider(Email/Google/Kakao) 표시 + 연결(`linkIdentity`)·해제(`unlinkIdentity`). 이메일은 표시만, 마지막 identity 는 해제 불가. **Supabase 'Manual Linking' 활성 전제**. 연결 완료는 `onAuthStateChange(userUpdated)` → `AuthController` 가 reload·notify.
