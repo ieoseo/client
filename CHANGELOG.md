@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.6.1...ieoseo-client-v0.7.0) (2026-06-26)
+
+
+### Features
+
+* 로그인 화면 DayKit 핸드오프 반영·소셜 3종 ([#101](https://github.com/ieoseo/client/issues/101)) ([0db94f7](https://github.com/ieoseo/client/commit/0db94f7df765deeddf5f89d6c2bfecc1de763189))
+* 오늘 탭 D-Day 전환·하단 네비 가운데 + 버튼 ([#98](https://github.com/ieoseo/client/issues/98)) ([77b6821](https://github.com/ieoseo/client/commit/77b6821eb852391d2e1d9ef900391687157a68af))
+
 ## [0.6.1](https://github.com/ieoseo/client/compare/ieoseo-client-v0.6.0...ieoseo-client-v0.6.1) (2026-06-19)
 
 
