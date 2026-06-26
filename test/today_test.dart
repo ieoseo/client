@@ -1,6 +1,5 @@
 import 'package:ieoseo/data/mock_data.dart';
 import 'package:ieoseo/data/models.dart';
-import 'package:ieoseo/parts/task_row.dart';
 import 'package:ieoseo/screens/today/today_screen.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,23 +7,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/harness.dart';
 
 TodayScreen _screen({
-  List<DkTask>? tasks,
-  ValueChanged<DkTask>? onToggle,
-  ValueChanged<DkTask>? onFocus,
+  List<DkEvent>? events,
+  ValueChanged<DkEvent>? onOpenEvent,
   VoidCallback? onOpenDebt,
 }) {
   return TodayScreen(
     userName: '지우',
-    tasks: tasks ?? kTasks,
-    events: kEvents,
+    events: events ?? kEvents,
     debts: kDebts,
-    onToggle: onToggle ?? (_) {},
-    onOpenTask: (_) {},
-    onOpenEvent: (_) {},
-    onAddTask: () {},
+    onOpenEvent: onOpenEvent ?? (_) {},
     onBell: () {},
     onOpenCalc: () {},
-    onFocus: onFocus ?? (_) {},
     onOpenDebt: onOpenDebt ?? () {},
   );
 }
@@ -40,23 +33,29 @@ Future<void> _pumpTall(WidgetTester tester, Widget child) async {
 }
 
 void main() {
-  testWidgets('콕핏·D-Day 레일·아젠다·미룬시간 넛지를 렌더한다', (WidgetTester tester) async {
+  testWidgets('인사 헤더·다가오는 일정·미룬시간 넛지를 렌더한다', (WidgetTester tester) async {
     await _pumpTall(tester, _screen());
 
     expect(find.text('안녕하세요, 지우님'), findsOneWidget);
-    expect(find.text('마감 D-DAY'), findsOneWidget);
-    expect(find.text('오늘의 흐름'), findsOneWidget);
+    expect(find.text('다가오는 일정'), findsOneWidget);
     expect(find.text('미룬 시간'), findsOneWidget);
-    // 콕핏 다음 할 일은 첫 미완료(정처기 실기 기출 1회 t3).
-    expect(find.text('정처기 실기 기출 1회'), findsWidgets);
+    // 오늘 할 일 콕핏·아젠다는 제거됨(플랜>할 일로 일원화).
+    expect(find.text('오늘의 흐름'), findsNothing);
   });
 
-  testWidgets('아젠다 체크박스 탭은 onToggle을 호출한다', (WidgetTester tester) async {
-    DkTask? toggled;
-    await _pumpTall(tester, _screen(onToggle: (DkTask t) => toggled = t));
+  testWidgets('일정이 없으면 빈 상태를 보인다', (WidgetTester tester) async {
+    await _pumpTall(tester, _screen(events: <DkEvent>[]));
 
-    await tester.tap(find.byType(DkCheckbox).first);
-    expect(toggled, isNotNull);
+    expect(find.text('다가오는 일정이 없어요'), findsOneWidget);
+  });
+
+  testWidgets('다가오는 일정 행 탭은 onOpenEvent를 호출한다', (WidgetTester tester) async {
+    DkEvent? opened;
+    await _pumpTall(tester, _screen(onOpenEvent: (DkEvent e) => opened = e));
+
+    // 첫 일정 카드(제목)를 탭한다.
+    await tester.tap(find.text(kEvents.first.title).first);
+    expect(opened, isNotNull);
   });
 
   testWidgets('미룬 시간 넛지 탭은 onOpenDebt를 호출한다', (WidgetTester tester) async {
