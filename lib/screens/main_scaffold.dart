@@ -16,7 +16,6 @@ import '../theme/tokens.dart';
 import '../widgets/dk_badge.dart';
 import '../widgets/dk_button.dart';
 import '../widgets/dk_empty.dart';
-import '../widgets/dk_fab.dart';
 import '../widgets/dk_feedback.dart';
 import '../widgets/dk_tab_bar.dart';
 import 'calc_sheet.dart';
@@ -380,8 +379,6 @@ class _MainScaffoldState extends State<MainScaffold>
     }
   }
 
-  bool get _showsFab => _tab == DkTab.today || _tab == DkTab.plan;
-
   /// 안드로이드 시스템 뒤로가기 처리(이슈 #54). 서브화면이 열려 있으면 닫고, 그 외엔
   /// today 가 아닌 탭이면 today 로 복귀한다. today + 서브 없음일 때만 앱 종료를 허용한다.
   void _handleBack() {
@@ -439,18 +436,13 @@ class _MainScaffoldState extends State<MainScaffold>
                         child: _buildTabBody(),
                       ),
                     ),
-                    if (_showsFab)
-                      Positioned(
-                        right: 18,
-                        bottom: 16,
-                        child: DkFab(onPressed: _addTask),
-                      ),
                   ],
                 ),
               ),
               DkTabBar(
                 active: _tab,
                 onChanged: (DkTab tb) => setState(() => _tab = tb),
+                onAdd: _addTask,
               ),
             ],
           ),
@@ -529,17 +521,12 @@ class _MainScaffoldState extends State<MainScaffold>
       case DkTab.today:
         return TodayScreen(
           userName: widget.user.nickname,
-          tasks: _c.tasks,
           events: _c.events,
           debts: _c.debts,
           unread: unread,
-          onToggle: _toggleTask,
-          onOpenTask: _openTaskSheet,
           onOpenEvent: _openEventSheet,
-          onAddTask: _addTask,
           onBell: _openNotif,
           onOpenCalc: _openCalc,
-          onFocus: _startFocus,
           onOpenDebt: () => setState(() => _sub = _Sub.debt),
         );
       case DkTab.plan:

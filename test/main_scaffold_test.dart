@@ -108,7 +108,7 @@ void main() {
     expect(find.text('아직 못 한 일, 사라지지 않아요'), findsOneWidget);
   });
 
-  testWidgets('컨트롤러 load 후 오늘 태스크 목록을 렌더한다', (WidgetTester tester) async {
+  testWidgets('컨트롤러 load 후 오늘 탭에 다가오는 일정을 렌더한다', (WidgetTester tester) async {
     final DataController controller = DataController(MockRepository());
     tester.view.physicalSize = const Size(440, 2400);
     tester.view.devicePixelRatio = 1.0;
@@ -132,8 +132,9 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 700));
 
-    // 시드의 오늘(2026-06-01) 태스크가 렌더된다.
-    expect(find.text('정처기 실기 기출 1회'), findsWidgets);
+    // 오늘 탭은 D-Day 중심 — 시드 이벤트가 다가오는 일정으로 렌더된다.
+    expect(find.text('다가오는 일정'), findsOneWidget);
+    expect(find.text('정보처리기사 실기'), findsWidgets);
   });
 
   testWidgets('완료 토글이 컨트롤러 상태에 반영된다', (WidgetTester tester) async {
