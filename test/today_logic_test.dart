@@ -82,4 +82,68 @@ void main() {
       expect(s.allDone, false);
     });
   });
+
+  group('ddayOrdered', () {
+    DkEvent ev(String id, String date, {bool pinned = false}) => DkEvent(
+      id: id,
+      type: DkEventType.single,
+      title: id,
+      category: '공부',
+      date: date,
+      pinned: pinned,
+    );
+
+    test('임박한(가까운 미래) 일정이 먼저 온다', () {
+      final List<DkEvent> events = <DkEvent>[
+        ev('far', '2026-06-20'), // D-19
+        ev('soon', '2026-06-03'), // D-2
+        ev('mid', '2026-06-10'), // D-9
+      ];
+
+      final List<DkEvent> out = ddayOrdered(
+        events,
+        today: DateTime(2026, 6, 1),
+      );
+      expect(out.map((DkEvent e) => e.id).toList(), <String>[
+        'soon',
+        'mid',
+        'far',
+      ]);
+    });
+
+    test('고정(pin) 일정은 임박순보다 앞선다', () {
+      final List<DkEvent> events = <DkEvent>[
+        ev('soon', '2026-06-03'),
+        ev('pinnedFar', '2026-06-25', pinned: true),
+      ];
+
+      final List<DkEvent> out = ddayOrdered(
+        events,
+        today: DateTime(2026, 6, 1),
+      );
+      expect(out.first.id, 'pinnedFar');
+    });
+
+    test('지난 일정은 미래 일정보다 뒤로 간다', () {
+      final List<DkEvent> events = <DkEvent>[
+        ev('past', '2026-05-20'), // 지남
+        ev('future', '2026-06-05'), // D-4
+      ];
+
+      final List<DkEvent> out = ddayOrdered(
+        events,
+        today: DateTime(2026, 6, 1),
+      );
+      expect(out.map((DkEvent e) => e.id).toList(), <String>['future', 'past']);
+    });
+
+    test('원본 리스트를 변형하지 않는다', () {
+      final List<DkEvent> events = <DkEvent>[
+        ev('b', '2026-06-10'),
+        ev('a', '2026-06-03'),
+      ];
+      ddayOrdered(events, today: DateTime(2026, 6, 1));
+      expect(events.map((DkEvent e) => e.id).toList(), <String>['b', 'a']);
+    });
+  });
 }

@@ -16,7 +16,11 @@ void main() {
           ),
           child: Align(
             alignment: Alignment.bottomCenter,
-            child: DkTabBar(active: DkTab.today, onChanged: (_) {}),
+            child: DkTabBar(
+              active: DkTab.today,
+              onChanged: (_) {},
+              onAdd: () {},
+            ),
           ),
         ),
       ),
@@ -38,5 +42,25 @@ void main() {
 
     // max(22, 10 + 8) = 22 → 높이 변화 없음.
     expect(tinyInset, noInset);
+  });
+
+  testWidgets('가운데 + 버튼 탭은 onAdd를 호출한다', (WidgetTester tester) async {
+    bool added = false;
+    await tester.pumpWidget(
+      wrapForTest(
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: DkTabBar(
+            active: DkTab.today,
+            onChanged: (_) {},
+            onAdd: () => added = true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey<String>('tabbar-add')));
+    await tester.pump();
+    expect(added, true);
   });
 }

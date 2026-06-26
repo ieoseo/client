@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../data/format.dart';
 import '../../data/models.dart';
 
 /// 오늘 탭의 파생 통계(불변). 프로토타입 `TodayScreen`의 계산부를 추출한다.
@@ -35,6 +36,34 @@ class TodayStats {
 
   /// 아젠다 순서: 미완료(다음 먼저) → 완료.
   final List<DkTask> agenda;
+}
+
+/// D-Day 정렬키: 가장 가까운 미래 시점(목표일·시작·마감)까지 남은 일수.
+/// 미래 일정이 작은 값으로 먼저 오고, 모두 지난 일정은 큰 값으로 뒤로 보낸다.
+int _ddayKey(DkEvent ev, DateTime today) {
+  final List<int> marks = <int>[
+    if (ev.date != null) daysBetween(today, ev.date!),
+    if (ev.start != null) daysBetween(today, ev.start!),
+    if (ev.end != null) daysBetween(today, ev.end!),
+  ];
+  if (marks.isEmpty) return 1 << 30;
+  final List<int> future = marks.where((int d) => d >= 0).toList()..sort();
+  if (future.isNotEmpty) return future.first; // 가장 임박한 미래
+  // 전부 과거면 뒤로 — 가장 최근 과거가 그나마 앞.
+  marks.sort();
+  return (1 << 29) - marks.last;
+}
+
+/// 이벤트를 D-Day 임박순으로 정렬한다(고정 pin 먼저, 그다음 임박한 순).
+/// 원본은 변형하지 않고 새 리스트를 반환한다.
+List<DkEvent> ddayOrdered(List<DkEvent> events, {DateTime? today}) {
+  final DateTime t = today ?? kToday;
+  final List<DkEvent> ordered = <DkEvent>[...events];
+  ordered.sort((DkEvent a, DkEvent b) {
+    if (a.pinned != b.pinned) return a.pinned ? -1 : 1;
+    return _ddayKey(a, t).compareTo(_ddayKey(b, t));
+  });
+  return ordered;
 }
 
 /// [tasks] 중 [today] 날짜의 할 일로 통계를 계산한다.
