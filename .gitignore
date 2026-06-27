@@ -53,6 +53,8 @@ app.*.map.json
 !.env.json.example
 *.local
 *.key
+# CI(Fastfile)가 dart-define 값을 임시로 쓰는 파일 — 시크릿 포함, 커밋 금지(빌드 후 삭제됨)
+ios/dart-define.prod.json
 *.pem
 *.p12
 *.keystore

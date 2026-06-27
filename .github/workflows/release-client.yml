@@ -11,8 +11,9 @@
 # 필요한 repo secrets(Settings → Secrets and variables → Actions):
 #   ANDROID_KEYSTORE_BASE64   = base64 < ieoseo-upload.jks
 #   ANDROID_KEYSTORE_PASSWORD = 키스토어 비밀번호(=키 비밀번호)
-#   ANDROID_KEY_ALIAS         = upload
 #   PLAY_SERVICE_ACCOUNT_JSON = Google Play Console 서비스 계정 JSON(전체 내용)
+# 참고: 키 alias 는 비밀이 아니라 고정값 `upload` 라 secret 이 아니라 아래 env 리터럴로 둔다
+#   (secret 으로 두면 흔한 단어 "upload" 가 로그 곳곳에서 과도 마스킹된다).
 #   SUPABASE_URL / SUPABASE_ANON_KEY / API_BASE_URL = 운영 dart-define 주입값(필수)
 name: release-client
 
@@ -27,7 +28,7 @@ jobs:
       HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
       HAS_PLAY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       # 운영 dart-define 값이 비어 있으면 잘못된 서버를 가리키는 AAB 가 만들어져
       # Play 에 그대로 올라갈 수 있다. 빌드 전에 빠르게 실패시켜 오배포를 막는다.
@@ -46,7 +47,7 @@ jobs:
             exit 1
           fi
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: "3.44.0"
           channel: stable
@@ -60,7 +61,7 @@ jobs:
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_ALIAS: upload # 비밀 아님(고정 alias) — secret 과도 마스킹 회피
         run: |
           echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/ieoseo-upload.jks"
           cat > android/key.properties <<EOF
@@ -94,7 +95,7 @@ jobs:
       # Play 내부테스트 업로드 — 서비스 계정 secret 있을 때만.
       - name: Upload to Google Play (internal)
         if: ${{ env.HAS_PLAY == 'true' }}
-        uses: r0adkll/upload-google-play@v1
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: app.ieoseo
