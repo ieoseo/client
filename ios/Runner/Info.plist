@@ -7,6 +7,11 @@
 	     "route generator 없음"으로 크래시하는 것을 막는다(ADR-0014). -->
 	<key>FlutterDeepLinkingEnabled</key>
 	<false/>
+	<!-- 앱은 HTTPS/TLS·표준 알고리즘만 사용(비면제 암호화 없음) → 수출 규정 면제.
+	     이 키가 false 면 App Store Connect 의 수출 규정 준수 질문을 매 업로드마다 자동 처리해
+	     CI 무인 업로드(deploy-ios.yml)가 멈추지 않는다. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
