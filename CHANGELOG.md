@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/ieoseo/client/compare/ieoseo-client-v0.9.0...ieoseo-client-v0.9.1) (2026-06-27)
+
+
+### Bug Fixes
+
+* 프로필 도구 섹션 헤더 표시와 연동 해제 버튼/팝업 개선 ([#137](https://github.com/ieoseo/client/issues/137)) ([6391976](https://github.com/ieoseo/client/commit/639197689b3530e39c2dd2a77aac3471b540f5c4))
+
 ## [0.9.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.8.0...ieoseo-client-v0.9.0) (2026-06-27)
 
 
