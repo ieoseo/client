@@ -19,15 +19,30 @@ const Set<String> kBrandKeys = <String>{
 ///
 /// [brand] 는 `kBrandKeys`(google/kakao/apple). 알 수 없는 키면 빈 위젯을 반환한다.
 class DkBrandMark extends StatelessWidget {
-  const DkBrandMark({super.key, required this.brand, this.size = 36});
+  const DkBrandMark({
+    super.key,
+    required this.brand,
+    this.size = 36,
+    this.framed = true,
+    this.glyphColor,
+  });
 
   final String brand;
   final double size;
+
+  /// true(기본)면 배경 박스/테두리로 감싼 마크(목록·카드용). false 면 글리프만 직접
+  /// 렌더(로그인 버튼처럼 이미 배경색이 있는 곳 — 박스가 겹쳐 "테두리"처럼 보이는 것 방지).
+  final bool framed;
+
+  /// 단색 글리프(apple·kakao) 틴트색. framed:false 에서 버튼 전경색을 넘긴다.
+  /// google 은 멀티컬러라 무시한다. null 이면 검정.
+  final Color? glyphColor;
 
   @override
   Widget build(BuildContext context) {
     final DkTokens t = DkTheme.of(context);
     final double radius = size * 0.3;
+    if (!framed) return _bareGlyph();
     switch (brand) {
       case 'google':
         // 멀티컬러 로고 → 밝은 배경 + 얇은 테두리로 가시성 확보.
@@ -94,6 +109,37 @@ class DkBrandMark extends StatelessWidget {
             height: size,
             fit: BoxFit.cover,
           ),
+        );
+      default:
+        return SizedBox(width: size, height: size);
+    }
+  }
+
+  /// 박스 없이 글리프만(로그인 버튼용). 버튼 배경이 이미 있으므로 박스/테두리를 두지 않는다.
+  Widget _bareGlyph() {
+    final Color tint = glyphColor ?? const Color(0xFF000000);
+    switch (brand) {
+      case 'google':
+        // 멀티컬러 → 틴트 없이 원본 G.
+        return SvgPicture.asset(
+          'assets/provider/google.svg',
+          width: size,
+          height: size,
+        );
+      case 'apple':
+        return SvgPicture.asset(
+          'assets/provider/apple.svg',
+          width: size,
+          height: size,
+          colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
+        );
+      case 'kakao':
+        // 노란 버튼 위 검정 말풍선(브랜드 가이드) — 박스 없는 심볼만.
+        return SvgPicture.asset(
+          'assets/provider/kakao_symbol.svg',
+          width: size,
+          height: size,
+          colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
         );
       default:
         return SizedBox(width: size, height: size);
