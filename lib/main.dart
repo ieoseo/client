@@ -48,8 +48,16 @@ Future<void> main() async {
     );
   }
   // anonKey: 레거시 anon(public) 키 사용. publishable 키로 전환 시 교체.
-  // ignore: deprecated_member_use
-  await Supabase.initialize(url: supa.url, anonKey: supa.anonKey);
+  // authFlowType: PKCE 를 명시해 OAuth code 가로채기 방어를 의도로 고정한다(S5).
+  // supabase_flutter v2 기본값도 PKCE 지만, 명시로 회귀를 막는다.
+  await Supabase.initialize(
+    url: supa.url,
+    // ignore: deprecated_member_use
+    anonKey: supa.anonKey,
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+    ),
+  );
 
   final SentryConfig sentry = SentryConfig.fromEnvironment();
   if (!sentry.isEnabled) {

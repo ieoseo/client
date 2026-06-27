@@ -36,8 +36,11 @@ class SettingsController extends ChangeNotifier {
       _loaded = true;
     } on ApiException catch (e) {
       _error = e.message;
-    } catch (_) {
+    } catch (e, stack) {
+      // 원본 예외·스택을 삼키지 않고 남긴다(C4).
       _error = '설정을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+      debugPrint('SettingsController.load 실패: $e');
+      debugPrint('$stack');
     } finally {
       _loading = false;
       notifyListeners();

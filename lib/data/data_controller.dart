@@ -50,8 +50,11 @@ class DataController extends ChangeNotifier {
       _debts = results[2] as List<DkDebt>;
     } on ApiException catch (e) {
       _error = e.message;
-    } catch (_) {
+    } catch (e, stack) {
+      // 원본 예외·스택을 삼키지 않고 남긴다(C4) — 사용자엔 친화 메시지만 노출.
       _error = '데이터를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+      debugPrint('DataController.load 실패: $e');
+      debugPrint('$stack');
     } finally {
       _loading = false;
       notifyListeners();

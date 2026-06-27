@@ -37,10 +37,13 @@ class NotifController extends ChangeNotifier {
       _error = e.message;
       _items = const <DkNotif>[];
       _unreadCount = 0;
-    } catch (_) {
+    } catch (e, stack) {
+      // 원본 예외·스택을 삼키지 않고 남긴다(C4).
       _error = '알림을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
       _items = const <DkNotif>[];
       _unreadCount = 0;
+      debugPrint('NotifController.load 실패: $e');
+      debugPrint('$stack');
     } finally {
       _loading = false;
       notifyListeners();
