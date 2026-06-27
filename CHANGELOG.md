@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.8.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.7.0...ieoseo-client-v0.8.0) (2026-06-27)
+
+
+### Features
+
+* iOS Apple 로그인 네이티브 처리 ([#116](https://github.com/ieoseo/client/issues/116)) ([2e24ba6](https://github.com/ieoseo/client/commit/2e24ba6bb93a965709617621e3ac12b71f9f4b48)), closes [#115](https://github.com/ieoseo/client/issues/115)
+
+
+### Bug Fixes
+
+* 긴 휴식 설정·외부 URL 검증·릴리스 난독화·ATS(F4·S2·S7·S8) ([#114](https://github.com/ieoseo/client/issues/114)) ([fc35ed7](https://github.com/ieoseo/client/commit/fc35ed78272cd562fb7465071c44fa561fc84ce9))
+* 인증 흐름 조용한 실패 보강(C1·C3) ([#111](https://github.com/ieoseo/client/issues/111)) ([7abff44](https://github.com/ieoseo/client/commit/7abff44139d5186bbc24bb5abc7f3d274a8ab22f))
+* 주간 리뷰 단위·미룬시간 롤백·목 상수 차단(F10·F6·F11·F12) ([#113](https://github.com/ieoseo/client/issues/113)) ([8ec98cc](https://github.com/ieoseo/client/commit/8ec98cc8ee93e9c4a61e5b242867c7abc3bb9210))
+* 컨트롤러 예외 관측성·PKCE 명시(C4·S5) ([#112](https://github.com/ieoseo/client/issues/112)) ([7c22b71](https://github.com/ieoseo/client/commit/7c22b717f7c1b7c2a96364c9c602f3608b1af618))
+
 ## [0.7.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.6.1...ieoseo-client-v0.7.0) (2026-06-26)
 
 
