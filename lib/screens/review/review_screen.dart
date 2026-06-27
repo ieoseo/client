@@ -184,11 +184,11 @@ class ReviewScreen extends StatelessWidget {
                   Expanded(
                     child: Column(
                       children: <Widget>[
-                        _heroRow(t, '계획', review.planned, t.onInk),
+                        _heroRow(t, '계획', review.planned, t.onInk, '개'),
                         const SizedBox(height: 10),
-                        _heroRow(t, '완료', review.done, white),
+                        _heroRow(t, '완료', review.done, white, '개'),
                         const SizedBox(height: 10),
-                        _heroRow(t, '밀린 시간', review.carried, t.warningFg),
+                        _heroRow(t, '밀린 시간', review.carried, t.warningFg, '시간'),
                       ],
                     ),
                   ),
@@ -201,7 +201,13 @@ class ReviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _heroRow(DkTokens t, String label, int value, Color color) {
+  Widget _heroRow(
+    DkTokens t,
+    String label,
+    int value,
+    Color color,
+    String unit,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
@@ -227,7 +233,7 @@ class ReviewScreen extends StatelessWidget {
             children: <InlineSpan>[
               TextSpan(text: '$value'),
               TextSpan(
-                text: '시간',
+                text: unit,
                 style: TextStyle(fontSize: 12, color: t.onInkMuted),
               ),
             ],
