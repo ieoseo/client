@@ -1,0 +1,80 @@
+# iOS 빌드·TestFlight 업로드 (deploy-ios.yml 에서 호출).
+# CI 자동 서명은 Apple 계정 로그인을 요구해 실패하므로(No Accounts), 수동 서명으로 처리한다:
+#   ASC API 키로 App Store 프로파일을 받아(sigh) 수동 서명 설정 → flutter build ipa → upload.
+# 경로는 GITHUB_WORKSPACE(레포 루트=client) 기준 절대경로로 고정해 cwd 혼선을 막는다.
+
+default_platform(:ios)
+
+WORKSPACE = ENV["GITHUB_WORKSPACE"] || File.expand_path("../..", __dir__)
+TEAM_ID = "5NQ7K88XN8"
+BUNDLE_ID = "app.ieoseo"
+
+platform :ios do
+  desc "Build release IPA and upload to TestFlight"
+  lane :beta do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: ENV.fetch("ASC_API_KEY_PATH"),
+    )
+
+    # App Store 프로비저닝 프로파일 다운로드/생성(없으면 생성) + keychain 의 배포 인증서와 페어링.
+    get_provisioning_profile(
+      app_identifier: BUNDLE_ID,
+      api_key: api_key,
+      readonly: false,
+    )
+    profile_name = lane_context[SharedValues::SIGH_NAME]
+
+    # 자동 서명 → 수동 서명 전환(계정 없이 서명 가능하게).
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "#{WORKSPACE}/ios/Runner.xcodeproj",
+      team_id: TEAM_ID,
+      code_sign_identity: "Apple Distribution",
+      profile_name: profile_name,
+      bundle_identifier: BUNDLE_ID,
+      targets: ["Runner"],
+    )
+
+    # flutter build ipa 가 쓸 ExportOptions(수동 서명) 생성.
+    File.write("#{WORKSPACE}/ios/ExportOptions.plist", <<~PLIST)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+      	<key>method</key>
+      	<string>app-store</string>
+      	<key>teamID</key>
+      	<string>#{TEAM_ID}</string>
+      	<key>signingStyle</key>
+      	<string>manual</string>
+      	<key>uploadSymbols</key>
+      	<true/>
+      	<key>provisioningProfiles</key>
+      	<dict>
+      		<key>#{BUNDLE_ID}</key>
+      		<string>#{profile_name}</string>
+      	</dict>
+      </dict>
+      </plist>
+    PLIST
+
+    sh(
+      "cd #{WORKSPACE} && flutter build ipa --release " \
+      "--export-options-plist=ios/ExportOptions.plist " \
+      "--dart-define=SUPABASE_URL=#{ENV.fetch('SUPABASE_URL')} " \
+      "--dart-define=SUPABASE_ANON_KEY=#{ENV.fetch('SUPABASE_ANON_KEY')} " \
+      "--dart-define=API_BASE_URL=#{ENV.fetch('API_BASE_URL')}"
+    )
+
+    ipa = Dir.glob("#{WORKSPACE}/build/ios/ipa/*.ipa").first
+    UI.user_error!("빌드된 .ipa 를 찾지 못했어요") if ipa.nil?
+
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: ipa,
+      skip_waiting_for_build_processing: true,
+    )
+  end
+end
