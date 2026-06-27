@@ -60,6 +60,8 @@ void main() {
     expect(find.text('연속 달성'), findsOneWidget);
     // 이번 주 돌아보기는 통계 탭으로 이동 → 프로필엔 없음. 도구의 '뽀모도로' 진입점이 있다.
     expect(find.text('이번 주 돌아보기'), findsNothing);
+    // 도구 섹션 헤더 라벨이 보여 카드가 어느 섹션인지 드러난다.
+    expect(find.text('도구'), findsOneWidget);
     expect(find.text('뽀모도로'), findsOneWidget);
     expect(find.text('다크 모드'), findsOneWidget);
     // 버전은 빌드 메타에서 읽으므로(하드코딩 제거) 테스트 환경에선 fallback "이어서".
@@ -198,7 +200,6 @@ void main() {
         onToggleDark: (_) {},
         settings: const DkSettings(autoCarry: true),
         onSaveSettings: (DkSettings s) => saved = s,
-        onOpenCalc: () {},
         onOpenCalendar: () {},
         onStub: () {},
         onLogout: () {},
@@ -225,7 +226,6 @@ void main() {
         onToggleDark: (_) {},
         settings: _settings,
         onSaveSettings: (_) {},
-        onOpenCalc: () {},
         onOpenCalendar: () {},
         onStub: () {},
         onLogout: () {},
