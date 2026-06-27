@@ -26,6 +26,13 @@ jobs:
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git rev-list 로 빌드번호(커밋 수)를 뽑으려면 전체 이력 필요
+
+      # iOS CFBundleVersion(빌드번호)는 App Store 에서 단조 증가·고유해야 한다.
+      # 커밋 수를 빌드번호로 쓰면 매 커밋마다 증가해 중복 업로드를 막는다.
+      - name: Compute build number
+        run: echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> "$GITHUB_ENV"
 
       # 운영 dart-define + 서명 secret 이 하나라도 비면 빠르게 실패시켜 오배포를 막는다.
       - name: Verify required secrets
@@ -65,34 +72,25 @@ jobs:
           p12-file-base64: ${{ secrets.APPLE_DIST_CERT_P12 }}
           p12-password: ${{ secrets.APPLE_DIST_CERT_PASSWORD }}
 
-      # App Store Connect API 키를 xcodebuild/altool 가 자동 탐색하는 위치에 둔다.
-      # -allowProvisioningUpdates(자동 서명)와 altool 업로드 인증에 함께 쓰인다.
+      # ASC API 키 .p8 를 파일로 풀고 경로를 다음 스텝에 넘긴다(fastlane app_store_connect_api_key 용).
       - name: Place App Store Connect API key
         env:
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
         run: |
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$ASC_API_KEY_P8" | base64 --decode \
-            > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          echo "$ASC_API_KEY_P8" | base64 --decode > "$KEY_PATH"
+          echo "ASC_API_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
 
-      # 운영 설정은 코드에 하드코딩하지 않는다(ADR-0014) — prod 값을 dart-define 으로 주입.
-      - name: Build release IPA
+      # 빌드 + TestFlight 업로드(fastlane). CI 자동 서명은 계정을 요구해 실패하므로
+      # 수동 서명(프로파일은 API 키로 sigh 자동 발급)으로 처리한다 → ios/fastlane/Fastfile.
+      - name: Build & upload to TestFlight (fastlane)
+        working-directory: ios
         env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
-        run: |
-          flutter build ipa --release \
-            --export-options-plist=ios/ExportOptions.plist \
-            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
-            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
-            --dart-define=API_BASE_URL="$API_BASE_URL"
-
-      # TestFlight 업로드 — API 키(~/.appstoreconnect/private_keys)로 인증.
-      - name: Upload to TestFlight
-        run: |
-          IPA="$(ls build/ios/ipa/*.ipa | head -1)"
-          echo "Uploading: $IPA"
-          xcrun altool --upload-app --type ios \
-            -f "$IPA" \
-            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
+        run: fastlane beta
