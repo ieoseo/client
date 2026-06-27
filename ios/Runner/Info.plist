@@ -90,5 +90,12 @@
 			</array>
 		</dict>
 	</array>
+	<!-- App Transport Security: arbitrary load 를 명시적으로 금지(HTTPS 강제, S8).
+	     기본값도 안전하지만 의도를 고정해 향후 http 허용 실수를 막는다. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
 </dict>
 </plist>

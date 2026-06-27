@@ -73,8 +73,12 @@ jobs:
       # 운영 설정은 코드에 하드코딩하지 않는다(ADR-0014) — 미주입 시 main 가드가
       # 스플래시 전에 던져 부팅이 멈춘다. prod 값을 dart-define 으로 주입한다.
       - name: Build release AAB
+        # --obfuscate + --split-debug-info: Dart 심볼을 난독화하고 디버그 심볼을 분리한다(S7).
+        # split-debug-info 산출물은 크래시 심볼화 전용이라 업로드/커밋하지 않는다.
         run: |
           flutter build appbundle --release \
+            --obfuscate \
+            --split-debug-info=build/debug-info \
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
             --dart-define=API_BASE_URL="$API_BASE_URL"
