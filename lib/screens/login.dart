@@ -191,7 +191,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Center(
                   child: isBusy
                       ? _SocialSpinner(color: s.fg)
-                      : DkBrandMark(brand: s.brand, size: 20),
+                      // 버튼 배경 위에 글리프만(박스/테두리 없이) — 무신사식 자연스러운 배치.
+                      // 단색 글리프(apple·kakao)는 버튼 전경색으로 틴트, google 은 멀티컬러.
+                      : DkBrandMark(
+                          brand: s.brand,
+                          size: 22,
+                          framed: false,
+                          glyphColor: s.fg,
+                        ),
                 ),
               ),
             ],
