@@ -125,12 +125,24 @@ class AuthController extends ChangeNotifier {
       await _provisionAndAuthenticate();
     } on ApiException {
       // 복귀 직후 me 실패 — 미인증 유지(화면이 재시도).
+    } catch (e, stack) {
+      // ApiException 이 아닌 예외(네트워크 raw·파싱 등)도 흡수한다 — 그렇지 않으면
+      // onSignedIn 스트림 리스너 밖으로 전파돼 구독이 끊기고, 이후 복귀 이벤트가
+      // 전부 무시된다. 미인증 유지는 _provisionAndAuthenticate 의 finally 가 보장한다.
+      debugPrint('OAuth 복귀 provisioning 실패(흡수): $e');
+      debugPrint('$stack');
     }
   }
 
   /// 사용자 갱신(연동 추가 등) 통지 시 최신 identity 를 로컬에 반영하고 알린다.
   Future<void> _onUserUpdated() async {
-    await _gateway.reloadUser();
+    try {
+      await _gateway.reloadUser();
+    } catch (e, stack) {
+      // reloadUser 실패가 onUserUpdated 구독을 끊지 않게 흡수한다(다음 갱신 이벤트 보존).
+      debugPrint('사용자 갱신(reloadUser) 실패(흡수): $e');
+      debugPrint('$stack');
+    }
     notifyListeners();
   }
 

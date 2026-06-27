@@ -2,6 +2,7 @@ import 'package:ieoseo/data/api/api_client.dart';
 import 'package:ieoseo/data/api/api_config.dart';
 import 'package:ieoseo/data/api/api_exception.dart';
 import 'package:ieoseo/data/api/auth_api.dart';
+import 'package:ieoseo/data/api/auth_dto.dart';
 import 'package:ieoseo/data/auth/auth_controller.dart';
 import 'package:ieoseo/data/auth/social_auth.dart';
 import 'package:dio/dio.dart';
@@ -126,6 +127,35 @@ void main() {
       );
       expect(c.controller.status, isNot(AuthStatus.authenticated));
     });
+
+    test(
+      '복귀 후 provisioning 이 ApiException 이 아닌 예외로 실패해도 흡수(C1, 구독 유지)',
+      () async {
+        // /auth/me 가 ApiException 이 아닌 예외(파싱/네트워크 raw 등)를 던지는 상황.
+        // 좁은 catch 면 onSignedIn 리스너 밖으로 전파돼 구독이 끊긴다 → 광범위 흡수해야 한다.
+        final FakeSupabaseGateway gateway = FakeSupabaseGateway();
+        final Dio dio = Dio(
+          BaseOptions(baseUrl: apiBaseUrl, validateStatus: (int? _) => true),
+        );
+        final ApiClient client = ApiClient(
+          dio: dio,
+          accessTokenReader: () async => gateway.accessToken,
+          tokenRefresher: gateway.refreshAccessToken,
+        );
+        final AuthController controller = AuthController(
+          gateway: gateway,
+          api: _ThrowingMeApi(client),
+          client: client,
+        );
+
+        await controller.oauthSignIn(SocialProvider.google);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        // 예외가 흡수되어 미인증 유지 + provisioning 해제(게이트가 멈추지 않음).
+        expect(controller.status, isNot(AuthStatus.authenticated));
+        expect(controller.isAuthenticating, isFalse);
+      },
+    );
 
     test('복귀 후 server me 401 → 미인증 유지(예외는 화면이 아닌 내부에서 흡수)', () async {
       final c = buildController();
@@ -309,5 +339,32 @@ void main() {
       expect(gateway.reloadCalled, isTrue);
       expect(notified, greaterThan(0));
     });
+
+    test('연동 갱신 중 reloadUser 가 실패해도 구독 유지·알림(C3)', () async {
+      // reloadUser 가 던지면 좁은 흡수론 onUserUpdated 리스너 밖으로 전파돼 구독이 끊긴다.
+      // 컨트롤러가 흡수하고 그래도 notifyListeners 해야 한다(UI 갱신 보장).
+      final FakeSupabaseGateway gateway = FakeSupabaseGateway(
+        accessToken: 'x',
+        linkedProviders: <String>{'email'},
+        reloadError: Exception('network down'),
+      );
+      final AuthController controller = AuthController(gateway: gateway);
+      int notified = 0;
+      controller.addListener(() => notified++);
+
+      await controller.linkAccount(SocialProvider.google);
+      await Future<void>.delayed(Duration.zero); // onUserUpdated 리스너 실행 대기
+
+      expect(gateway.reloadCalled, isTrue);
+      expect(notified, greaterThan(0)); // reloadUser 실패해도 알림은 발생
+    });
   });
+}
+
+/// C1 검증용: `me()` 가 ApiException 이 아닌 예외를 던지는 [AuthApi].
+class _ThrowingMeApi extends AuthApi {
+  _ThrowingMeApi(super.client);
+
+  @override
+  Future<AuthUser> me() async => throw StateError('non-ApiException boom');
 }
