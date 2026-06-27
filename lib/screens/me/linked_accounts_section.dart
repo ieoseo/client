@@ -4,6 +4,7 @@ import '../../data/auth/social_auth.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_brand_mark.dart';
 import '../../widgets/dk_button.dart';
+import 'settings_dialogs.dart';
 
 /// 나 탭 '연동 계정' 섹션(이슈 #10, ADR-0014).
 ///
@@ -26,10 +27,11 @@ class LinkedAccountsSection extends StatefulWidget {
   final Future<void> Function(SocialProvider provider) onLink;
   final Future<void> Function(SocialProvider provider) onUnlink;
 
-  /// 관리 가능한 소셜 provider(Apple 은 후속이라 제외).
+  /// 관리 가능한 소셜 provider(카카오·Google·Apple).
   static const List<SocialProvider> manageable = <SocialProvider>[
     SocialProvider.google,
     SocialProvider.kakao,
+    SocialProvider.apple,
   ];
 
   @override
@@ -45,6 +47,14 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
 
   /// 마지막 남은 identity 면 해제 불가(계정 잠금 방지).
   bool get _canUnlinkAny => widget.linkedProviders.length > 1;
+
+  /// 해제는 확인 시트를 거친 뒤에만 실제로 진행한다(실수 방지).
+  Future<void> _confirmAndUnlink(SocialProvider provider) async {
+    if (_busy != null) return;
+    final bool ok = await confirmUnlinkAccount(context, _brand(provider));
+    if (!ok || !mounted) return;
+    await _run(provider, widget.onUnlink);
+  }
 
   Future<void> _run(
     SocialProvider provider,
@@ -135,7 +145,7 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
           ? DkButton(
               size: DkButtonSize.sm,
               variant: DkButtonVariant.outline,
-              onPressed: () => _run(p, widget.onUnlink),
+              onPressed: () => _confirmAndUnlink(p),
               child: const Text('연결 해제'),
             )
           : _statusChip(t, '연결됨');
