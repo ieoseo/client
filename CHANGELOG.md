@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.9.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.8.0...ieoseo-client-v0.9.0) (2026-06-27)
+
+
+### Features
+
+* 신규 가입 닉네임 설정 화면 + 랜덤 닉네임 제안 ([#130](https://github.com/ieoseo/client/issues/130)) ([8b97044](https://github.com/ieoseo/client/commit/8b97044993b6f028766c968fa8f74c561ae7d990))
+* 연동 계정에 Apple 추가 + 해제 확인 시트 ([#128](https://github.com/ieoseo/client/issues/128)) ([8c7f6d4](https://github.com/ieoseo/client/commit/8c7f6d464dfff7134cc3b43305307f16108fd88e))
+* 연동 해제 확인을 중앙 Alert(취소/확인)로 변경 ([#132](https://github.com/ieoseo/client/issues/132)) ([81adb7f](https://github.com/ieoseo/client/commit/81adb7f91bea309d90b92d193c36c38cf6baf985))
+* 하단 네비 IA 재구성(홈·플랜·통계·프로필) + 집중→프로필 도구 뽀모도로 ([#133](https://github.com/ieoseo/client/issues/133)) ([babc178](https://github.com/ieoseo/client/commit/babc178b1016b61a0dd63079514c640e6af3d5b1))
+
+
+### Bug Fixes
+
+* iOS Sign in with Apple entitlement 빌드 배선 ([#124](https://github.com/ieoseo/client/issues/124)) ([9c8a34e](https://github.com/ieoseo/client/commit/9c8a34e76615916c635001d80a8403f35e7cd42c))
+* iOS 바텀시트 하단 잘림(홈 인디케이터) 해결 ([#131](https://github.com/ieoseo/client/issues/131)) ([71b63ed](https://github.com/ieoseo/client/commit/71b63edde52b71b07f8e91257a31a8a230170e20))
+* 로그인 버튼 소셜 아이콘을 박스 없이 글리프만 표시 ([#129](https://github.com/ieoseo/client/issues/129)) ([a9a13cf](https://github.com/ieoseo/client/commit/a9a13cffebe9c2dee3d5eab48184384288e5906f))
+
 ## [0.8.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.7.0...ieoseo-client-v0.8.0) (2026-06-27)
 
 
