@@ -33,6 +33,9 @@ import 'sheets/notif_sheet.dart';
 import 'sheets/task_sheet.dart';
 import 'today/today_screen.dart';
 
+/// 캘린더 OAuth 동의 화면 실행을 허용하는 host(S2). 서버가 준 URL 이라도 이 집합 밖이면 거부한다.
+const Set<String> kAllowedCalendarAuthHosts = <String>{'accounts.google.com'};
+
 /// 메인 4탭 셸. 진입 플로우 이후의 컨테이너.
 ///
 /// 탭바·FAB·토스트 + 탭별 실제 화면 배선. events/tasks/debts 데이터·쓰기는
@@ -339,8 +342,17 @@ class _MainScaffoldState extends State<MainScaffold>
   Future<void> _connectCalendar(DkSource source) async {
     try {
       final String url = await _c.repository.googleCalendarConnectUrl();
+      // 서버 응답 URL 이라도 외부 실행 전 scheme·host 를 검증한다(침해/MITM 시 비-https
+      // 또는 임의 host 로의 실행 방지, S2). 동의 화면은 항상 Google 호스트다.
+      final Uri? parsed = Uri.tryParse(url);
+      if (parsed == null ||
+          parsed.scheme != 'https' ||
+          !kAllowedCalendarAuthHosts.contains(parsed.host)) {
+        _toast('유효하지 않은 연동 URL이에요', icon: 'x', tone: DkTone.danger);
+        return;
+      }
       final bool launched = await launchUrl(
-        Uri.parse(url),
+        parsed,
         mode: LaunchMode.externalApplication,
       );
       if (!launched) {
