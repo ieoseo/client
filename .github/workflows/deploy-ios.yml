@@ -20,7 +20,9 @@ on:
 
 jobs:
   build-and-upload:
-    runs-on: macos-latest
+    # Apple 은 iOS 26 SDK(Xcode 26+)로 빌드한 앱만 업로드 허용(2026-06-15~). macos-latest
+    # 가 아직 Xcode 16(iOS 18 SDK) 이미지라 409(SDK version) 가 나므로 macos-26 으로 고정.
+    runs-on: macos-26
     env:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
