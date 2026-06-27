@@ -103,8 +103,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1600));
     await tester.pumpAndSettle();
 
-    // main 탭바(오늘 탭)가 보이고 인증 화면은 없다.
+    // main 탭바(홈 탭)가 보이고 인증 화면은 없다.
     expect(find.text('오늘을 이어서,\n매일을 끝까지'), findsNothing);
-    expect(find.text('오늘'), findsWidgets);
+    expect(find.text('홈'), findsWidgets);
   });
 }

@@ -18,12 +18,14 @@ class ReviewScreen extends StatelessWidget {
     super.key,
     required this.review,
     required this.streak,
-    required this.onBack,
+    this.onBack,
   });
 
   final DkWeekReview review;
   final int streak;
-  final VoidCallback onBack;
+
+  /// 서브화면으로 열릴 때 뒤로가기. 통계 탭(최상위)으로 쓰일 땐 null → 뒤로가기 미표시.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -74,20 +76,22 @@ class ReviewScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 58, 16, 8),
       child: Row(
         children: <Widget>[
-          GestureDetector(
-            onTap: onBack,
-            child: Container(
-              width: 44,
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: t.bgPress,
-                borderRadius: BorderRadius.circular(12),
+          if (onBack != null) ...<Widget>[
+            GestureDetector(
+              onTap: onBack,
+              child: Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: t.bgPress,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: DkIcon('chevL', size: 22, color: t.fg),
               ),
-              child: DkIcon('chevL', size: 22, color: t.fg),
             ),
-          ),
-          const SizedBox(width: 8),
+            const SizedBox(width: 8),
+          ],
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
