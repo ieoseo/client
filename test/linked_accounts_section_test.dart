@@ -4,9 +4,9 @@ import 'package:ieoseo/screens/me/linked_accounts_section.dart';
 
 import 'support/harness.dart';
 
-/// LinkedAccountsSection 위젯 테스트(이슈 #10).
+/// LinkedAccountsSection 위젯 테스트(이슈 #10, Apple 추가 + 해제 확인).
 void main() {
-  testWidgets('연동 목록과 Google·카카오 행을 보여준다', (WidgetTester tester) async {
+  testWidgets('연동 목록과 Google·카카오·Apple 행을 보여준다', (WidgetTester tester) async {
     await tester.pumpWidget(
       wrapForTest(
         LinkedAccountsSection(
@@ -20,48 +20,76 @@ void main() {
     expect(find.text('연동 계정'), findsOneWidget);
     expect(find.text('Google'), findsOneWidget);
     expect(find.text('카카오'), findsOneWidget);
+    expect(find.text('Apple'), findsOneWidget);
     // 이메일 로그인 제거(ADR-0023) → 이메일 행 없음.
     expect(find.text('이메일'), findsNothing);
   });
 
-  testWidgets('미연동 provider 는 "연결" 버튼을 누르면 onLink 호출', (
+  testWidgets('미연동 Apple 은 "연결" 버튼을 누르면 onLink 호출', (
     WidgetTester tester,
   ) async {
     final List<SocialProvider> linked = <SocialProvider>[];
     await tester.pumpWidget(
       wrapForTest(
         LinkedAccountsSection(
-          linkedProviders: const <String>{'email', 'kakao'},
+          // google·kakao 연동(연결됨), apple 만 미연동 → '연결' 버튼은 apple 행 하나.
+          linkedProviders: const <String>{'google', 'kakao'},
           onLink: (SocialProvider p) async => linked.add(p),
           onUnlink: (_) async {},
         ),
       ),
     );
 
-    await tester.tap(find.text('연결')); // google(미연동) 행의 연결 버튼
+    await tester.tap(find.text('연결'));
     await tester.pump();
 
-    expect(linked, <SocialProvider>[SocialProvider.google]);
+    expect(linked, <SocialProvider>[SocialProvider.apple]);
   });
 
-  testWidgets('연동된 provider 는 "연결 해제"를 누르면 onUnlink 호출', (
+  testWidgets('"연결 해제" → 확인 시트에서 "해제하기"를 눌러야 onUnlink 호출', (
     WidgetTester tester,
   ) async {
     final List<SocialProvider> unlinked = <SocialProvider>[];
     await tester.pumpWidget(
       wrapForTest(
         LinkedAccountsSection(
-          linkedProviders: const <String>{'email', 'kakao'},
+          linkedProviders: const <String>{'google', 'kakao'},
           onLink: (_) async {},
           onUnlink: (SocialProvider p) async => unlinked.add(p),
         ),
       ),
     );
 
-    await tester.tap(find.text('연결 해제')); // kakao(연동) 행
-    await tester.pump();
+    // 행의 '연결 해제' 탭 → 확인 시트 등장(아직 onUnlink 미호출).
+    await tester.tap(find.text('연결 해제').first);
+    await tester.pumpAndSettle();
+    expect(unlinked, isEmpty);
 
-    expect(unlinked, <SocialProvider>[SocialProvider.kakao]);
+    // 시트의 '해제하기' 확정 → onUnlink 호출.
+    await tester.tap(find.text('해제하기'));
+    await tester.pumpAndSettle();
+
+    expect(unlinked.length, 1);
+  });
+
+  testWidgets('"연결 해제" 후 "취소" 하면 onUnlink 미호출', (WidgetTester tester) async {
+    final List<SocialProvider> unlinked = <SocialProvider>[];
+    await tester.pumpWidget(
+      wrapForTest(
+        LinkedAccountsSection(
+          linkedProviders: const <String>{'google', 'kakao'},
+          onLink: (_) async {},
+          onUnlink: (SocialProvider p) async => unlinked.add(p),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('연결 해제').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+
+    expect(unlinked, isEmpty);
   });
 
   testWidgets('identity 가 하나뿐이면 해제 버튼을 숨긴다', (WidgetTester tester) async {

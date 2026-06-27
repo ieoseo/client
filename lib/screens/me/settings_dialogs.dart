@@ -185,6 +185,19 @@ Future<void> confirmWithdraw(
   await onConfirm();
 }
 
+/// 소셜 계정 연결 해제 확인(이슈 #10). 확인하면 true, 취소면 false.
+/// 해제는 즉시 Supabase `unlinkIdentity` 로 반영되므로 실수 방지용 확인 단계다.
+Future<bool> confirmUnlinkAccount(BuildContext context, String label) async {
+  final bool? ok = await _showConfirm(
+    context,
+    title: '$label 연결 해제',
+    body: '$label 계정 연결을 해제할까요? 해제 후에는 이 계정으로 로그인할 수 없어요.',
+    confirmLabel: '해제하기',
+    destructive: true,
+  );
+  return ok == true;
+}
+
 // --- 내부 헬퍼 ---
 
 class _Option<T> {
