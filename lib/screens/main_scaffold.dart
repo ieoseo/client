@@ -94,7 +94,7 @@ class MainScaffold extends StatefulWidget {
 }
 
 /// 서브화면(탭 위에 덮어 표시).
-enum _Sub { none, debt, review, calendar }
+enum _Sub { none, debt, focus, calendar }
 
 class _MainScaffoldState extends State<MainScaffold>
     with WidgetsBindingObserver {
@@ -231,7 +231,7 @@ class _MainScaffoldState extends State<MainScaffold>
   void _startFocus(DkTask task) {
     setState(() {
       _linkedTask = task;
-      _tab = DkTab.focus;
+      _sub = _Sub.focus; // 집중은 더 이상 탭이 아니라 서브화면(뽀모도로)
     });
     _toast('집중 타이머에 연결했어요', icon: 'focus', tone: DkTone.primary);
   }
@@ -507,11 +507,21 @@ class _MainScaffoldState extends State<MainScaffold>
             successTone: DkTone.warning,
           ),
         );
-      case _Sub.review:
-        return ReviewScreen(
-          review: _weekReview(),
-          streak: _streakDays(),
-          onBack: () => setState(() => _sub = _Sub.none),
+      case _Sub.focus:
+        return FocusScreen(
+          focusStats: _focusStats(),
+          settings: _s.settings,
+          onSaveSettings: _saveSettings,
+          linkedTask: _linkedTask,
+          unread: _n.unreadCount,
+          onClearTask: () => setState(() => _linkedTask = null),
+          onBell: _openNotif,
+          onCompleteTask: _completeTask,
+          onToast: _toastNamed,
+          onBack: () => setState(() {
+            _sub = _Sub.none;
+            _linkedTask = null;
+          }),
         );
       case _Sub.calendar:
         return CalendarSyncScreen(
@@ -560,18 +570,8 @@ class _MainScaffoldState extends State<MainScaffold>
           onOpenDebt: () => setState(() => _sub = _Sub.debt),
           onBell: _openNotif,
         );
-      case DkTab.focus:
-        return FocusScreen(
-          focusStats: _focusStats(),
-          settings: _s.settings,
-          onSaveSettings: _saveSettings,
-          linkedTask: _linkedTask,
-          unread: unread,
-          onClearTask: () => setState(() => _linkedTask = null),
-          onBell: _openNotif,
-          onCompleteTask: _completeTask,
-          onToast: _toastNamed,
-        );
+      case DkTab.stats:
+        return ReviewScreen(review: _weekReview(), streak: _streakDays());
       case DkTab.me:
         return MeScreen(
           user: widget.user,
@@ -584,7 +584,7 @@ class _MainScaffoldState extends State<MainScaffold>
           onToggleDark: widget.onToggleDark,
           onBell: _openNotif,
           onOpenCalc: _openCalc,
-          onOpenReview: () => setState(() => _sub = _Sub.review),
+          onOpenFocus: () => setState(() => _sub = _Sub.focus),
           onOpenCalendar: _openCalendarSync,
           onStub: () => _toast(kComingSoonMessage, icon: 'sparkle'),
           onLogout: widget.onLogout,

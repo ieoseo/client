@@ -5,8 +5,8 @@ import 'package:flutter/widgets.dart';
 import '../theme/tokens.dart';
 import 'dk_icon.dart';
 
-/// 하단 탭. 프로토타입 `TABS`.
-enum DkTab { today, plan, focus, me }
+/// 하단 탭. 프로토타입 `TABS`. (집중 탭은 프로필 도구로 이동, 통계 탭 신설 — ADR 없이 IA 조정)
+enum DkTab { today, plan, stats, me }
 
 class _TabSpec {
   const _TabSpec(this.tab, this.label, this.icon);
@@ -16,9 +16,9 @@ class _TabSpec {
 }
 
 const List<_TabSpec> _tabs = <_TabSpec>[
-  _TabSpec(DkTab.today, '오늘', 'home'),
+  _TabSpec(DkTab.today, '홈', 'home'),
   _TabSpec(DkTab.plan, '플랜', 'calendar'),
-  _TabSpec(DkTab.focus, '집중', 'focus'),
+  _TabSpec(DkTab.stats, '통계', 'chart'),
   _TabSpec(DkTab.me, '프로필', 'user'),
 ];
 

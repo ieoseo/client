@@ -8,7 +8,7 @@ import 'package:ieoseo/data/models.dart';
 import 'package:ieoseo/data/notif_controller.dart';
 import 'package:ieoseo/data/repository.dart';
 import 'package:ieoseo/data/settings_controller.dart';
-import 'package:ieoseo/screens/focus/focus_screen.dart';
+import 'package:ieoseo/screens/review/review_screen.dart';
 import 'package:ieoseo/screens/main_scaffold.dart';
 import 'package:ieoseo/screens/me/me_screen.dart';
 import 'package:ieoseo/screens/plan/plan_screen.dart';
@@ -83,16 +83,17 @@ void main() {
     expect(find.text('안녕하세요, 지우님'), findsOneWidget);
   });
 
-  testWidgets('탭바로 플랜·집중·프로필로 전환된다', (WidgetTester tester) async {
+  testWidgets('탭바로 플랜·통계·프로필로 전환된다', (WidgetTester tester) async {
     await _pumpTall(tester);
 
     await tester.tap(find.text('플랜'));
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(PlanScreen), findsOneWidget);
 
-    await tester.tap(find.text('집중'));
+    // 집중 탭은 프로필 도구(뽀모도로)로 이동했고, 그 자리에 통계(주간 돌아보기) 탭.
+    await tester.tap(find.text('통계'));
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.byType(FocusScreen), findsOneWidget);
+    expect(find.byType(ReviewScreen), findsOneWidget);
 
     await tester.tap(find.text('프로필'));
     await tester.pump(const Duration(milliseconds: 400));

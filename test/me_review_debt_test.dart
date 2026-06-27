@@ -30,8 +30,10 @@ Future<void> _pumpTall(WidgetTester tester, Widget child) async {
 }
 
 void main() {
-  testWidgets('MeScreen은 프로필·통계·리뷰 진입·설정을 렌더한다', (WidgetTester tester) async {
-    bool reviewOpened = false;
+  testWidgets('MeScreen은 프로필·통계·도구(뽀모도로)·설정을 렌더한다', (
+    WidgetTester tester,
+  ) async {
+    bool focusOpened = false;
     await _pumpTall(
       tester,
       MeScreen(
@@ -44,7 +46,7 @@ void main() {
         onToggleDark: (_) {},
         onBell: () {},
         onOpenCalc: () {},
-        onOpenReview: () => reviewOpened = true,
+        onOpenFocus: () => focusOpened = true,
         onOpenCalendar: () {},
         onStub: () {},
         onLogout: () {},
@@ -56,13 +58,15 @@ void main() {
 
     expect(find.text('지우'), findsOneWidget);
     expect(find.text('연속 달성'), findsOneWidget);
-    expect(find.text('이번 주 돌아보기'), findsOneWidget);
+    // 이번 주 돌아보기는 통계 탭으로 이동 → 프로필엔 없음. 도구의 '뽀모도로' 진입점이 있다.
+    expect(find.text('이번 주 돌아보기'), findsNothing);
+    expect(find.text('뽀모도로'), findsOneWidget);
     expect(find.text('다크 모드'), findsOneWidget);
     // 버전은 빌드 메타에서 읽으므로(하드코딩 제거) 테스트 환경에선 fallback "이어서".
     expect(find.textContaining('이어서'), findsOneWidget);
 
-    await tester.tap(find.text('이번 주 돌아보기'));
-    expect(reviewOpened, true);
+    await tester.tap(find.text('뽀모도로'));
+    expect(focusOpened, true);
   });
 
   testWidgets('MeScreen 헤더 제목은 프로필이다', (WidgetTester tester) async {
@@ -78,7 +82,7 @@ void main() {
         onToggleDark: (_) {},
         onBell: () {},
         onOpenCalc: () {},
-        onOpenReview: () {},
+        onOpenFocus: () {},
         onOpenCalendar: () {},
         onStub: () {},
         onLogout: () {},
@@ -107,7 +111,7 @@ void main() {
         onToggleDark: (_) {},
         onBell: () {},
         onOpenCalc: () {},
-        onOpenReview: () {},
+        onOpenFocus: () {},
         onOpenCalendar: () {},
         onStub: () => stubbed++,
         onLogout: () {},
@@ -139,7 +143,7 @@ void main() {
         onToggleDark: (_) {},
         onBell: () {},
         onOpenCalc: () {},
-        onOpenReview: () {},
+        onOpenFocus: () {},
         onOpenCalendar: () {},
         onStub: () => stubbed++,
         onLogout: () {},
@@ -169,7 +173,7 @@ void main() {
         onToggleDark: (bool v) => toggled = v,
         onBell: () {},
         onOpenCalc: () {},
-        onOpenReview: () {},
+        onOpenFocus: () {},
         onOpenCalendar: () {},
         onStub: () {},
         onLogout: () {},
