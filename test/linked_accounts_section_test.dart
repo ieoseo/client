@@ -92,18 +92,33 @@ void main() {
     expect(unlinked, isEmpty);
   });
 
-  testWidgets('identity 가 하나뿐이면 해제 버튼을 숨긴다', (WidgetTester tester) async {
+  testWidgets('identity 가 하나뿐이어도 "연결 해제" 버튼과 확인 팝업을 보여준다', (
+    WidgetTester tester,
+  ) async {
+    final List<SocialProvider> unlinked = <SocialProvider>[];
     await tester.pumpWidget(
       wrapForTest(
         LinkedAccountsSection(
           linkedProviders: const <String>{'kakao'}, // 단일 identity
           onLink: (_) async {},
-          onUnlink: (_) async {},
+          onUnlink: (SocialProvider p) async => unlinked.add(p),
         ),
       ),
     );
 
-    expect(find.text('연결 해제'), findsNothing);
-    expect(find.text('연결됨'), findsWidgets); // kakao 는 연결됨 칩으로만 표시
+    // 정적 '연결됨' 대신 실제 '연결 해제' 버튼이 보인다.
+    expect(find.text('연결됨'), findsNothing);
+    expect(find.text('연결 해제'), findsOneWidget);
+
+    // 탭하면 확인 Alert 가 뜬다.
+    await tester.tap(find.text('연결 해제'));
+    await tester.pumpAndSettle();
+    expect(find.text('확인'), findsOneWidget);
+
+    // 확인해도 마지막 수단이라 onUnlink 는 호출되지 않고 안내가 뜬다(계정 잠금 방지).
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+    expect(unlinked, isEmpty);
+    expect(find.textContaining('마지막'), findsOneWidget);
   });
 }
