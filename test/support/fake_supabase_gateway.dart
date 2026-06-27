@@ -19,6 +19,7 @@ class FakeSupabaseGateway implements SupabaseAuthGateway {
     this.grantedAccessToken = 'supabase-access',
     this.linkError,
     this.unlinkError,
+    this.reloadError,
     Set<String>? linkedProviders,
     // ignore: prefer_initializing_formals
   }) : _accessToken = accessToken,
@@ -34,6 +35,9 @@ class FakeSupabaseGateway implements SupabaseAuthGateway {
 
   /// 지정하면 [unlinkOAuth] 가 이 예외를 던진다.
   final Object? unlinkError;
+
+  /// 지정하면 [reloadUser] 가 이 예외를 던진다(세션 갱신 실패 시뮬레이션).
+  final Object? reloadError;
 
   /// link/unlink 호출 이력(검증용).
   final List<SocialProvider> linkCalls = <SocialProvider>[];
@@ -121,6 +125,8 @@ class FakeSupabaseGateway implements SupabaseAuthGateway {
   @override
   Future<void> reloadUser() async {
     reloadCalled = true;
+    final Object? err = reloadError;
+    if (err != null) throw err;
   }
 
   /// 테스트 종료 시 스트림 정리(선택).

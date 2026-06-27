@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform;
+    show TargetPlatform, debugPrint, defaultTargetPlatform;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'social_auth.dart';
@@ -177,8 +177,11 @@ class SupabaseAuthGatewayImpl implements SupabaseAuthGateway {
   Future<void> reloadUser() async {
     try {
       await _auth.refreshSession();
-    } on AuthException {
-      // 세션 갱신 실패는 무시(다음 요청 401 처리에 위임).
+    } on Exception catch (e) {
+      // 세션 갱신 실패는 무시(다음 요청 401 처리에 위임). AuthException 뿐 아니라
+      // 네트워크 예외(SocketException·타임아웃 등)까지 흡수해, 호출부(onUserUpdated·
+      // unlinkOAuth)의 스트림 구독이 끊기지 않게 한다.
+      debugPrint('Supabase reloadUser(refreshSession) 실패(흡수): $e');
     }
   }
 }
