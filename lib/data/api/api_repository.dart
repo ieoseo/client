@@ -195,17 +195,28 @@ class ApiRepository implements IeoseoRepository {
   @override
   List<DkExternal> externalEvents() => kExternal;
 
+  // 주간 요약·집중 통계·포모도로·스트릭은 server 엔드포인트도, 조작 가능한 단일 값도 두지
+  // 않는다. 운영 화면은 실데이터에서 파생(main_scaffold `_weekSummary`)하거나 0 으로 둔다.
+  // 직접 호출은 잘못된 사용이므로 명시적으로 실패시킨다(조작 상수 반환 금지, F12).
   @override
-  DkWeekSummary weekSummary() => kWeekSummary;
+  DkWeekSummary weekSummary() => throw UnsupportedError(
+    '주간 요약은 ApiRepository 가 제공하지 않습니다. 로드된 task/debt 에서 파생하세요.',
+  );
 
   @override
-  DkFocusStats focusStats() => kFocusStats;
+  DkFocusStats focusStats() => throw UnsupportedError(
+    '집중 통계는 ApiRepository 가 제공하지 않습니다(server 엔드포인트 없음). 0 으로 두세요.',
+  );
 
   @override
-  DkPomodoro pomodoro() => kPomodoro;
+  DkPomodoro pomodoro() => throw UnsupportedError(
+    '포모도로 설정은 ApiRepository 가 제공하지 않습니다. settings 또는 기본값을 쓰세요.',
+  );
 
   @override
-  int streak() => kStreak;
+  int streak() => throw UnsupportedError(
+    '스트릭은 ApiRepository 가 제공하지 않습니다(이력 없음). 0 으로 두세요.',
+  );
 
   /// 주간 리뷰는 server 엔드포인트도, 조작 가능한 단일 값도 두지 않는다.
   /// 운영 화면은 로드된 실제 task/debt 에서 파생한다(main_scaffold 의 `_weekReview`).

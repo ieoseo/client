@@ -299,7 +299,9 @@ class _DebtScreenState extends State<DebtScreen> {
                 color: t.fgSubtle,
               ),
               children: <InlineSpan>[
-                TextSpan(text: '${fmtMins(d.mins)} · ${d.fromLabel}에서 발생'),
+                TextSpan(
+                  text: '${fmtMins(d.mins)} · ${d.fromLabel ?? '지난 날'}에서 발생',
+                ),
                 if (d.assignedTo != null)
                   TextSpan(
                     text: ' → ${parseYmd(d.assignedTo!).day}일 배정',

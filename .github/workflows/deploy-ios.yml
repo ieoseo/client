@@ -1,0 +1,98 @@
+# 클라이언트(Flutter) release IPA 빌드 → App Store Connect(TestFlight) 업로드.
+# - iOS 릴리스 빌드는 macOS 에서만 가능 → macos 러너 사용(public repo 라 무료).
+# - 서명: 배포 인증서(.p12)를 keychain 에 import 해 재사용 + App Store Connect API 키로
+#   프로비저닝 자동 발급(-allowProvisioningUpdates) 및 업로드. (fastlane match 없이 운영)
+# - dart-define(운영 백엔드 값)이 비면 잘못된 서버를 가리키는 빌드가 되므로 먼저 가드한다.
+#
+# 트리거: 수동 실행 전용(workflow_dispatch). release-please 의 client 태그 머지 후 사람이 실행.
+#
+# 필요한 repo secrets(Settings → Secrets and variables → Actions):
+#   APPLE_DIST_CERT_P12       = base64 < 배포용 .p12 (Apple Distribution 인증서 + 개인키)
+#   APPLE_DIST_CERT_PASSWORD  = .p12 export 시 정한 비밀번호
+#   ASC_API_KEY_P8            = base64 < App Store Connect API 키 .p8
+#   ASC_KEY_ID                = API 키 Key ID
+#   ASC_ISSUER_ID             = API 키 Issuer ID
+#   SUPABASE_URL / SUPABASE_ANON_KEY / API_BASE_URL = 운영 dart-define 주입값(Android 와 공유)
+name: deploy-ios
+
+on:
+  workflow_dispatch: {} # 수동 실행 전용
+
+jobs:
+  build-and-upload:
+    runs-on: macos-latest
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 운영 dart-define + 서명 secret 이 하나라도 비면 빠르게 실패시켜 오배포를 막는다.
+      - name: Verify required secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          APPLE_DIST_CERT_P12: ${{ secrets.APPLE_DIST_CERT_P12 }}
+          APPLE_DIST_CERT_PASSWORD: ${{ secrets.APPLE_DIST_CERT_PASSWORD }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          missing=""
+          for v in SUPABASE_URL SUPABASE_ANON_KEY API_BASE_URL \
+                   APPLE_DIST_CERT_P12 APPLE_DIST_CERT_PASSWORD \
+                   ASC_API_KEY_P8 ASC_KEY_ID ASC_ISSUER_ID; do
+            eval "val=\${$v}"
+            [ -z "$val" ] && missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::필수 secret 누락 →$missing (repo Settings → Secrets 에 등록 후 재실행)"
+            exit 1
+          fi
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.0"
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # 배포 인증서(.p12)를 임시 keychain 에 import — 자동서명이 새 인증서를 만들지 않고
+      # 기존 것을 재사용하게 해(인증서 한도 소모 방지) CI 에서도 결정적으로 서명한다.
+      - name: Import Apple distribution certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.APPLE_DIST_CERT_P12 }}
+          p12-password: ${{ secrets.APPLE_DIST_CERT_PASSWORD }}
+
+      # App Store Connect API 키를 xcodebuild/altool 가 자동 탐색하는 위치에 둔다.
+      # -allowProvisioningUpdates(자동 서명)와 altool 업로드 인증에 함께 쓰인다.
+      - name: Place App Store Connect API key
+        env:
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_API_KEY_P8" | base64 --decode \
+            > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+
+      # 운영 설정은 코드에 하드코딩하지 않는다(ADR-0014) — prod 값을 dart-define 으로 주입.
+      - name: Build release IPA
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          flutter build ipa --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+            --dart-define=API_BASE_URL="$API_BASE_URL"
+
+      # TestFlight 업로드 — API 키(~/.appstoreconnect/private_keys)로 인증.
+      - name: Upload to TestFlight
+        run: |
+          IPA="$(ls build/ios/ipa/*.ipa | head -1)"
+          echo "Uploading: $IPA"
+          xcrun altool --upload-app --type ios \
+            -f "$IPA" \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"

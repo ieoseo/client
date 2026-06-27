@@ -594,15 +594,29 @@ class _PomodoroSettingsSheetState extends State<_PomodoroSettingsSheet> {
           value: '${_s.pomodoroShortBreak} / ${_s.pomodoroLongBreak}분',
           last: false,
           onTap: () async {
+            // 짧은 휴식 → 긴 휴식 2단계로 둘 다 설정한다(종전엔 긴 휴식 변경 경로가 없었다, F4).
             final int? shortMins = await showMinutePicker(
               context,
               title: '짧은 휴식',
               current: _s.pomodoroShortBreak,
               options: const <int>[3, 5, 10],
             );
-            if (shortMins != null && shortMins != _s.pomodoroShortBreak) {
-              _update(_s.copyWith(pomodoroShortBreak: shortMins));
+            if (shortMins == null) return;
+            if (!context.mounted) return;
+            final int? longMins = await showMinutePicker(
+              context,
+              title: '긴 휴식',
+              current: _s.pomodoroLongBreak,
+              options: const <int>[10, 15, 20, 30],
+            );
+            DkSettings next = _s;
+            if (shortMins != next.pomodoroShortBreak) {
+              next = next.copyWith(pomodoroShortBreak: shortMins);
             }
+            if (longMins != null && longMins != next.pomodoroLongBreak) {
+              next = next.copyWith(pomodoroLongBreak: longMins);
+            }
+            if (next != _s) _update(next);
           },
         ),
         SettingRow(

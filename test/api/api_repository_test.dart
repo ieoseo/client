@@ -296,4 +296,16 @@ void main() {
       expect(debt.status, DkDebtStatus.abandoned);
     });
   });
+
+  group('운영 미지원 읽기는 목 상수 대신 차단된다(F12)', () {
+    test('weekSummary/focusStats/pomodoro/streak 직접 호출은 UnsupportedError', () {
+      final ({Dio dio, DioAdapter adapter, ApiRepository repo}) h = harness();
+
+      // 운영 화면은 실데이터에서 파생하거나 0 으로 둔다 — 조작 상수 반환 금지.
+      expect(() => h.repo.weekSummary(), throwsUnsupportedError);
+      expect(() => h.repo.focusStats(), throwsUnsupportedError);
+      expect(() => h.repo.pomodoro(), throwsUnsupportedError);
+      expect(() => h.repo.streak(), throwsUnsupportedError);
+    });
+  });
 }

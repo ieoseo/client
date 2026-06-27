@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform;
+    show TargetPlatform, debugPrint, defaultTargetPlatform;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'apple_native.dart';
 import 'social_auth.dart';
 import 'supabase_config.dart';
 
@@ -56,9 +57,15 @@ abstract class SupabaseAuthGateway {
 /// [Supabase.instance] 접근은 메서드 호출 시점으로 지연한다(생성자에서 초기화 전
 /// 인스턴스를 건드리지 않도록). 단위 테스트는 [auth] 를 주입한다.
 class SupabaseAuthGatewayImpl implements SupabaseAuthGateway {
-  SupabaseAuthGatewayImpl({GoTrueClient? auth}) : _injected = auth;
+  SupabaseAuthGatewayImpl({
+    GoTrueClient? auth,
+    this._appleNative = const SignInWithApplePlugin(),
+  }) : _injected = auth;
 
   final GoTrueClient? _injected;
+
+  /// iOS 네이티브 Apple 로그인 어댑터(테스트는 가짜 주입).
+  final AppleNativeSignIn _appleNative;
 
   /// Supabase 가 초기화되지 않았으면(예: 서버 없이 UI 점검하는 main_dev) null 을 돌려준다.
   /// 생성자에서 [onSignedIn] 구독 등 읽기 접근이 크래시 나지 않도록 방어한다.
@@ -109,12 +116,31 @@ class SupabaseAuthGatewayImpl implements SupabaseAuthGateway {
 
   @override
   Future<void> signInWithOAuth(SocialProvider provider) async {
+    // iOS + Apple 은 네이티브 시트(idToken) 경로(심사 4.8). 그 외는 웹 OAuth.
+    if (shouldUseNativeApple(provider, defaultTargetPlatform)) {
+      await _nativeAppleSignIn();
+      return;
+    }
     final (OAuthProvider oauth, String? scopes) = _oauthSpec(provider);
     await _auth.signInWithOAuth(
       oauth,
       redirectTo: kSupabaseRedirectUri,
       scopes: scopes,
       authScreenLaunchMode: _authLaunchMode,
+    );
+  }
+
+  /// 네이티브 Apple: raw nonce 생성 → 해시본을 Apple 에 보내 idToken 수령 →
+  /// raw nonce 와 함께 Supabase `signInWithIdToken` 으로 세션 생성(즉시 완료).
+  /// 세션 생성은 `onAuthStateChange(signedIn)` 을 발화해 기존 provisioning 흐름을 탄다.
+  Future<void> _nativeAppleSignIn() async {
+    final String rawNonce = generateRawNonce();
+    final String hashedNonce = sha256OfString(rawNonce);
+    final String idToken = await _appleNative.idToken(hashedNonce: hashedNonce);
+    await _auth.signInWithIdToken(
+      provider: OAuthProvider.apple,
+      idToken: idToken,
+      nonce: rawNonce,
     );
   }
 
@@ -177,8 +203,11 @@ class SupabaseAuthGatewayImpl implements SupabaseAuthGateway {
   Future<void> reloadUser() async {
     try {
       await _auth.refreshSession();
-    } on AuthException {
-      // 세션 갱신 실패는 무시(다음 요청 401 처리에 위임).
+    } on Exception catch (e) {
+      // 세션 갱신 실패는 무시(다음 요청 401 처리에 위임). AuthException 뿐 아니라
+      // 네트워크 예외(SocketException·타임아웃 등)까지 흡수해, 호출부(onUserUpdated·
+      // unlinkOAuth)의 스트림 구독이 끊기지 않게 한다.
+      debugPrint('Supabase reloadUser(refreshSession) 실패(흡수): $e');
     }
   }
 }
