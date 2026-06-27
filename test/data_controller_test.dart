@@ -26,6 +26,13 @@ class _ThrowingRepo extends MockRepository {
       Future<List<DkTask>>.error(ApiException.timeout());
 }
 
+/// autoCarryDebt 가 항상 (비동기로) 실패하는 repository(낙관·롤백 검증용, F6).
+/// 실제 네트워크처럼 await 시점에 던지도록 async 로 둔다(동기 throw 면 낙관 단계 관찰 불가).
+class _FailingAutoCarryRepo extends MockRepository {
+  @override
+  Future<DkDebt> autoCarryDebt(String id) async => throw ApiException.network();
+}
+
 const DkTask _t1 = DkTask(
   id: 't1',
   title: '알고리즘',
@@ -118,6 +125,32 @@ void main() {
 
       expect(c.tasks, hasLength(1));
       expect(c.tasks.single.title, '새 할 일');
+    });
+  });
+
+  group('autoCarryDebt (F6 낙관·롤백)', () {
+    test('낙관적으로 assigned 표시 후 실패 시 원래 상태로 롤백한다', () async {
+      final DataController c = DataController(_FailingAutoCarryRepo());
+      await c.load();
+      final DkDebt target = c.debts.firstWhere(
+        (DkDebt d) => d.status != DkDebtStatus.assigned,
+      );
+      final DkDebtStatus original = target.status;
+
+      // 동기 prefix 에서 낙관적으로 assigned 가 반영된다(await 전).
+      final Future<DkDebt> future = c.autoCarryDebt(target.id);
+      expect(
+        c.debts.firstWhere((DkDebt d) => d.id == target.id).status,
+        DkDebtStatus.assigned,
+      );
+
+      await expectLater(future, throwsA(isA<ApiException>()));
+
+      // 실패 → 원래 상태로 롤백(화면이 'assigned' 로 영구히 남지 않음).
+      expect(
+        c.debts.firstWhere((DkDebt d) => d.id == target.id).status,
+        original,
+      );
     });
   });
 }

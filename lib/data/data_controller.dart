@@ -155,11 +155,26 @@ class DataController extends ChangeNotifier {
     return updated;
   }
 
-  /// 자동 이월(가장 여유 있는 날로 server 가 배정). 응답으로 목록을 갱신한다.
+  /// 자동 이월(가장 여유 있는 날로 server 가 배정). 낙관적으로 assigned 를 표시하고
+  /// 응답으로 확정하되, 실패 시 스냅샷으로 롤백한다(F6 — 실패가 'assigned' 로 굳지 않게).
   Future<DkDebt> autoCarryDebt(String id) async {
-    final DkDebt updated = await _repo.autoCarryDebt(id);
-    _replaceDebt(updated);
-    return updated;
+    final List<DkDebt> snapshot = _debts;
+    _debts = _debts
+        .map(
+          (DkDebt d) =>
+              d.id == id ? d.copyWith(status: DkDebtStatus.assigned) : d,
+        )
+        .toList();
+    notifyListeners();
+    try {
+      final DkDebt updated = await _repo.autoCarryDebt(id);
+      _replaceDebt(updated);
+      return updated;
+    } on Exception {
+      _debts = snapshot;
+      notifyListeners();
+      rethrow;
+    }
   }
 
   /// 탕감(내려놓기). 낙관적으로 목록에서 숨기고 실패 시 롤백.
