@@ -8,6 +8,7 @@ class AuthUser {
     required this.email,
     required this.nickname,
     required this.provider,
+    this.isNew = false,
   });
 
   /// 사용자 UUID.
@@ -20,11 +21,24 @@ class AuthUser {
   /// 가입 경로(`LOCAL`/`GOOGLE`/`KAKAO`/...).
   final String provider;
 
+  /// 이번 `/auth/me` 요청에서 막 provisioning 된 신규 사용자인지(server 제공).
+  /// true 면 진입 게이트가 닉네임 설정 화면을 먼저 띄운다. 필드 없으면 false.
+  final bool isNew;
+
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
     id: json['id'] as String,
     email: json['email'] as String?,
     nickname: json['nickname'] as String,
     provider: (json['provider'] as String?) ?? 'LOCAL',
+    isNew: json['isNew'] as bool? ?? false,
+  );
+
+  AuthUser copyWith({String? nickname, bool? isNew}) => AuthUser(
+    id: id,
+    email: email,
+    nickname: nickname ?? this.nickname,
+    provider: provider,
+    isNew: isNew ?? this.isNew,
   );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -32,5 +46,6 @@ class AuthUser {
     'email': email,
     'nickname': nickname,
     'provider': provider,
+    'isNew': isNew,
   };
 }

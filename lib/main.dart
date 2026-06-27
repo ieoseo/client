@@ -17,6 +17,7 @@ import 'observability/sentry_config.dart';
 import 'screens/login.dart';
 import 'screens/main_scaffold.dart';
 import 'screens/auth_loading.dart';
+import 'screens/nickname_setup_screen.dart';
 import 'screens/onboarding.dart';
 import 'screens/splash.dart';
 import 'theme/tokens.dart';
@@ -215,6 +216,17 @@ class _IeoseoAppState extends State<IeoseoApp> {
 
     // 인증되면 진입 흐름과 무관하게 main으로 전환(로그인/복원 공통 게이트).
     if (_auth.status == AuthStatus.authenticated && _auth.user != null) {
+      // 신규 가입(server isNew)은 닉네임 설정을 먼저 거친다(모든 provider 공통).
+      // 설정 완료(updateProfile) 시 user.isNew=false 가 되어 main 으로 전환된다.
+      if (_auth.user!.isNew) {
+        return Container(
+          color: tokens.page,
+          child: NicknameSetupScreen(
+            onSubmit: (String nickname) =>
+                _auth.updateProfile(nickname: nickname),
+          ),
+        );
+      }
       body = MainScaffold(
         controller: _data,
         notif: _notif,
