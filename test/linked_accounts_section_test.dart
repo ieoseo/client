@@ -46,7 +46,7 @@ void main() {
     expect(linked, <SocialProvider>[SocialProvider.apple]);
   });
 
-  testWidgets('"연결 해제" → 확인 시트에서 "해제하기"를 눌러야 onUnlink 호출', (
+  testWidgets('"연결 해제" → 확인 Alert 에서 "확인"을 눌러야 onUnlink 호출', (
     WidgetTester tester,
   ) async {
     final List<SocialProvider> unlinked = <SocialProvider>[];
@@ -60,13 +60,13 @@ void main() {
       ),
     );
 
-    // 행의 '연결 해제' 탭 → 확인 시트 등장(아직 onUnlink 미호출).
+    // 행의 '연결 해제' 탭 → 확인 Alert 등장(아직 onUnlink 미호출).
     await tester.tap(find.text('연결 해제').first);
     await tester.pumpAndSettle();
     expect(unlinked, isEmpty);
 
-    // 시트의 '해제하기' 확정 → onUnlink 호출.
-    await tester.tap(find.text('해제하기'));
+    // Alert 의 '확인' 확정 → onUnlink 호출.
+    await tester.tap(find.text('확인'));
     await tester.pumpAndSettle();
 
     expect(unlinked.length, 1);
