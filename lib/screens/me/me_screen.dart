@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/widgets.dart';
 
 import '../../data/api/auth_dto.dart';
@@ -30,7 +28,7 @@ class MeScreen extends StatelessWidget {
     required this.onToggleDark,
     required this.onBell,
     required this.onOpenCalc,
-    required this.onOpenReview,
+    required this.onOpenFocus,
     required this.onOpenCalendar,
     required this.onStub,
     required this.onLogout,
@@ -58,7 +56,9 @@ class MeScreen extends StatelessWidget {
   final ValueChanged<bool> onToggleDark;
   final VoidCallback onBell;
   final VoidCallback onOpenCalc;
-  final VoidCallback onOpenReview;
+
+  /// 도구 섹션의 '뽀모도로'(집중 타이머) 진입. (기존 '이번 주 돌아보기'는 통계 탭으로 이동)
+  final VoidCallback onOpenFocus;
 
   /// 캘린더 연동 화면 열기(나>설정>캘린더 연동, 이슈 #59).
   final VoidCallback onOpenCalendar;
@@ -143,12 +143,11 @@ class MeScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              _reviewEntry(t),
-              const SizedBox(height: 16),
-              // 구독 일정 관리: 정기결제 구독 일정을 모아 보는 향후 기능의 진입점.
-              // 아직 화면/데이터가 없어 탭 시 통합 준비 중 안내 토스트만 띄운다.
+              // 도구: 뽀모도로(집중 타이머) 진입 + 향후 구독 일정 관리.
+              // (이번 주 돌아보기는 하단 '통계' 탭으로 이동했다.)
               SettingGroup(
                 children: <Widget>[
+                  SettingRow(icon: 'focus', label: '뽀모도로', onTap: onOpenFocus),
                   SettingRow(
                     icon: 'repeat',
                     label: '구독 일정 관리',
@@ -323,95 +322,6 @@ class MeScreen extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _reviewEntry(DkTokens t) {
-    return GestureDetector(
-      onTap: onOpenReview,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(t.radius),
-        child: Container(
-          decoration: BoxDecoration(
-            color: t.ink,
-            borderRadius: BorderRadius.circular(t.radius),
-            boxShadow: t.shadows.s2,
-          ),
-          child: Stack(
-            children: <Widget>[
-              Positioned(
-                top: -40,
-                right: -20,
-                child: ImageFiltered(
-                  imageFilter: ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: t.primary.withValues(alpha: 0.24),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 16,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Container(
-                      width: 44,
-                      height: 44,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0x24FFFFFF),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const DkIcon(
-                        'chart',
-                        size: 22,
-                        color: Color(0xFFFFFFFF),
-                        strokeWidth: 2,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            '이번 주 돌아보기',
-                            style: TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.31,
-                              color: t.onInk,
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            '완료율·요일별 실행·카테고리 분포를 한눈에',
-                            style: TextStyle(
-                              fontFamily: 'Pretendard',
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w500,
-                              color: t.onInkMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    DkIcon('chevR', size: 20, color: t.onInkMuted),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

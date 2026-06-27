@@ -15,6 +15,7 @@ class AppHeader extends StatelessWidget {
     this.unread = 0,
     this.onBell,
     this.right,
+    this.onBack,
   });
 
   final String title;
@@ -22,6 +23,9 @@ class AppHeader extends StatelessWidget {
   final int unread;
   final VoidCallback? onBell;
   final Widget? right;
+
+  /// 지정하면 제목 앞에 뒤로가기 chevron 을 둔다(서브화면용). null 이면 표시 안 함.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +35,22 @@ class AppHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          if (onBack != null) ...<Widget>[
+            GestureDetector(
+              onTap: onBack,
+              child: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: t.bgPress,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: DkIcon('chevL', size: 22, color: t.fg),
+              ),
+            ),
+            const SizedBox(width: 10),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

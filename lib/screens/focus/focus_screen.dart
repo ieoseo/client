@@ -36,7 +36,11 @@ class FocusScreen extends StatefulWidget {
     required this.onCompleteTask,
     required this.onToast,
     this.unread = 0,
+    this.onBack,
   });
+
+  /// 서브화면(프로필 도구·태스크 집중 시작)으로 열릴 때 뒤로가기. null 이면 헤더에 미표시.
+  final VoidCallback? onBack;
 
   final DkFocusStats focusStats;
 
@@ -176,10 +180,11 @@ class _FocusScreenState extends State<FocusScreen> {
       padding: EdgeInsets.zero,
       children: <Widget>[
         AppHeader(
-          title: '집중',
-          subtitle: '뽀모도로로 실제로 실행해요',
+          title: '뽀모도로',
+          subtitle: '집중 타이머로 실제로 실행해요',
           unread: widget.unread,
           onBell: widget.onBell,
+          onBack: widget.onBack,
           right: GestureDetector(
             key: const ValueKey<String>('focus-settings'),
             onTap: _openPomodoroSettings,
