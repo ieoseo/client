@@ -26,6 +26,13 @@ jobs:
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git rev-list 로 빌드번호(커밋 수)를 뽑으려면 전체 이력 필요
+
+      # iOS CFBundleVersion(빌드번호)는 App Store 에서 단조 증가·고유해야 한다.
+      # 커밋 수를 빌드번호로 쓰면 매 커밋마다 증가해 중복 업로드를 막는다.
+      - name: Compute build number
+        run: echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> "$GITHUB_ENV"
 
       # 운영 dart-define + 서명 secret 이 하나라도 비면 빠르게 실패시켜 오배포를 막는다.
       - name: Verify required secrets
@@ -85,4 +92,5 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: fastlane beta

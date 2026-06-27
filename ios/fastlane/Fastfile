@@ -60,8 +60,11 @@ platform :ios do
       </plist>
     PLIST
 
+    # 빌드번호는 App Store 단조 증가가 필요 → CI 가 커밋 수로 지정(중복 업로드 방지).
+    build_number = ENV.fetch("BUILD_NUMBER")
     sh(
       "cd #{WORKSPACE} && flutter build ipa --release " \
+      "--build-number=#{build_number} " \
       "--export-options-plist=ios/ExportOptions.plist " \
       "--dart-define=SUPABASE_URL=#{ENV.fetch('SUPABASE_URL')} " \
       "--dart-define=SUPABASE_ANON_KEY=#{ENV.fetch('SUPABASE_ANON_KEY')} " \
