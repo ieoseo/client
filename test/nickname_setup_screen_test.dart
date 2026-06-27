@@ -7,9 +7,7 @@ import 'support/harness.dart';
 
 /// 신규 가입 닉네임 설정 화면 테스트.
 void main() {
-  testWidgets('랜덤 추천 닉네임이 미리 채워지고 변경 안내를 보여준다', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('랜덤 추천 닉네임이 미리 채워지고 변경 안내를 보여준다', (WidgetTester tester) async {
     await tester.pumpWidget(
       wrapForTest(NicknameSetupScreen(onSubmit: (_) async {})),
     );
@@ -26,9 +24,7 @@ void main() {
     expect(find.textContaining('나중에'), findsOneWidget); // 변경 가능 안내
   });
 
-  testWidgets('"시작하기" 탭 → 입력한 닉네임으로 onSubmit 호출', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('"시작하기" 탭 → 입력한 닉네임으로 onSubmit 호출', (WidgetTester tester) async {
     String? submitted;
     await tester.pumpWidget(
       wrapForTest(
@@ -44,14 +40,10 @@ void main() {
     expect(submitted, '말랑이');
   });
 
-  testWidgets('빈 닉네임이면 시작하기로 onSubmit 되지 않는다', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('빈 닉네임이면 시작하기로 onSubmit 되지 않는다', (WidgetTester tester) async {
     bool called = false;
     await tester.pumpWidget(
-      wrapForTest(
-        NicknameSetupScreen(onSubmit: (_) async => called = true),
-      ),
+      wrapForTest(NicknameSetupScreen(onSubmit: (_) async => called = true)),
     );
 
     await tester.enterText(find.byType(EditableText), '   ');
