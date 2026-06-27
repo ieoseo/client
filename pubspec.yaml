@@ -60,6 +60,8 @@ dependencies:
 
   # 설정 화면의 앱 버전 표기를 빌드 메타에서 읽는다(하드코딩 제거).
   package_info_plus: ^8.0.2
+  sign_in_with_apple: ^8.1.0
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:
