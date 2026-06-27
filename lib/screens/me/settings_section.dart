@@ -224,7 +224,6 @@ class SettingsSection extends StatelessWidget {
     required this.onToggleDark,
     required this.settings,
     required this.onSaveSettings,
-    required this.onOpenCalc,
     required this.onOpenCalendar,
     required this.onStub,
     required this.onLogout,
@@ -239,8 +238,6 @@ class SettingsSection extends StatelessWidget {
 
   /// 설정 변경 저장(낙관적 PUT). 다음 설정 스냅샷을 받는다.
   final ValueChanged<DkSettings> onSaveSettings;
-
-  final VoidCallback onOpenCalc;
 
   /// 캘린더 연동 화면 열기(이슈 #59).
   final VoidCallback onOpenCalendar;
@@ -355,21 +352,6 @@ class SettingsSection extends StatelessWidget {
                 label: '다크 모드',
                 last: true,
                 right: DkToggle(value: dark, onChanged: onToggleDark),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          SettingGroup(
-            title: '도구',
-            children: <Widget>[
-              SettingRow(
-                icon: 'calc',
-                iconBg: t.primarySubtle,
-                iconColor: t.primary,
-                label: '계산기',
-                value: '일반 · 공학',
-                last: true,
-                onTap: onOpenCalc,
               ),
             ],
           ),

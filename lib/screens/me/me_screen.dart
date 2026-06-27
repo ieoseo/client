@@ -146,14 +146,21 @@ class MeScreen extends StatelessWidget {
               // 도구: 뽀모도로(집중 타이머) 진입 + 향후 구독 일정 관리.
               // (이번 주 돌아보기는 하단 '통계' 탭으로 이동했다.)
               SettingGroup(
+                title: '도구',
                 children: <Widget>[
                   SettingRow(icon: 'focus', label: '뽀모도로', onTap: onOpenFocus),
                   SettingRow(
                     icon: 'repeat',
                     label: '구독 일정 관리',
-                    last: true,
                     comingSoon: true,
                     onTap: onStub,
+                  ),
+                  SettingRow(
+                    icon: 'calc',
+                    label: '계산기',
+                    value: '일반 · 공학',
+                    last: true,
+                    onTap: onOpenCalc,
                   ),
                 ],
               ),
@@ -173,7 +180,6 @@ class MeScreen extends StatelessWidget {
           onToggleDark: onToggleDark,
           settings: settings,
           onSaveSettings: onSaveSettings,
-          onOpenCalc: onOpenCalc,
           onOpenCalendar: onOpenCalendar,
           onStub: onStub,
           onLogout: onLogout,

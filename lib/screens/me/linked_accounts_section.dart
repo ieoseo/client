@@ -8,9 +8,10 @@ import 'settings_dialogs.dart';
 
 /// 나 탭 '연동 계정' 섹션(이슈 #10, ADR-0014).
 ///
-/// 현재 연동된 provider(Email/Google/Kakao)를 보여주고, 소셜 계정을 연결([onLink],
-/// `linkIdentity`)·해제([onUnlink], `unlinkIdentity`)한다. 이메일은 비밀번호 identity 라
-/// 표시만 하고 해제 버튼을 두지 않는다. 마지막 1개 identity 는 해제 버튼을 숨긴다(잠금 방지).
+/// 현재 연동된 provider(Google/Kakao/Apple)를 보여주고, 소셜 계정을 연결([onLink],
+/// `linkIdentity`)·해제([onUnlink], `unlinkIdentity`)한다. 연결된 계정은 항상 '연결 해제'
+/// 버튼 + 확인 팝업을 노출한다. 마지막 1개 identity 는 버튼·팝업은 그대로 두되 확인 후에도
+/// 해제하지 않고 안내만 한다(계정 잠금 방지).
 ///
 /// Supabase 대시보드 'Manual Linking' 활성화가 전제다. 연결은 브라우저+딥링크 비동기 흐름이라
 /// 완료는 AuthController 의 onUserUpdated 가 반영한다(이 위젯은 시작만 트리거).
@@ -49,10 +50,15 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
   bool get _canUnlinkAny => widget.linkedProviders.length > 1;
 
   /// 해제는 확인 시트를 거친 뒤에만 실제로 진행한다(실수 방지).
+  /// 마지막 1개 identity 면 확인 후에도 해제하지 않고 안내한다(계정 잠금 방지).
   Future<void> _confirmAndUnlink(SocialProvider provider) async {
     if (_busy != null) return;
     final bool ok = await confirmUnlinkAccount(context, _brand(provider));
     if (!ok || !mounted) return;
+    if (!_canUnlinkAny) {
+      setState(() => _error = '마지막 로그인 수단은 해제할 수 없어요. 다른 계정을 먼저 연결해 주세요.');
+      return;
+    }
     await _run(provider, widget.onUnlink);
   }
 
@@ -141,14 +147,14 @@ class _LinkedAccountsSectionState extends State<LinkedAccountsSection> {
     if (busy) {
       action = _statusChip(t, '처리 중…');
     } else if (linked) {
-      action = _canUnlinkAny
-          ? DkButton(
-              size: DkButtonSize.sm,
-              variant: DkButtonVariant.outline,
-              onPressed: () => _confirmAndUnlink(p),
-              child: const Text('연결 해제'),
-            )
-          : _statusChip(t, '연결됨');
+      // 연결된 계정은 항상 '연결 해제' 버튼을 노출한다(확인 팝업으로 실수 방지).
+      // 마지막 1개 identity 는 확인 후 _confirmAndUnlink 가 안내하고 막는다.
+      action = DkButton(
+        size: DkButtonSize.sm,
+        variant: DkButtonVariant.outline,
+        onPressed: () => _confirmAndUnlink(p),
+        child: const Text('연결 해제'),
+      );
     } else {
       action = DkButton(
         size: DkButtonSize.sm,
