@@ -68,6 +68,7 @@ abstract final class DkEventDto {
     pinned: json['pinned'] == true,
     memo: _str(json['memo']) ?? '',
     color: _str(json['color']) ?? 'cool',
+    completed: json['completed'] == true,
   );
 
   /// [DkEvent] → 생성 요청 본문(EventCreateRequest). id/파생계산은 보내지 않는다.

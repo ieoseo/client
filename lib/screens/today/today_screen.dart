@@ -45,7 +45,10 @@ class TodayScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<DkEvent> ordered = ddayOrdered(events);
+    // 종료(완료) 처리한 이벤트는 홈에서 숨긴다(미종료는 D+ 로 계속 노출). FRD 5.1.
+    final List<DkEvent> ordered = ddayOrdered(
+      events.where((DkEvent e) => !e.completed).toList(growable: false),
+    );
     final int debtTotal = debts.fold(0, (int s, DkDebt d) => s + d.mins);
     final int debtOverdue = debts
         .where((DkDebt d) => d.status == DkDebtStatus.overdue)

@@ -57,6 +57,18 @@ class ApiRepository implements IeoseoRepository {
   @override
   Future<void> deleteEvent(String id) => _client.delete('/events/$id');
 
+  @override
+  Future<DkEvent> completeEvent(String id) async {
+    final dynamic data = await _client.post('/events/$id/complete');
+    return DkEventDto.fromJson(_asMap(data));
+  }
+
+  @override
+  Future<DkEvent> reopenEvent(String id) async {
+    final dynamic data = await _client.post('/events/$id/reopen');
+    return DkEventDto.fromJson(_asMap(data));
+  }
+
   // ── Tasks ───────────────────────────────────────────────
   @override
   Future<List<DkTask>> tasks({String? date}) async {

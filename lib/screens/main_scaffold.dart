@@ -310,6 +310,19 @@ class _MainScaffoldState extends State<MainScaffold>
       ),
       onSubmit: (DkEvent draft) =>
           _run(() => _c.updateEvent(draft), success: '이벤트를 저장했어요'),
+      onComplete: (DkEvent e) => e.completed
+          ? _run(
+              () => _c.reopenEvent(e.id),
+              success: '종료를 취소했어요',
+              successIcon: 'repeat',
+              successTone: DkTone.info,
+            )
+          : _run(
+              () => _c.completeEvent(e.id),
+              success: '일정을 종료했어요',
+              successIcon: 'check',
+              successTone: DkTone.success,
+            ),
     );
   }
 

@@ -69,4 +69,26 @@ void main() {
     await tester.tap(find.text('미룬 시간'));
     expect(opened, true);
   });
+
+  testWidgets('종료(완료) 처리한 이벤트는 홈에서 숨긴다', (WidgetTester tester) async {
+    const DkEvent done = DkEvent(
+      id: 'done',
+      type: DkEventType.single,
+      title: '끝난 일정',
+      category: '자격증',
+      date: '2026-12-01',
+      completed: true,
+    );
+    const DkEvent live = DkEvent(
+      id: 'live',
+      type: DkEventType.single,
+      title: '남은 일정',
+      category: '자격증',
+      date: '2026-12-02',
+    );
+    await _pumpTall(tester, _screen(events: <DkEvent>[done, live]));
+
+    expect(find.text('끝난 일정'), findsNothing);
+    expect(find.text('남은 일정'), findsOneWidget);
+  });
 }

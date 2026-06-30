@@ -128,6 +128,46 @@ void main() {
     });
   });
 
+  group('completeEvent / reopenEvent (종료 처리)', () {
+    const DkEvent e1 = DkEvent(
+      id: 'e1',
+      type: DkEventType.single,
+      title: '시험',
+      category: '자격증',
+      date: '2026-08-02',
+    );
+
+    test('종료 처리하면 completed=true 로 반영된다', () async {
+      final DataController c = DataController(
+        MockRepository(
+          tasks: <DkTask>[],
+          events: <DkEvent>[e1],
+          debts: <DkDebt>[],
+        ),
+      );
+      await c.load();
+
+      await c.completeEvent('e1');
+
+      expect(c.events.single.completed, isTrue);
+    });
+
+    test('종료 취소하면 completed=false 로 되돌린다', () async {
+      final DataController c = DataController(
+        MockRepository(
+          tasks: <DkTask>[],
+          events: <DkEvent>[e1.copyWith(completed: true)],
+          debts: <DkDebt>[],
+        ),
+      );
+      await c.load();
+
+      await c.reopenEvent('e1');
+
+      expect(c.events.single.completed, isFalse);
+    });
+  });
+
   group('autoCarryDebt (F6 낙관·롤백)', () {
     test('낙관적으로 assigned 표시 후 실패 시 원래 상태로 롤백한다', () async {
       final DataController c = DataController(_FailingAutoCarryRepo());
