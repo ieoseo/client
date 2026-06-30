@@ -111,19 +111,6 @@ void main() {
       ]);
     });
 
-    test('고정(pin) 일정은 임박순보다 앞선다', () {
-      final List<DkEvent> events = <DkEvent>[
-        ev('soon', '2026-06-03'),
-        ev('pinnedFar', '2026-06-25', pinned: true),
-      ];
-
-      final List<DkEvent> out = ddayOrdered(
-        events,
-        today: DateTime(2026, 6, 1),
-      );
-      expect(out.first.id, 'pinnedFar');
-    });
-
     test('지난 일정은 미래 일정보다 뒤로 간다', () {
       final List<DkEvent> events = <DkEvent>[
         ev('past', '2026-05-20'), // 지남

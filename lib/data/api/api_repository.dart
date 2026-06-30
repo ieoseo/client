@@ -57,10 +57,6 @@ class ApiRepository implements IeoseoRepository {
   @override
   Future<void> deleteEvent(String id) => _client.delete('/events/$id');
 
-  @override
-  Future<DkEvent> pinEvent(DkEvent event, {required bool pinned}) =>
-      updateEvent(event.copyWith(pinned: pinned));
-
   // ── Tasks ───────────────────────────────────────────────
   @override
   Future<List<DkTask>> tasks({String? date}) async {

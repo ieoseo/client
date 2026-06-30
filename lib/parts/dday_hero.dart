@@ -12,7 +12,7 @@ import '../widgets/dk_icon.dart';
 /// D-Day 히어로 카드. 프로토타입 `DdayHero`.
 ///
 /// fg-strong 배경/흰 글자, radius-lg, shadow-2. 우상단 hue 글로우 원(blur).
-/// 상단: 고정 칩 + 카테고리 + (urgency high면) "마감 임박" 솔리드 뱃지.
+/// 상단: 카테고리 + (urgency high면) "마감 임박" 솔리드 뱃지.
 /// 하단: 제목·날짜 + 큰 D-라벨(brand 52/800).
 class DdayHero extends StatelessWidget {
   const DdayHero({super.key, required this.event, this.onOpen});
@@ -62,10 +62,6 @@ class DdayHero extends StatelessWidget {
                   children: <Widget>[
                     Row(
                       children: <Widget>[
-                        if (event.pinned) ...<Widget>[
-                          _pill(white),
-                          const SizedBox(width: 8),
-                        ],
                         Text(
                           event.category,
                           style: const TextStyle(
@@ -145,32 +141,6 @@ class DdayHero extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _pill(Color white) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0x24FFFFFF),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          DkIcon('pin', size: 13, color: white, strokeWidth: 2),
-          const SizedBox(width: 4),
-          const Text(
-            '고정됨',
-            style: TextStyle(
-              fontFamily: 'Pretendard',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xD1FFFFFF),
-            ),
-          ),
-        ],
       ),
     );
   }

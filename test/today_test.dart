@@ -12,12 +12,10 @@ TodayScreen _screen({
   VoidCallback? onOpenDebt,
 }) {
   return TodayScreen(
-    userName: '지우',
     events: events ?? kEvents,
     debts: kDebts,
     onOpenEvent: onOpenEvent ?? (_) {},
     onBell: () {},
-    onOpenCalc: () {},
     onOpenDebt: onOpenDebt ?? () {},
   );
 }
@@ -33,13 +31,19 @@ Future<void> _pumpTall(WidgetTester tester, Widget child) async {
 }
 
 void main() {
-  testWidgets('인사 헤더·다가오는 일정·미룬시간 넛지를 렌더한다', (WidgetTester tester) async {
+  testWidgets('헤더(오늘 날짜)·다가오는 일정·미룬시간 넛지를 렌더한다', (WidgetTester tester) async {
     await _pumpTall(tester, _screen());
 
-    expect(find.text('안녕하세요, 지우님'), findsOneWidget);
+    // 상단 좌측에 오늘 날짜를 제목으로 노출한다(ink 인사 카드는 제거됨).
+    final DateTime now = DateTime.now();
+    const List<String> weekdays = <String>['월', '화', '수', '목', '금', '토', '일'];
+    final String dateLabel =
+        '${now.month}월 ${now.day}일 ${weekdays[now.weekday - 1]}요일';
+    expect(find.text(dateLabel), findsOneWidget);
     expect(find.text('다가오는 일정'), findsOneWidget);
     expect(find.text('미룬 시간'), findsOneWidget);
-    // 오늘 할 일 콕핏·아젠다는 제거됨(플랜>할 일로 일원화).
+    // 옛 인사 카드·오늘 할 일 콕핏은 제거됨.
+    expect(find.textContaining('안녕하세요'), findsNothing);
     expect(find.text('오늘의 흐름'), findsNothing);
   });
 

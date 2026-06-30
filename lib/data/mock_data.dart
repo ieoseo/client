@@ -16,7 +16,6 @@ List<DkEvent> get kEvents => <DkEvent>[
     title: '정보처리기사 실기',
     category: '자격증',
     date: _d(28),
-    pinned: true,
     memo: '필답형 + 실무. 기출 5개년 정리하기.',
     color: 'blue',
     remindDays: const <int>[7, 3, 1],

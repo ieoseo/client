@@ -177,4 +177,53 @@ void main() {
     await tester.tap(find.textContaining('토익 시험이 3일'));
     expect(tapped?.id, 'n-1');
   });
+
+  testWidgets('안 읽은 알림이 있으면 모두 읽음 액션을 노출하고 콜백을 호출한다', (
+    WidgetTester tester,
+  ) async {
+    bool marked = false;
+    await _pumpTall(
+      tester,
+      NotifSheetBody(
+        items: const <DkNotif>[
+          DkNotif(
+            id: 'n-1',
+            type: DkNotifType.dday,
+            title: '토익 시험',
+            body: '토익 시험이 3일 남았어요',
+            read: false,
+            createdAt: '2026-06-04T09:00:00Z',
+          ),
+        ],
+        onTapItem: (_) {},
+        onMarkAllRead: () => marked = true,
+      ),
+    );
+
+    expect(find.text('모두 읽음'), findsOneWidget);
+    await tester.tap(find.text('모두 읽음'));
+    expect(marked, true);
+  });
+
+  testWidgets('모두 읽은 상태면 모두 읽음 액션이 없다', (WidgetTester tester) async {
+    await _pumpTall(
+      tester,
+      NotifSheetBody(
+        items: const <DkNotif>[
+          DkNotif(
+            id: 'n-2',
+            type: DkNotifType.streak,
+            title: '스트릭 달성!',
+            body: '7일 연속 달성했어요',
+            read: true,
+            createdAt: '2026-06-03T09:00:00Z',
+          ),
+        ],
+        onTapItem: (_) {},
+        onMarkAllRead: () {},
+      ),
+    );
+
+    expect(find.text('모두 읽음'), findsNothing);
+  });
 }

@@ -1,10 +1,9 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/widgets.dart';
 
 import '../../data/dday.dart';
 import '../../data/format.dart';
 import '../../data/models.dart';
+import '../../parts/app_header.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_badge.dart';
 import '../../widgets/dk_card.dart';
@@ -27,18 +26,13 @@ String _todayLabel() {
 class TodayScreen extends StatelessWidget {
   const TodayScreen({
     super.key,
-    required this.userName,
     required this.events,
     required this.debts,
     required this.onOpenEvent,
     required this.onBell,
-    required this.onOpenCalc,
     required this.onOpenDebt,
     this.unread = 0,
   });
-
-  /// 인사말에 쓸 사용자 닉네임(실제 로그인 사용자).
-  final String userName;
 
   final List<DkEvent> events;
   final List<DkDebt> debts;
@@ -47,7 +41,6 @@ class TodayScreen extends StatelessWidget {
   final int unread;
   final ValueChanged<DkEvent> onOpenEvent;
   final VoidCallback onBell;
-  final VoidCallback onOpenCalc;
   final VoidCallback onOpenDebt;
 
   @override
@@ -61,17 +54,10 @@ class TodayScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: 120),
       children: <Widget>[
-        const SizedBox(height: 54),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: _Header(
-            userName: userName,
-            unread: unread,
-            onBell: onBell,
-            onOpenCalc: onOpenCalc,
-          ),
-        ),
-        const SizedBox(height: 26),
+        // 다른 탭과 동일한 AppHeader — 좌측 상단에 오늘 날짜(제목), 우측 상단에 알림 벨.
+        // ink 인사 카드는 제거(요청)하고 헤더 위치/벨을 4개 탭에서 통일한다.
+        AppHeader(title: _todayLabel(), unread: unread, onBell: onBell),
+        const SizedBox(height: 8),
         const Padding(
           padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
           child: DkSectionLabel('다가오는 일정'),
@@ -105,133 +91,6 @@ class TodayScreen extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-/// ink 인사 헤더. 날짜 + 인사 + 계산기/알림 버튼.
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.userName,
-    required this.unread,
-    required this.onBell,
-    required this.onOpenCalc,
-  });
-
-  final String userName;
-  final int unread;
-  final VoidCallback onBell;
-  final VoidCallback onOpenCalc;
-
-  @override
-  Widget build(BuildContext context) {
-    final DkTokens t = DkTheme.of(context);
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: Container(
-        decoration: BoxDecoration(
-          color: t.ink,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: t.shadows.s3,
-        ),
-        child: Stack(
-          children: <Widget>[
-            Positioned(
-              top: -90,
-              right: -60,
-              child: ImageFiltered(
-                imageFilter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  width: 240,
-                  height: 240,
-                  decoration: BoxDecoration(
-                    color: t.primary.withValues(alpha: 0.28),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          _todayLabel(),
-                          style: TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: t.onInkMuted,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '안녕하세요, $userName님',
-                          style: TextStyle(
-                            fontFamily: 'Pretendard',
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.66,
-                            color: t.onInk,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _inkBtn('calc', onOpenCalc, t),
-                  const SizedBox(width: 8),
-                  _inkBtn('bell', onBell, t, dot: unread > 0),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _inkBtn(
-    String icon,
-    VoidCallback onTap,
-    DkTokens t, {
-    bool dot = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color(0x1FFFFFFF),
-          borderRadius: BorderRadius.circular(13),
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: <Widget>[
-            DkIcon(icon, size: 20, color: t.onInk),
-            if (dot)
-              Positioned(
-                top: -3,
-                right: -2,
-                child: Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: t.danger,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -272,7 +131,13 @@ class _DdayRow extends StatelessWidget {
                 color: h.subtle,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: DkIcon('target', size: 19, color: h.color, strokeWidth: 2),
+              // 카테고리에 맞는 아이콘(자격증→graduationCap 등). 미매핑은 target 폴백.
+              child: DkIcon(
+                kCategoryIcon[event.category] ?? 'target',
+                size: 19,
+                color: h.color,
+                strokeWidth: 2,
+              ),
             ),
             const SizedBox(width: 13),
             Expanded(
@@ -295,10 +160,6 @@ class _DdayRow extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (event.pinned) ...<Widget>[
-                        const SizedBox(width: 6),
-                        DkIcon('pin', size: 14, color: t.fgDisabled),
-                      ],
                     ],
                   ),
                   const SizedBox(height: 3),
@@ -322,7 +183,12 @@ class _DdayRow extends StatelessWidget {
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.72,
-                color: info.urgency == DkUrgency.high ? t.danger : t.fgStrong,
+                // 종료(D+)는 강조 해제(회색), 임박은 danger, 그 외 기본.
+                color: switch (info.urgency) {
+                  DkUrgency.high => t.danger,
+                  DkUrgency.past => t.fgDisabled,
+                  _ => t.fgStrong,
+                },
               ),
             ),
           ],

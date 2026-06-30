@@ -90,6 +90,73 @@ void main() {
     });
   });
 
+  // 기간 D-Day 단계 전이(오늘 = 2026-06-10). 시작 전→시작당일→진행중→마감당일→종료.
+  // 임박도(urgency)는 "지금 표시 중인 경계" 기준: 시작 전=시작거리, 진행 중=마감거리,
+  // 종료=past(강조 해제).
+  group('기간 D-Day 단계 (오늘 = 2026-06-10)', () {
+    DkEvent period(String start, String end) => DkEvent(
+      id: 'e',
+      type: DkEventType.period,
+      title: '기간',
+      category: '자격증',
+      start: start,
+      end: end,
+    );
+
+    final DateTime today = DateTime(2026, 6, 10);
+
+    test('시작 전 임박은 시작거리로 urgency 를 계산한다', () {
+      // 시작 D-2(임박), 마감은 멀다 → high 는 시작 기준이어야 한다.
+      final DkDdayInfo info = ddayInfo(
+        period('2026-06-12', '2026-06-30'),
+        today,
+      );
+      expect(info.label, '시작 D-2');
+      expect(info.status, '예정');
+      expect(info.urgency, DkUrgency.high);
+    });
+
+    test('시작 당일은 "시작 D-DAY · high"', () {
+      final DkDdayInfo info = ddayInfo(
+        period('2026-06-10', '2026-06-20'),
+        today,
+      );
+      expect(info.label, '시작 D-DAY');
+      expect(info.status, '진행중');
+      expect(info.urgency, DkUrgency.high);
+    });
+
+    test('진행 중은 "마감 D-N", 임박도는 마감거리 기준', () {
+      final DkDdayInfo info = ddayInfo(
+        period('2026-06-05', '2026-06-14'),
+        today,
+      );
+      expect(info.label, '마감 D-4');
+      expect(info.status, '진행중');
+      expect(info.urgency, DkUrgency.mid);
+    });
+
+    test('마감 당일은 "마감 D-DAY · high"', () {
+      final DkDdayInfo info = ddayInfo(
+        period('2026-06-01', '2026-06-10'),
+        today,
+      );
+      expect(info.label, '마감 D-DAY');
+      expect(info.status, '진행중');
+      expect(info.urgency, DkUrgency.high);
+    });
+
+    test('마감 다음 날부터 "마감 D+N · 종료 · past"(자동 삭제 아님)', () {
+      final DkDdayInfo info = ddayInfo(
+        period('2026-06-01', '2026-06-08'),
+        today,
+      );
+      expect(info.label, '마감 D+2');
+      expect(info.status, '종료');
+      expect(info.urgency, DkUrgency.past);
+    });
+  });
+
   group('urgencyOf', () {
     test('경계값 분류', () {
       expect(urgencyOf(-1), DkUrgency.past);

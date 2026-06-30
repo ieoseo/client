@@ -90,17 +90,35 @@ DkDdayInfo ddayInfo(DkEvent ev, [DateTime? today]) {
     case DkEventType.period:
       final int toStart = daysBetween(t, ev.start!);
       final int toEnd = daysBetween(t, ev.end!);
-      final String status = toStart > 0 ? '예정' : (toEnd >= 0 ? '진행중' : '종료');
-      final String label = toStart > 0
-          ? '시작 D-$toStart'
-          : (toEnd > 0 ? '마감 D-$toEnd' : (toEnd == 0 ? '마감 D-DAY' : '종료'));
+      // 단계 전이: 시작 전 → 시작당일 → 진행중 → 마감당일 → 종료.
+      // 임박도(urgency)는 "지금 카운트다운 중인 경계" 기준으로 맞춘다 — 시작 전엔
+      // 시작까지, 시작 후엔 마감까지. 종료(D+)는 past 로 강조를 해제한다.
+      final String status;
+      final String label;
+      final DkUrgency urgency;
+      if (toStart >= 0) {
+        // 시작 전(toStart>0) 또는 시작 당일(toStart==0). 시작일까지 카운트다운.
+        status = toStart == 0 ? '진행중' : '예정';
+        label = toStart == 0 ? '시작 D-DAY' : '시작 D-$toStart';
+        urgency = urgencyOf(toStart);
+      } else if (toEnd >= 0) {
+        // 진행 중. 마감일까지 카운트다운(마감 당일 = "마감 D-DAY").
+        status = '진행중';
+        label = toEnd == 0 ? '마감 D-DAY' : '마감 D-$toEnd';
+        urgency = urgencyOf(toEnd);
+      } else {
+        // 종료: 마감일부터 경과(D+). 자동 삭제하지 않고 계속 노출(유저가 종료 처리).
+        status = '종료';
+        label = '마감 D+${-toEnd}';
+        urgency = DkUrgency.past;
+      }
       return DkDdayInfo(
         type: DkEventType.period,
         toStart: toStart,
         toEnd: toEnd,
         status: status,
         label: label,
-        urgency: urgencyOf(toEnd),
+        urgency: urgency,
       );
   }
 }
