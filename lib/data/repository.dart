@@ -23,6 +23,13 @@ abstract class IeoseoRepository {
   /// 이벤트 삭제(server: DELETE /events/{id} → 204).
   Future<void> deleteEvent(String id);
 
+  /// 종료(완료) 처리(server: POST /events/{id}/complete). 갱신된 이벤트 반환.
+  /// 마감/기간이 지나도 자동 삭제하지 않고, 유저가 명시적으로 종료할 때 호출.
+  Future<DkEvent> completeEvent(String id);
+
+  /// 종료 취소(재개, server: POST /events/{id}/reopen).
+  Future<DkEvent> reopenEvent(String id);
+
   // ── Tasks ───────────────────────────────────────────────
   /// 태스크 목록(server: GET /tasks). [date] 지정 시 해당 일자만.
   Future<List<DkTask>> tasks({String? date});
@@ -139,6 +146,20 @@ class MockRepository implements IeoseoRepository {
   @override
   Future<void> deleteEvent(String id) async {
     _events = _events.where((DkEvent e) => e.id != id).toList();
+  }
+
+  @override
+  Future<DkEvent> completeEvent(String id) async => _setCompleted(id, true);
+
+  @override
+  Future<DkEvent> reopenEvent(String id) async => _setCompleted(id, false);
+
+  DkEvent _setCompleted(String id, bool completed) {
+    final DkEvent updated = _events
+        .firstWhere((DkEvent e) => e.id == id)
+        .copyWith(completed: completed);
+    _events = _events.map((DkEvent e) => e.id == id ? updated : e).toList();
+    return updated;
   }
 
   @override
