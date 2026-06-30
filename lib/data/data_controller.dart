@@ -147,6 +147,35 @@ class DataController extends ChangeNotifier {
     }
   }
 
+  /// 이벤트 종료(완료) 처리. 자동 삭제 대신 유저 명시 액션(FRD 5.1).
+  Future<DkEvent> completeEvent(String id) => _setEventCompleted(id, true);
+
+  /// 종료 취소(재개).
+  Future<DkEvent> reopenEvent(String id) => _setEventCompleted(id, false);
+
+  Future<DkEvent> _setEventCompleted(String id, bool completed) async {
+    final List<DkEvent> snapshot = _events;
+    // 낙관적 업데이트 후 server 응답으로 교체, 실패 시 롤백.
+    _events = _events
+        .map((DkEvent e) => e.id == id ? e.copyWith(completed: completed) : e)
+        .toList();
+    notifyListeners();
+    try {
+      final DkEvent updated = completed
+          ? await _repo.completeEvent(id)
+          : await _repo.reopenEvent(id);
+      _events = _events
+          .map((DkEvent e) => e.id == updated.id ? updated : e)
+          .toList();
+      notifyListeners();
+      return updated;
+    } on Exception {
+      _events = snapshot;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   // ── Debts ───────────────────────────────────────────────
 
   Future<DkDebt> carryDebt(String id, {required String toDate}) async {

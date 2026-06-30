@@ -186,6 +186,7 @@ class DkEvent {
     this.memo = '',
     this.color = 'cool',
     this.remindDays = const <int>[],
+    this.completed = false,
   });
 
   final String id;
@@ -209,6 +210,10 @@ class DkEvent {
   final String color;
   final List<int> remindDays;
 
+  /// 종료(완료) 처리 여부. true 면 홈 "다가오는 일정"에서 숨긴다(server `completed`).
+  /// 마감/기간이 지나도 자동 삭제하지 않고, 유저가 명시적으로 종료할 때만 true.
+  final bool completed;
+
   /// nullable 날짜 필드(date/start/end)는 센티넬([_unset])로 받아 **null 로 비우기**도
   /// 가능하게 한다(`field ?? this.field` 패턴은 null 설정을 못 함). 예: T1↔T2 전환 시 date 비우기.
   DkEvent copyWith({
@@ -223,6 +228,7 @@ class DkEvent {
     String? memo,
     String? color,
     List<int>? remindDays,
+    bool? completed,
   }) {
     return DkEvent(
       id: id ?? this.id,
@@ -236,6 +242,7 @@ class DkEvent {
       memo: memo ?? this.memo,
       color: color ?? this.color,
       remindDays: remindDays ?? this.remindDays,
+      completed: completed ?? this.completed,
     );
   }
 }

@@ -113,7 +113,6 @@ class MeScreen extends StatelessWidget {
                   _statTile(
                     t,
                     icon: 'flame',
-                    iconBg: t.warningSubtle,
                     iconColor: t.warningFg,
                     fill: true,
                     value: streak.toDouble(),
@@ -124,7 +123,6 @@ class MeScreen extends StatelessWidget {
                   _statTile(
                     t,
                     icon: 'chart',
-                    iconBg: t.successSubtle,
                     iconColor: t.successFg,
                     value: pct.toDouble(),
                     suffix: '%',
@@ -134,7 +132,6 @@ class MeScreen extends StatelessWidget {
                   _statTile(
                     t,
                     icon: 'focus',
-                    iconBg: t.primarySubtle,
                     iconColor: t.primary,
                     value: focusStats.todaySessions.toDouble(),
                     suffix: '회',
@@ -270,7 +267,6 @@ class MeScreen extends StatelessWidget {
   Widget _statTile(
     DkTokens t, {
     required String icon,
-    required Color iconBg,
     required Color iconColor,
     required double value,
     required String suffix,
@@ -289,23 +285,15 @@ class MeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Container(
-              width: 34,
-              height: 34,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: DkIcon(
-                icon,
-                size: 19,
-                color: iconColor,
-                strokeWidth: 1.95,
-                fill: fill ? iconColor : null,
-              ),
+            // 아이콘 뒤 컬러 타일 제거 — 아이콘만 색으로 노출(템플릿 느낌 완화).
+            DkIcon(
+              icon,
+              size: 24,
+              color: iconColor,
+              strokeWidth: 1.95,
+              fill: fill ? iconColor : null,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             DkCountUp(
               value: value,
               suffix: suffix,

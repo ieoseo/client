@@ -24,6 +24,7 @@ class EventSheetBody extends StatefulWidget {
     required this.onClose,
     this.onDelete,
     this.onSubmit,
+    this.onComplete,
   });
 
   final DkEvent? event;
@@ -34,6 +35,9 @@ class EventSheetBody extends StatefulWidget {
   /// 추가/저장 제출. 폼 값으로 만든 초안(신규는 id 빈 문자열)을 전달한다.
   final ValueChanged<DkEvent>? onSubmit;
 
+  /// 종료(완료) 토글. 현재 이벤트를 전달하면 호출부가 `completed` 에 따라 종료/재개한다.
+  final ValueChanged<DkEvent>? onComplete;
+
   @override
   State<EventSheetBody> createState() => _EventSheetBodyState();
 }
@@ -41,7 +45,6 @@ class EventSheetBody extends StatefulWidget {
 class _EventSheetBodyState extends State<EventSheetBody> {
   late DkEventType _type = widget.event?.type ?? DkEventType.single;
   late String _cat = widget.event?.category ?? '자격증';
-  late bool _pinned = widget.event?.pinned ?? false;
   bool _remind = true;
   late final TextEditingController _title = TextEditingController(
     text: widget.event?.title ?? '',
@@ -81,7 +84,8 @@ class _EventSheetBodyState extends State<EventSheetBody> {
       date: single ? _date.text.trim() : null,
       start: single ? null : _start.text.trim(),
       end: single ? null : _end.text.trim(),
-      pinned: _pinned,
+      // 핀(홈 고정) 기능 제거 — 신규는 false, 편집은 기존 값 보존(서버 계약 필드는 유지).
+      pinned: widget.event?.pinned ?? false,
       memo: _memo.text.trim(),
       color: widget.event?.color ?? 'cool',
     );
@@ -236,10 +240,6 @@ class _EventSheetBodyState extends State<EventSheetBody> {
           ),
           child: Column(
             children: <Widget>[
-              _toggleRow(t, 'pin', '홈 화면에 고정', _pinned, (bool v) {
-                setState(() => _pinned = v);
-              }),
-              Container(height: 1, color: t.borderSubtle),
               _toggleRow(t, 'bell', 'D-Day 알림 (7·3·1일 전)', _remind, (bool v) {
                 setState(() => _remind = v);
               }),
@@ -387,30 +387,66 @@ class _EventSheetBodyState extends State<EventSheetBody> {
   }
 
   Widget _stickyActions(DkTokens t, DkEvent? ev) {
-    return Row(
+    final bool isCompleted = ev?.completed ?? false;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        if (!widget.isNew && ev != null) ...<Widget>[
-          DkButton(
-            size: DkButtonSize.lg,
-            variant: DkButtonVariant.danger,
-            onPressed: () {
-              widget.onDelete?.call(ev);
-              widget.onClose();
-            },
-            leading: DkIcon('trash', size: 18, color: t.danger, strokeWidth: 2),
+        // 종료(완료) 토글 — 기존 이벤트만. 자동 삭제 대신 유저가 명시적으로 종료(FRD 5.1).
+        if (!widget.isNew &&
+            ev != null &&
+            widget.onComplete != null) ...<Widget>[
+          SizedBox(
+            width: double.infinity,
+            child: DkButton(
+              size: DkButtonSize.lg,
+              full: true,
+              variant: DkButtonVariant.outline,
+              onPressed: () {
+                widget.onComplete!.call(ev);
+                widget.onClose();
+              },
+              leading: DkIcon(
+                isCompleted ? 'repeat' : 'check',
+                size: 18,
+                color: t.fg,
+                strokeWidth: 2,
+              ),
+              child: Text(isCompleted ? '종료 취소' : '종료 처리'),
+            ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(height: 10),
         ],
-        Expanded(
-          child: DkButton(
-            size: DkButtonSize.lg,
-            full: true,
-            onPressed: () {
-              widget.onSubmit?.call(_draft());
-              widget.onClose();
-            },
-            child: Text(widget.isNew ? '추가하기' : '저장'),
-          ),
+        Row(
+          children: <Widget>[
+            if (!widget.isNew && ev != null) ...<Widget>[
+              DkButton(
+                size: DkButtonSize.lg,
+                variant: DkButtonVariant.danger,
+                onPressed: () {
+                  widget.onDelete?.call(ev);
+                  widget.onClose();
+                },
+                leading: DkIcon(
+                  'trash',
+                  size: 18,
+                  color: t.danger,
+                  strokeWidth: 2,
+                ),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: DkButton(
+                size: DkButtonSize.lg,
+                full: true,
+                onPressed: () {
+                  widget.onSubmit?.call(_draft());
+                  widget.onClose();
+                },
+                child: Text(widget.isNew ? '추가하기' : '저장'),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -424,6 +460,7 @@ Future<void> showEventSheet(
   required bool isNew,
   ValueChanged<DkEvent>? onDelete,
   ValueChanged<DkEvent>? onSubmit,
+  ValueChanged<DkEvent>? onComplete,
 }) {
   return showDkSheet<void>(
     context,
@@ -436,6 +473,7 @@ Future<void> showEventSheet(
         onClose: () => Navigator.of(sheetContext).maybePop(),
         onDelete: onDelete,
         onSubmit: onSubmit,
+        onComplete: onComplete,
       ),
     ),
   );

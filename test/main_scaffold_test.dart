@@ -80,7 +80,13 @@ void main() {
   testWidgets('기본 탭은 오늘이고 TodayScreen을 보인다', (WidgetTester tester) async {
     await _pumpTall(tester);
     expect(find.byType(TodayScreen), findsOneWidget);
-    expect(find.text('안녕하세요, 지우님'), findsOneWidget);
+    // 홈 헤더는 오늘 날짜를 제목으로 노출한다(인사 카드 제거).
+    final DateTime now = DateTime.now();
+    const List<String> weekdays = <String>['월', '화', '수', '목', '금', '토', '일'];
+    expect(
+      find.text('${now.month}월 ${now.day}일 ${weekdays[now.weekday - 1]}요일'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('탭바로 플랜·통계·프로필로 전환된다', (WidgetTester tester) async {
@@ -98,6 +104,26 @@ void main() {
     await tester.tap(find.text('프로필'));
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(MeScreen), findsOneWidget);
+  });
+
+  testWidgets('+ 버튼은 추가 시트를 열고 상단 탭으로 할 일↔D-Day 를 전환한다', (
+    WidgetTester tester,
+  ) async {
+    await _pumpTall(tester);
+
+    await tester.tap(find.byKey(const ValueKey<String>('tabbar-add')));
+    await tester.pumpAndSettle();
+
+    // 상단 세그먼트 [할 일 | D-Day 일정], 기본은 할 일 탭(태스크 폼 = 예상 소요시간).
+    expect(find.text('할 일'), findsWidgets);
+    expect(find.text('D-Day 일정'), findsOneWidget);
+    expect(find.text('예상 소요시간'), findsOneWidget);
+
+    // D-Day 일정 탭으로 전환 → 이벤트 폼(이벤트 타입), 태스크 폼은 사라진다.
+    await tester.tap(find.text('D-Day 일정'));
+    await tester.pumpAndSettle();
+    expect(find.text('이벤트 타입'), findsOneWidget);
+    expect(find.text('예상 소요시간'), findsNothing);
   });
 
   testWidgets('미룬 시간 넛지 탭은 미룬 시간 상세 서브화면을 연다', (WidgetTester tester) async {

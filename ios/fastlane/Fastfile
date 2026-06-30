@@ -3,6 +3,8 @@
 #   ASC API 키로 App Store 프로파일을 받아(sigh) 수동 서명 설정 → flutter build ipa → upload.
 # 경로는 GITHUB_WORKSPACE(레포 루트=client) 기준 절대경로로 고정해 cwd 혼선을 막는다.
 
+require "json"
+
 default_platform(:ios)
 
 WORKSPACE = ENV["GITHUB_WORKSPACE"] || File.expand_path("../..", __dir__)
@@ -62,14 +64,26 @@ platform :ios do
 
     # 빌드번호는 App Store 단조 증가가 필요 → CI 가 커밋 수로 지정(중복 업로드 방지).
     build_number = ENV.fetch("BUILD_NUMBER")
-    sh(
-      "cd #{WORKSPACE} && flutter build ipa --release " \
-      "--build-number=#{build_number} " \
-      "--export-options-plist=ios/ExportOptions.plist " \
-      "--dart-define=SUPABASE_URL=#{ENV.fetch('SUPABASE_URL')} " \
-      "--dart-define=SUPABASE_ANON_KEY=#{ENV.fetch('SUPABASE_ANON_KEY')} " \
-      "--dart-define=API_BASE_URL=#{ENV.fetch('API_BASE_URL')}"
-    )
+
+    # dart-define 값(SUPABASE_*/API_BASE_URL)을 명령줄에 직접 넣으면 fastlane sh() 가
+    # 확장된 전체 명령을 로그에 echo 하고 다른 프로세스의 /proc/<pid>/cmdline 에도 노출된다.
+    # 임시 JSON 파일 + --dart-define-from-file 로 빼서 시크릿이 명령줄에 안 실리게 한다(빌드 후 삭제).
+    define_file = "#{WORKSPACE}/ios/dart-define.prod.json"
+    File.write(define_file, JSON.generate(
+      "SUPABASE_URL" => ENV.fetch("SUPABASE_URL"),
+      "SUPABASE_ANON_KEY" => ENV.fetch("SUPABASE_ANON_KEY"),
+      "API_BASE_URL" => ENV.fetch("API_BASE_URL"),
+    ))
+    begin
+      sh(
+        "cd #{WORKSPACE} && flutter build ipa --release " \
+        "--build-number=#{build_number} " \
+        "--export-options-plist=ios/ExportOptions.plist " \
+        "--dart-define-from-file=ios/dart-define.prod.json"
+      )
+    ensure
+      File.delete(define_file) if File.exist?(define_file)
+    end
 
     ipa = Dir.glob("#{WORKSPACE}/build/ios/ipa/*.ipa").first
     UI.user_error!("빌드된 .ipa 를 찾지 못했어요") if ipa.nil?

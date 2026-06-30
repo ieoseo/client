@@ -58,8 +58,16 @@ class ApiRepository implements IeoseoRepository {
   Future<void> deleteEvent(String id) => _client.delete('/events/$id');
 
   @override
-  Future<DkEvent> pinEvent(DkEvent event, {required bool pinned}) =>
-      updateEvent(event.copyWith(pinned: pinned));
+  Future<DkEvent> completeEvent(String id) async {
+    final dynamic data = await _client.post('/events/$id/complete');
+    return DkEventDto.fromJson(_asMap(data));
+  }
+
+  @override
+  Future<DkEvent> reopenEvent(String id) async {
+    final dynamic data = await _client.post('/events/$id/reopen');
+    return DkEventDto.fromJson(_asMap(data));
+  }
 
   // ── Tasks ───────────────────────────────────────────────
   @override

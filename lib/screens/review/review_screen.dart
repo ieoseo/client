@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../data/format.dart';
 import '../../data/meta.dart';
+import '../../parts/app_header.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_card.dart';
 import '../../widgets/dk_feedback.dart';
@@ -18,11 +19,19 @@ class ReviewScreen extends StatelessWidget {
     super.key,
     required this.review,
     required this.streak,
+    this.unread = 0,
+    this.onBell,
     this.onBack,
   });
 
   final DkWeekReview review;
   final int streak;
+
+  /// 안 읽은 알림 수(헤더 벨 점 표시용, 이슈 #46).
+  final int unread;
+
+  /// 우상단 알림 벨 탭. null 이면 벨 미표시(다른 탭들과 동일한 헤더 동작).
+  final VoidCallback? onBell;
 
   /// 서브화면으로 열릴 때 뒤로가기. 통계 탭(최상위)으로 쓰일 땐 null → 뒤로가기 미표시.
   final VoidCallback? onBack;
@@ -47,7 +56,13 @@ class ReviewScreen extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: <Widget>[
-        _header(t),
+        AppHeader(
+          title: '주간 리뷰',
+          subtitle: review.range,
+          unread: unread,
+          onBell: onBell,
+          onBack: onBack,
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
           child: Column(
@@ -68,56 +83,6 @@ class ReviewScreen extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _header(DkTokens t) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 58, 16, 8),
-      child: Row(
-        children: <Widget>[
-          if (onBack != null) ...<Widget>[
-            GestureDetector(
-              onTap: onBack,
-              child: Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: t.bgPress,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: DkIcon('chevL', size: 22, color: t.fg),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                '주간 리뷰',
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.66,
-                  color: t.fgStrong,
-                ),
-              ),
-              Text(
-                review.range,
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: t.fgSubtle,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -366,21 +331,13 @@ class ReviewScreen extends StatelessWidget {
       padding: 16,
       child: Row(
         children: <Widget>[
-          Container(
-            width: 46,
-            height: 46,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: t.warningSubtle,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: DkIcon(
-              'flame',
-              size: 24,
-              color: t.warningFg,
-              strokeWidth: 1.9,
-              fill: t.warningFg,
-            ),
+          // 아이콘 뒤 컬러 타일 제거 — 통계 타일과 동일하게 색 아이콘만 노출.
+          DkIcon(
+            'flame',
+            size: 28,
+            color: t.warningFg,
+            strokeWidth: 1.9,
+            fill: t.warningFg,
           ),
           const SizedBox(width: 14),
           Expanded(

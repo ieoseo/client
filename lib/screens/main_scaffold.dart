@@ -28,6 +28,7 @@ import 'loading_skeleton.dart';
 import 'plan/plan_summary.dart';
 import 'review/review_screen.dart';
 import 'review/week_review_builder.dart';
+import 'sheets/add_sheet.dart';
 import 'sheets/event_sheet.dart';
 import 'sheets/notif_sheet.dart';
 import 'sheets/task_sheet.dart';
@@ -261,6 +262,27 @@ class _MainScaffoldState extends State<MainScaffold>
     );
   }
 
+  /// 하단 + (FAB): 통합 추가 시트(상단 [할 일 | D-Day 일정] 세그먼트)로 한 시트에서 분기한다.
+  /// 태스크와 D-Day 는 별개 도메인이라(홈 "다가오는 일정"=D-Day 만) 폼은 탭으로 전환한다.
+  void _openAddSheet() {
+    showAddSheet(
+      context,
+      onToast: _toastNamed,
+      onAddTask: (DkTask draft) => _run(
+        () => _c.createTask(draft),
+        success: '태스크를 추가했어요',
+        successIcon: 'plus',
+        successTone: DkTone.primary,
+      ),
+      onAddEvent: (DkEvent draft) => _run(
+        () => _c.createEvent(draft),
+        success: '이벤트를 추가했어요',
+        successIcon: 'plus',
+        successTone: DkTone.primary,
+      ),
+    );
+  }
+
   void _addTask() {
     showTaskSheet(
       context,
@@ -288,6 +310,19 @@ class _MainScaffoldState extends State<MainScaffold>
       ),
       onSubmit: (DkEvent draft) =>
           _run(() => _c.updateEvent(draft), success: '이벤트를 저장했어요'),
+      onComplete: (DkEvent e) => e.completed
+          ? _run(
+              () => _c.reopenEvent(e.id),
+              success: '종료를 취소했어요',
+              successIcon: 'repeat',
+              successTone: DkTone.info,
+            )
+          : _run(
+              () => _c.completeEvent(e.id),
+              success: '일정을 종료했어요',
+              successIcon: 'check',
+              successTone: DkTone.success,
+            ),
     );
   }
 
@@ -454,7 +489,7 @@ class _MainScaffoldState extends State<MainScaffold>
               DkTabBar(
                 active: _tab,
                 onChanged: (DkTab tb) => setState(() => _tab = tb),
-                onAdd: _addTask,
+                onAdd: _openAddSheet,
               ),
             ],
           ),
@@ -542,13 +577,11 @@ class _MainScaffoldState extends State<MainScaffold>
     switch (_tab) {
       case DkTab.today:
         return TodayScreen(
-          userName: widget.user.nickname,
           events: _c.events,
           debts: _c.debts,
           unread: unread,
           onOpenEvent: _openEventSheet,
           onBell: _openNotif,
-          onOpenCalc: _openCalc,
           onOpenDebt: () => setState(() => _sub = _Sub.debt),
         );
       case DkTab.plan:
@@ -571,7 +604,12 @@ class _MainScaffoldState extends State<MainScaffold>
           onBell: _openNotif,
         );
       case DkTab.stats:
-        return ReviewScreen(review: _weekReview(), streak: _streakDays());
+        return ReviewScreen(
+          review: _weekReview(),
+          streak: _streakDays(),
+          unread: unread,
+          onBell: _openNotif,
+        );
       case DkTab.me:
         return MeScreen(
           user: widget.user,
