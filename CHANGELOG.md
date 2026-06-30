@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.9.2](https://github.com/ieoseo/client/compare/ieoseo-client-v0.9.1...ieoseo-client-v0.9.2) (2026-06-30)
+
+
+### Features
+
+* 기간 D-Day 단계 표시·하단 내비/헤더/아이콘 정비 ([#143](https://github.com/ieoseo/client/issues/143)) ([28f84fd](https://github.com/ieoseo/client/commit/28f84fd952324597e0613ab4f9cf222b066838c6)), closes [#142](https://github.com/ieoseo/client/issues/142)
+* 이벤트 종료(완료) 처리 ([#145](https://github.com/ieoseo/client/issues/145)) ([e9a5c38](https://github.com/ieoseo/client/commit/e9a5c3842c3bbfacd834138c28f9630e5c8a9982)), closes [#144](https://github.com/ieoseo/client/issues/144)
+
+
+### Bug Fixes
+
+* CI 워크플로 시크릿 노출 표면 축소 ([#141](https://github.com/ieoseo/client/issues/141)) ([21ae5b3](https://github.com/ieoseo/client/commit/21ae5b33ed62b9919402b30c65e6cca18966285d)), closes [#140](https://github.com/ieoseo/client/issues/140)
+
+
+### Miscellaneous Chores
+
+* client 릴리스 0.9.2 강제(Release-As) ([#148](https://github.com/ieoseo/client/issues/148)) ([dbb56ed](https://github.com/ieoseo/client/commit/dbb56ed9f467fe841bb532e73c44bd5aca2b3a31))
+
 ## [0.9.1](https://github.com/ieoseo/client/compare/ieoseo-client-v0.9.0...ieoseo-client-v0.9.1) (2026-06-27)
 
 
