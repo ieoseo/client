@@ -23,9 +23,6 @@ abstract class IeoseoRepository {
   /// 이벤트 삭제(server: DELETE /events/{id} → 204).
   Future<void> deleteEvent(String id);
 
-  /// 홈 고정 토글. server 전용 엔드포인트가 없어 PUT 으로 `pinned` 만 갱신한다.
-  Future<DkEvent> pinEvent(DkEvent event, {required bool pinned});
-
   // ── Tasks ───────────────────────────────────────────────
   /// 태스크 목록(server: GET /tasks). [date] 지정 시 해당 일자만.
   Future<List<DkTask>> tasks({String? date});
@@ -143,10 +140,6 @@ class MockRepository implements IeoseoRepository {
   Future<void> deleteEvent(String id) async {
     _events = _events.where((DkEvent e) => e.id != id).toList();
   }
-
-  @override
-  Future<DkEvent> pinEvent(DkEvent event, {required bool pinned}) =>
-      updateEvent(event.copyWith(pinned: pinned));
 
   @override
   Future<List<DkTask>> tasks({String? date}) async {

@@ -19,16 +19,21 @@ import '../../widgets/dk_sheet.dart';
 /// 알림 목록(server 실데이터, 이슈 #46). 프로토타입 `NotifSheet`.
 ///
 /// 안 읽은 항목은 점으로 강조하고, 항목 탭 시 [onTapItem] 으로 읽음 처리를 위임한다.
+/// 안 읽은 항목이 하나라도 있으면 상단에 "모두 읽음"([onMarkAllRead]) 액션을 노출한다.
 /// 항목이 없으면 빈 상태를 보인다. 시각은 `createdAt`(ISO) 을 상대 표기로 환산한다.
 class NotifSheetBody extends StatelessWidget {
   const NotifSheetBody({
     super.key,
     required this.items,
     required this.onTapItem,
+    this.onMarkAllRead,
   });
 
   final List<DkNotif> items;
   final ValueChanged<DkNotif> onTapItem;
+
+  /// "모두 읽음" 탭. null 이면 액션을 숨긴다(읽음 처리 위임 없음).
+  final VoidCallback? onMarkAllRead;
 
   @override
   Widget build(BuildContext context) {
@@ -40,8 +45,42 @@ class NotifSheetBody extends StatelessWidget {
         body: '마감·미룬 시간·스트릭 소식이 생기면 여기에서 알려드릴게요.',
       );
     }
+    final bool hasUnread = items.any((DkNotif n) => !n.read);
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        if (hasUnread && onMarkAllRead != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onMarkAllRead,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 4, 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    DkIcon(
+                      'check',
+                      size: 16,
+                      color: t.primary,
+                      strokeWidth: 2.2,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '모두 읽음',
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: t.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         for (int i = 0; i < items.length; i++)
           GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -149,6 +188,7 @@ Future<void> showNotifSheet(
       builder: (BuildContext context, _) => NotifSheetBody(
         items: controller.items,
         onTapItem: onTapItem ?? (DkNotif n) => controller.markRead(n.id),
+        onMarkAllRead: controller.markAllRead,
       ),
     ),
   );

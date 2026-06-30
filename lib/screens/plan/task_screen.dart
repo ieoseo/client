@@ -107,12 +107,11 @@ class _TaskScreenState extends State<TaskScreen> {
         ],
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          // 추가 진입점은 하단 FAB(+)·빈 상태 CTA 로 충분해, 헤더의 중복 '추가' 는 제거.
           child: DkSectionHead(
             title: isToday
                 ? '오늘의 할 일'
                 : '${d.day}일 (${kWeekdaysKo[d.weekday % 7]}) 할 일',
-            action: '추가',
-            onAction: widget.onAddTask,
           ),
         ),
         Padding(

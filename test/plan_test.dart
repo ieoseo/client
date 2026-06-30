@@ -65,21 +65,23 @@ void main() {
     expect(find.text(label(prev.year, prev.month)), findsOneWidget);
   });
 
-  testWidgets('일간 뷰: 오늘 칩 + 날짜 네비로 하루 이동', (WidgetTester tester) async {
+  testWidgets('주간 뷰: 오늘 칩 + 네비로 다음 주(+7일)로 이동', (WidgetTester tester) async {
     await _pumpTall(tester, _screen());
 
-    await tester.tap(find.text('일간'));
-    await tester.pump();
-    // 오늘 칩과 날짜 네비 화살표가 보인다(섹션헤드의 옛 오늘 버튼은 제거).
+    await tester.tap(find.text('주간'));
+    await tester.pumpAndSettle();
+    // 일간 세그먼트는 제거됨(주간/월간만).
+    expect(find.text('일간'), findsNothing);
+    // 오늘 칩과 주 네비 화살표가 보인다.
     expect(find.text('오늘'), findsWidgets);
     expect(find.byKey(const ValueKey<String>('calnav-next')), findsOneWidget);
 
-    // 다음 날 화살표 → 선택일이 내일로 이동(섹션헤드 날짜 갱신).
-    final DateTime tomorrow = addDays(kToday, 1);
+    // 다음 주 화살표 → 선택일이 +7일로 이동(섹션헤드 날짜 갱신, 슬라이드 후 정착).
+    final DateTime nextWeek = addDays(kToday, 7);
     await tester.tap(find.byKey(const ValueKey<String>('calnav-next')));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(
-      find.textContaining('${tomorrow.month}월 ${tomorrow.day}일'),
+      find.textContaining('${nextWeek.month}월 ${nextWeek.day}일'),
       findsWidgets,
     );
   });

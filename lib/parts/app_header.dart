@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../theme/tokens.dart';
+import '../widgets/dk_bell_button.dart';
 import '../widgets/dk_icon.dart';
 
 /// 화면 상단 헤더(인사 + 알림 벨). 프로토타입 `AppHeader`.
@@ -89,38 +90,7 @@ class AppHeader extends StatelessWidget {
                   right!,
                   const SizedBox(width: 8),
                 ],
-                GestureDetector(
-                  onTap: onBell,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: t.bgPress,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: <Widget>[
-                        DkIcon('bell', size: 21, color: t.fgMuted),
-                        if (unread > 0)
-                          Positioned(
-                            top: -2,
-                            right: -1,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: t.danger,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: t.bgPress, width: 2),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
+                DkBellButton(unread: unread, onTap: onBell),
               ],
             ),
           ),

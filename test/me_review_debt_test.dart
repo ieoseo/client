@@ -7,6 +7,7 @@ import 'package:ieoseo/screens/debt/debt_screen.dart';
 import 'package:ieoseo/screens/me/me_screen.dart';
 import 'package:ieoseo/screens/me/settings_section.dart';
 import 'package:ieoseo/screens/review/review_screen.dart';
+import 'package:ieoseo/widgets/dk_icon.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -258,6 +259,27 @@ void main() {
     expect(find.text('요일별 실행'), findsOneWidget);
     expect(find.text('카테고리 분포'), findsOneWidget);
     expect(find.textContaining('수요일'), findsOneWidget); // insight
+  });
+
+  testWidgets('ReviewScreen은 onBell 제공 시 우상단 알림 벨을 보여주고 탭하면 호출한다', (
+    WidgetTester tester,
+  ) async {
+    bool belled = false;
+    await _pumpTall(
+      tester,
+      ReviewScreen(
+        review: kWeekReview,
+        streak: kStreak,
+        onBell: () => belled = true,
+      ),
+    );
+
+    final Finder bell = find.byWidgetPredicate(
+      (Widget w) => w is DkIcon && w.name == 'bell',
+    );
+    expect(bell, findsOneWidget);
+    await tester.tap(bell);
+    expect(belled, true);
   });
 
   testWidgets('DebtScreen은 제목과 출처 라벨을 보여준다', (WidgetTester tester) async {

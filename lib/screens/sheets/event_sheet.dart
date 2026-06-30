@@ -41,7 +41,6 @@ class EventSheetBody extends StatefulWidget {
 class _EventSheetBodyState extends State<EventSheetBody> {
   late DkEventType _type = widget.event?.type ?? DkEventType.single;
   late String _cat = widget.event?.category ?? '자격증';
-  late bool _pinned = widget.event?.pinned ?? false;
   bool _remind = true;
   late final TextEditingController _title = TextEditingController(
     text: widget.event?.title ?? '',
@@ -81,7 +80,8 @@ class _EventSheetBodyState extends State<EventSheetBody> {
       date: single ? _date.text.trim() : null,
       start: single ? null : _start.text.trim(),
       end: single ? null : _end.text.trim(),
-      pinned: _pinned,
+      // 핀(홈 고정) 기능 제거 — 신규는 false, 편집은 기존 값 보존(서버 계약 필드는 유지).
+      pinned: widget.event?.pinned ?? false,
       memo: _memo.text.trim(),
       color: widget.event?.color ?? 'cool',
     );
@@ -236,10 +236,6 @@ class _EventSheetBodyState extends State<EventSheetBody> {
           ),
           child: Column(
             children: <Widget>[
-              _toggleRow(t, 'pin', '홈 화면에 고정', _pinned, (bool v) {
-                setState(() => _pinned = v);
-              }),
-              Container(height: 1, color: t.borderSubtle),
               _toggleRow(t, 'bell', 'D-Day 알림 (7·3·1일 전)', _remind, (bool v) {
                 setState(() => _remind = v);
               }),

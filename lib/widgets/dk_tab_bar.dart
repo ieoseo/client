@@ -85,12 +85,14 @@ class DkTabBar extends StatelessWidget {
               curve: const Cubic(0.34, 1.3, 0.64, 1),
               child: Transform.translate(
                 offset: Offset(0, on ? -1 : 0),
+                // 활성 탭도 채움(fill) 없이 아웃라인 형태를 유지한다 — primarySubtle 로
+                // 채우면 집·달력·사람 아이콘이 파란 덩어리가 돼 원본 형태가 사라졌다.
+                // 강조는 primary 색 + 굵은 stroke + 확대(scale)로만 준다.
                 child: DkIcon(
                   spec.icon,
                   size: 24,
                   color: color,
                   strokeWidth: on ? 2.3 : 1.9,
-                  fill: on ? t.primarySubtle : null,
                 ),
               ),
             ),
@@ -139,7 +141,7 @@ class _CenterAddState extends State<_CenterAdd> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Transform.translate(
-            offset: const Offset(0, -8),
+            offset: const Offset(0, -4),
             child: AnimatedScale(
               scale: _down ? 0.94 : 1.0,
               duration: const Duration(milliseconds: 160),
@@ -150,12 +152,11 @@ class _CenterAddState extends State<_CenterAdd> {
                 decoration: BoxDecoration(
                   color: t.primary,
                   shape: BoxShape.circle,
-                  border: Border.all(color: t.bg, width: 4),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: t.primary.withValues(alpha: 0.45),
-                      offset: const Offset(0, 8),
-                      blurRadius: 20,
+                      color: t.fgStrong.withValues(alpha: 0.14),
+                      offset: const Offset(0, 4),
+                      blurRadius: 10,
                     ),
                   ],
                 ),

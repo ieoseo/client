@@ -38,7 +38,7 @@ class CalendarScreen extends StatefulWidget {
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
-enum _CalView { month, week, day }
+enum _CalView { month, week }
 
 class _CalendarScreenState extends State<CalendarScreen> {
   _CalView _view = _CalView.month;
@@ -47,30 +47,71 @@ class _CalendarScreenState extends State<CalendarScreen> {
   /// 표시 중인 월(선택과 독립). 이전/다음 달로 이동할 수 있게 별도 상태로 둔다.
   DateTime _month = DateTime(kToday.year, kToday.month);
 
+  // 주간 PageView(주 단위 캐러셀 슬라이드 — 끌면 옆 주가 따라오고 ‹›도 슬라이드).
+  // 페이지 = anchor 주로부터의 주 수. anchor 는 주간 진입 시점 선택일의 월요일.
+  PageController? _weekCtrl;
+  DateTime _weekAnchorMonday = addDays(kToday, 1 - kToday.weekday);
+  static const int _weekAnchorPage = 100000;
+  static const Duration _kWeekAnim = Duration(milliseconds: 300);
+
+  DateTime _mondayOf(DateTime d) => addDays(d, 1 - d.weekday);
+  DateTime _mondayForPage(int page) =>
+      addDays(_weekAnchorMonday, (page - _weekAnchorPage) * 7);
+
+  /// UTC 자정 기준 일수(주 차이 계산용 — DST 영향 없음).
+  int _epochDay(DateTime d) =>
+      DateTime.utc(d.year, d.month, d.day).millisecondsSinceEpoch ~/
+      Duration.millisecondsPerDay;
+  int _pageForMonday(DateTime mon) =>
+      _weekAnchorPage + (_epochDay(mon) - _epochDay(_weekAnchorMonday)) ~/ 7;
+
+  @override
+  void dispose() {
+    _weekCtrl?.dispose();
+    super.dispose();
+  }
+
   void _shiftMonth(int delta) =>
       setState(() => _month = DateTime(_month.year, _month.month + delta));
 
-  /// 오늘로 복귀: 표시 월·선택을 오늘로 맞춘다.
+  /// 뷰 전환. 주간 진입 시 anchor=현재 선택주로 PageController 생성, 이탈 시 해제.
+  void _setView(_CalView v) {
+    setState(() {
+      if (v == _CalView.week) {
+        _weekAnchorMonday = _mondayOf(parseYmd(_sel));
+        _weekCtrl?.dispose();
+        _weekCtrl = PageController(initialPage: _weekAnchorPage);
+      } else {
+        _weekCtrl?.dispose();
+        _weekCtrl = null;
+      }
+      _view = v;
+    });
+  }
+
+  /// 오늘로 복귀: 표시 월·선택을 오늘로 맞춘다(주간이면 해당 주로 슬라이드).
   void _goToday() {
     setState(() {
       _month = DateTime(kToday.year, kToday.month);
       _sel = ymd(kToday);
     });
-  }
-
-  /// 선택일을 [delta]일만큼 이동(주간=±7, 일간=±1).
-  void _shiftDays(int delta) {
-    setState(() => _sel = ymd(addDays(parseYmd(_sel), delta)));
-  }
-
-  /// 좌우 스와이프 → [unit]일 단위 이동(왼쪽=다음, 오른쪽=이전).
-  void _onSwipe(DragEndDetails d, int unit) {
-    final double v = d.primaryVelocity ?? 0;
-    if (v < -200) {
-      _shiftDays(unit);
-    } else if (v > 200) {
-      _shiftDays(-unit);
+    final PageController? c = _weekCtrl;
+    if (_view == _CalView.week && c != null && c.hasClients) {
+      c.animateToPage(
+        _pageForMonday(_mondayOf(kToday)),
+        duration: _kWeekAnim,
+        curve: Curves.easeOutCubic,
+      );
     }
+  }
+
+  /// PageView 페이지 변경 → 선택 요일을 유지하며 해당 주로 이동.
+  void _onWeekPage(int page) {
+    setState(() {
+      final DateTime monday = _mondayForPage(page);
+      final int weekdayOffset = parseYmd(_sel).weekday - 1; // 0=월..6=일
+      _sel = ymd(addDays(monday, weekdayOffset));
+    });
   }
 
   void _openItem(DayItem it) {
@@ -93,11 +134,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
           child: DkSegmented<_CalView>(
             full: true,
             value: _view,
-            onChanged: (_CalView v) => setState(() => _view = v),
+            onChanged: _setView,
             options: const <DkSegment<_CalView>>[
               DkSegment<_CalView>(_CalView.month, '월간'),
               DkSegment<_CalView>(_CalView.week, '주간'),
-              DkSegment<_CalView>(_CalView.day, '일간'),
             ],
           ),
         ),
@@ -120,30 +160,34 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             ),
           ),
-        // 주간: 주 단위 네비(±7) + 오늘, 좌우 스와이프로 주 이동.
+        // 주간: 주 단위 네비(‹›) + 오늘. PageView 로 주를 페이징해 손가락으로 끌면 옆 주가
+        // 따라오고(이전·다음 주가 겹쳐 보이며 슬라이드), ‹› 도 같은 슬라이드로 넘어간다.
         if (_view == _CalView.week) ...<Widget>[
           _CalNav(
-            onPrev: () => _shiftDays(-7),
-            onNext: () => _shiftDays(7),
+            onPrev: () => _weekCtrl?.previousPage(
+              duration: _kWeekAnim,
+              curve: Curves.easeOutCubic,
+            ),
+            onNext: () => _weekCtrl?.nextPage(
+              duration: _kWeekAnim,
+              curve: Curves.easeOutCubic,
+            ),
             onToday: _goToday,
           ),
           const SizedBox(height: 6),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onHorizontalDragEnd: (DragEndDetails e) => _onSwipe(e, 7),
-            child: WeekStrip(
-              selected: _sel,
-              onSelect: (String k) => setState(() => _sel = k),
+          SizedBox(
+            height: 76,
+            child: PageView.builder(
+              controller: _weekCtrl,
+              onPageChanged: _onWeekPage,
+              itemBuilder: (BuildContext _, int page) => WeekStrip(
+                weekStart: _mondayForPage(page),
+                selected: _sel,
+                onSelect: (String k) => setState(() => _sel = k),
+              ),
             ),
           ),
         ],
-        // 일간: 하루 단위 네비(±1) + 오늘(스와이프는 아래 일정 영역에서 ±1).
-        if (_view == _CalView.day)
-          _CalNav(
-            onPrev: () => _shiftDays(-1),
-            onNext: () => _shiftDays(1),
-            onToday: _goToday,
-          ),
         const SizedBox(height: 18),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -152,20 +196,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
             title: '${d.month}월 ${d.day}일 (${kWeekdaysKo[d.weekday % 7]})',
           ),
         ),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onHorizontalDragEnd: _view == _CalView.day
-              ? (DragEndDetails e) => _onSwipe(e, 1)
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _DayList(
-              dateStr: _sel,
-              tasks: widget.tasks,
-              events: widget.events,
-              externals: widget.externals,
-              onOpen: _openItem,
-            ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: _DayList(
+            dateStr: _sel,
+            tasks: widget.tasks,
+            events: widget.events,
+            externals: widget.externals,
+            onOpen: _openItem,
           ),
         ),
         // FAB 가림 방지용 하단 여백(하단 출처 로고 범례는 제거 — 출처 구분은
@@ -208,7 +246,7 @@ Widget _todayChip(DkTokens t, VoidCallback onTap) {
   );
 }
 
-/// 주간/일간 뷰 네비: 이전 ‹ · 오늘 · 다음 ›.
+/// 주간 뷰 네비: 이전 ‹ · 오늘 · 다음 ›.
 class _CalNav extends StatelessWidget {
   const _CalNav({
     required this.onPrev,
