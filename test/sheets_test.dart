@@ -1,4 +1,5 @@
 import 'package:ieoseo/data/api/notif_dto.dart';
+import 'package:ieoseo/data/format.dart';
 import 'package:ieoseo/data/models.dart';
 import 'package:ieoseo/screens/sheets/event_sheet.dart';
 import 'package:ieoseo/screens/sheets/notif_sheet.dart';
@@ -114,6 +115,42 @@ void main() {
     expect(find.text('이벤트 타입'), findsOneWidget);
     expect(find.text('D-Day'), findsOneWidget);
     expect(find.text('추가하기'), findsOneWidget);
+  });
+
+  testWidgets('생성 시트 이벤트 타입에 진행률 옵션이 없다(D-Day/기간만)', (
+    WidgetTester tester,
+  ) async {
+    await _pumpTall(tester, EventSheetBody(isNew: true, onClose: () {}));
+
+    // 진행률은 생성 타입에서 제거(보기 토글로 이동).
+    expect(find.text('기간 진행률'), findsNothing);
+    expect(find.text('기간'), findsOneWidget);
+  });
+
+  testWidgets('기간 이벤트 상세는 보기 토글을 보이고 진행률로 전환하면 %를 보인다', (
+    WidgetTester tester,
+  ) async {
+    final DkEvent ev = DkEvent(
+      id: 'p1',
+      type: DkEventType.period,
+      title: '집중 챌린지',
+      category: '건강',
+      start: ymd(addDays(kToday, -10)),
+      end: ymd(addDays(kToday, 10)),
+    );
+    await _pumpTall(
+      tester,
+      EventSheetBody(event: ev, isNew: false, onClose: () {}),
+    );
+
+    // 보기 토글 노출(마감 D-Day ↔ 진행률).
+    expect(find.text('마감 D-Day'), findsWidgets);
+    expect(find.text('진행률'), findsOneWidget);
+
+    // 진행률로 전환 → 히어로에 % 표시.
+    await tester.tap(find.text('진행률'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('%'), findsOneWidget);
   });
 
   testWidgets('알림 시트는 실데이터 목록을 렌더한다', (WidgetTester tester) async {

@@ -78,6 +78,20 @@ DkDdayInfo ddayInfo(DkEvent ev, [DateTime? today]) {
       final int pct = total == 0
           ? 0
           : (past / total * 100).round().clamp(0, 100);
+      final int overrun = past - total; // 마감(end) 이후 경과 일수
+      if (overrun > 0) {
+        // 마감 지남: 진행률(%)은 기간 D-Day 와 같은 데이터의 다른 표현이므로, 100% 에
+        // 멈추지 않고 '마감 D+N'(past)로 수렴시킨다 — 안 사라지고 계속 노출(종료 정책).
+        return DkDdayInfo(
+          type: DkEventType.progress,
+          pct: 100,
+          status: '종료',
+          total: total,
+          past: total,
+          label: '마감 D+$overrun',
+          urgency: DkUrgency.past,
+        );
+      }
       final String status = past < 0 ? '예정' : (past >= total ? '완료' : '진행중');
       return DkDdayInfo(
         type: DkEventType.progress,
