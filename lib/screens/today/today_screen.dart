@@ -110,8 +110,11 @@ class _DdayRow extends StatelessWidget {
     final DkTokens t = DkTheme.of(context);
     final DkDdayInfo info = ddayInfo(event);
     final DkHue h = DkHue.byName(event.color);
+    // 진행률 뷰라도 마감이 지나면 %가 아니라 '마감 D+N'(카운트다운과 수렴)으로 보인다.
     final String big = info.type == DkEventType.progress
-        ? '${info.pct}%'
+        ? (info.urgency == DkUrgency.past
+              ? info.label.replaceAll('마감 ', '')
+              : '${info.pct}%')
         : info.label.replaceAll('마감 ', '').replaceAll('시작 ', '');
 
     return GestureDetector(

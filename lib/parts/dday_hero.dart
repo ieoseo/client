@@ -34,7 +34,8 @@ class DdayHero extends StatelessWidget {
         borderRadius: BorderRadius.circular(t.radiusLg),
         child: Container(
           decoration: BoxDecoration(
-            color: t.fgStrong,
+            // ink 표면(양 테마 어두움) — fgStrong 은 다크에서 흰색으로 뒤집혀 흰 카드가 된다.
+            color: t.ink,
             borderRadius: BorderRadius.circular(t.radiusLg),
             boxShadow: t.shadows.s2,
           ),
@@ -122,7 +123,9 @@ class DdayHero extends StatelessWidget {
                         const SizedBox(width: 12),
                         Text(
                           info.type == DkEventType.progress
-                              ? '${info.pct}%'
+                              ? (info.urgency == DkUrgency.past
+                                    ? info.label
+                                    : '${info.pct}%')
                               : info.label,
                           style: const TextStyle(
                             fontFamily: 'WantedSans',

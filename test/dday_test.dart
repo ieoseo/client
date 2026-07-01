@@ -157,6 +157,46 @@ void main() {
     });
   });
 
+  // 진행률(%) 뷰도 기간 D-Day 와 같은 start+end 데이터의 다른 표현이므로, 마감이 지나면
+  // 100% 에 멈추지 않고 '마감 D+N'(past)로 수렴한다 — 종료 정책(안 사라지고 계속 노출)과 일치.
+  group('기간 진행률 마감 후 (오늘 = 2026-06-10)', () {
+    DkEvent prog(String start, String end) => DkEvent(
+      id: 'e',
+      type: DkEventType.progress,
+      title: '기간',
+      category: '건강',
+      start: start,
+      end: end,
+    );
+
+    final DateTime today = DateTime(2026, 6, 10);
+
+    test('진행 중은 진행률%와 진행중 상태(강조 해제 아님)', () {
+      // 전체 10일 중 9일 경과 → 90%.
+      final DkDdayInfo info = ddayInfo(prog('2026-06-01', '2026-06-11'), today);
+      expect(info.pct, 90);
+      expect(info.status, '진행중');
+      expect(info.urgency, isNot(DkUrgency.past));
+    });
+
+    test('마감 당일은 100% · 완료(아직 D+ 아님)', () {
+      // 전체 9일 중 9일 경과 → 100%, 초과 없음.
+      final DkDdayInfo info = ddayInfo(prog('2026-06-01', '2026-06-10'), today);
+      expect(info.pct, 100);
+      expect(info.status, '완료');
+      expect(info.urgency, isNot(DkUrgency.past));
+    });
+
+    test('마감 후는 100% 고정 + "마감 D+N · 종료 · past"', () {
+      // 전체 7일, 9일 경과 → 2일 초과.
+      final DkDdayInfo info = ddayInfo(prog('2026-06-01', '2026-06-08'), today);
+      expect(info.pct, 100);
+      expect(info.label, '마감 D+2');
+      expect(info.status, '종료');
+      expect(info.urgency, DkUrgency.past);
+    });
+  });
+
   group('urgencyOf', () {
     test('경계값 분류', () {
       expect(urgencyOf(-1), DkUrgency.past);

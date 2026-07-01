@@ -14,7 +14,7 @@ class DkToastData {
 
 /// 화면 하단에 토스트를 쌓아 보여주는 호스트. 프로토타입 `ToastHost`.
 ///
-/// 하단 104, fg-strong 배경/흰 글자, 14/600, 2.4초 후 소멸, 최대 3개.
+/// 하단 104, ink 배경/onInk 글자(다크에서 뒤집히지 않음), 14/600, 2.4초 후 소멸, 최대 3개.
 /// 표시는 [DkToastHostState.show]로 트리거(상위 위젯이 GlobalKey로 접근).
 class DkToastHost extends StatefulWidget {
   const DkToastHost({super.key});
@@ -91,7 +91,8 @@ class _Toast extends StatelessWidget {
       case DkTone.primary:
         return tokens.primary;
       default:
-        return const Color(0xFFFFFFFF);
+        // ink 표면 위 기본 아이콘 — 양 테마 모두 밝은 onInk(흰색 하드코딩 아님).
+        return tokens.onInk;
     }
   }
 
@@ -113,7 +114,9 @@ class _Toast extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         decoration: BoxDecoration(
-          color: tokens.fgStrong,
+          // ink 표면(양 테마 모두 어두움) — fgStrong 은 다크에서 흰색으로 뒤집혀
+          // 흰 알약+흰 글자가 되므로 쓰지 않는다.
+          color: tokens.ink,
           borderRadius: BorderRadius.circular(14),
           boxShadow: tokens.shadows.s3,
         ),
@@ -131,12 +134,12 @@ class _Toast extends StatelessWidget {
             ],
             Text(
               data.message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Pretendard',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.14,
-                color: Color(0xFFFFFFFF),
+                color: tokens.onInk,
               ),
             ),
           ],

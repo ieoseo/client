@@ -43,7 +43,13 @@ class EventSheetBody extends StatefulWidget {
 }
 
 class _EventSheetBodyState extends State<EventSheetBody> {
-  late DkEventType _type = widget.event?.type ?? DkEventType.single;
+  // 진행률은 더 이상 '생성 타입'이 아니라 기간 이벤트의 보기 방식이다. 레거시 progress 이벤트는
+  // 편집 시 기간(period)으로 흡수한다(세그먼트에 진행률 옵션이 없어졌으므로).
+  late DkEventType _type = widget.event?.type == DkEventType.progress
+      ? DkEventType.period
+      : (widget.event?.type ?? DkEventType.single);
+  // 기간 이벤트 히어로 보기 토글: false=마감 D-Day 카운트다운, true=진행률(%).
+  late bool _showProgress = widget.event?.type == DkEventType.progress;
   late String _cat = widget.event?.category ?? '자격증';
   bool _remind = true;
   late final TextEditingController _title = TextEditingController(
@@ -193,6 +199,9 @@ class _EventSheetBodyState extends State<EventSheetBody> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         if (showHero) _hero(t, ev),
+        // 기간 이벤트 상세에서만 보기 토글(마감 D-Day ↔ 진행률). 진행률은 생성 타입이 아니라
+        // 같은 기간 데이터의 다른 표현이므로 여기서 전환한다.
+        if (showHero && _type == DkEventType.period) _viewToggle(t),
         DkField(
           label: '이벤트 타입',
           child: DkSegmented<DkEventType>(
@@ -201,8 +210,7 @@ class _EventSheetBodyState extends State<EventSheetBody> {
             onChanged: (DkEventType v) => setState(() => _type = v),
             options: const <DkSegment<DkEventType>>[
               DkSegment<DkEventType>(DkEventType.single, 'D-Day'),
-              DkSegment<DkEventType>(DkEventType.progress, '기간 진행률'),
-              DkSegment<DkEventType>(DkEventType.period, '기간 D-Day'),
+              DkSegment<DkEventType>(DkEventType.period, '기간'),
             ],
           ),
         ),
@@ -251,12 +259,36 @@ class _EventSheetBodyState extends State<EventSheetBody> {
     );
   }
 
+  /// 기간 이벤트 히어로 보기 토글(마감 D-Day ↔ 진행률).
+  Widget _viewToggle(DkTokens t) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DkSegmented<bool>(
+        full: true,
+        value: _showProgress,
+        onChanged: (bool v) => setState(() => _showProgress = v),
+        options: const <DkSegment<bool>>[
+          DkSegment<bool>(false, '마감 D-Day'),
+          DkSegment<bool>(true, '진행률'),
+        ],
+      ),
+    );
+  }
+
   Widget _hero(DkTokens t, DkEvent ev) {
-    final DkDdayInfo info = ddayInfo(ev);
+    // 기간 이벤트는 보기 토글에 따라 진행률(progress) 또는 마감 카운트다운(period)으로 렌더한다.
+    final DkEvent shown = _type == DkEventType.period
+        ? ev.copyWith(
+            type: _showProgress ? DkEventType.progress : DkEventType.period,
+          )
+        : ev;
+    final DkDdayInfo info = ddayInfo(shown);
     final DkHue h = DkHue.byName(ev.color);
     const Color white = Color(0xFFFFFFFF);
     final String big = info.type == DkEventType.progress
-        ? '${info.pct}%'
+        ? (info.urgency == DkUrgency.past
+              ? info.label.replaceAll('마감 ', '')
+              : '${info.pct}%')
         : info.label.replaceAll('마감 ', '');
 
     return ClipRRect(
@@ -264,7 +296,8 @@ class _EventSheetBodyState extends State<EventSheetBody> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 18),
         decoration: BoxDecoration(
-          color: t.fgStrong,
+          // ink 표면(양 테마 어두움) — fgStrong 은 다크에서 흰색으로 뒤집혀 흰 카드가 된다.
+          color: t.ink,
           borderRadius: BorderRadius.circular(22),
         ),
         child: Stack(
