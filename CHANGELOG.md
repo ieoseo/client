@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.3](https://github.com/ieoseo/client/compare/ieoseo-client-v0.9.2...ieoseo-client-v0.9.3) (2026-07-01)
+
+
+### Features
+
+* 기간 진행률 보기 토글 + 마감 후 마감 D+N + 다크모드 토스트 수정 ([#150](https://github.com/ieoseo/client/issues/150)) ([c0c3beb](https://github.com/ieoseo/client/commit/c0c3beb72012a190b9eee72c36ced8257944f098))
+
+
+### Miscellaneous Chores
+
+* client 릴리스 0.9.3 강제(Release-As) ([21781ec](https://github.com/ieoseo/client/commit/21781ec7fefc9b4345be55edfcf407f479c044ca))
+
 ## [0.9.2](https://github.com/ieoseo/client/compare/ieoseo-client-v0.9.1...ieoseo-client-v0.9.2) (2026-06-30)
 
 
