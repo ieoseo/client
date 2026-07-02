@@ -157,33 +157,36 @@ void main() {
       },
     );
 
-    test('복귀 후 provisioning 실패 → authError 노출 + signOut + 미인증(로그인 화면 안내)', () async {
-      // 세션은 생겼지만 /auth/me 가 실패 = "인증했는데 로그인 화면으로 복귀"(#156).
-      // 무음 흡수 대신 authError 를 세우고 매달린 세션을 정리해야 한다.
-      final c = buildController();
-      c.adapter.onGet(
-        '/auth/me',
-        (server) => server.reply(401, <String, dynamic>{
-          'success': false,
-          'data': null,
-          'error': <String, dynamic>{
-            'code': 'UNAUTHORIZED',
-            'message': '인증이 필요합니다',
-          },
-          'meta': null,
-        }),
-      );
+    test(
+      '복귀 후 provisioning 실패 → authError 노출 + signOut + 미인증(로그인 화면 안내)',
+      () async {
+        // 세션은 생겼지만 /auth/me 가 실패 = "인증했는데 로그인 화면으로 복귀"(#156).
+        // 무음 흡수 대신 authError 를 세우고 매달린 세션을 정리해야 한다.
+        final c = buildController();
+        c.adapter.onGet(
+          '/auth/me',
+          (server) => server.reply(401, <String, dynamic>{
+            'success': false,
+            'data': null,
+            'error': <String, dynamic>{
+              'code': 'UNAUTHORIZED',
+              'message': '인증이 필요합니다',
+            },
+            'meta': null,
+          }),
+        );
 
-      await c.controller.oauthSignIn(SocialProvider.apple);
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+        await c.controller.oauthSignIn(SocialProvider.apple);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
 
-      expect(c.controller.status, isNot(AuthStatus.authenticated));
-      expect(c.controller.authError, isNotNull);
-      expect(c.gateway.signedOut, isTrue);
+        expect(c.controller.status, isNot(AuthStatus.authenticated));
+        expect(c.controller.authError, isNotNull);
+        expect(c.gateway.signedOut, isTrue);
 
-      c.controller.clearAuthError();
-      expect(c.controller.authError, isNull);
-    });
+        c.controller.clearAuthError();
+        expect(c.controller.authError, isNull);
+      },
+    );
   });
 
   group('tryRestore', () {
