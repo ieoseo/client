@@ -127,6 +127,15 @@ void main() {
     expect(find.text('기간'), findsOneWidget);
   });
 
+  testWidgets('D-Day 추가 시 목표일 기본값은 오늘이다(먼 미래 아님)', (
+    WidgetTester tester,
+  ) async {
+    await _pumpTall(tester, EventSheetBody(isNew: true, onClose: () {}));
+
+    // 기본 타입은 D-Day(single) → 목표일 필드가 오늘 날짜를 보인다.
+    expect(find.text(fmtDate(ymd(kToday))), findsOneWidget);
+  });
+
   testWidgets('기간 이벤트 상세는 보기 토글을 보이고 진행률로 전환하면 %를 보인다', (
     WidgetTester tester,
   ) async {
