@@ -93,4 +93,31 @@ void main() {
     await tester.pumpAndSettle();
     expect(auth.controller.status, AuthStatus.authenticated);
   });
+
+  testWidgets('복귀 provisioning 실패 시 로그인 화면에 안내 배너가 뜬다(#156)', (
+    WidgetTester tester,
+  ) async {
+    final auth = buildAuth();
+    // 세션은 생기지만 /auth/me 가 실패 → out-of-band provisioning 실패.
+    auth.adapter.onGet(
+      '/auth/me',
+      (server) => server.reply(401, <String, dynamic>{
+        'success': false,
+        'data': null,
+        'error': <String, dynamic>{
+          'code': 'UNAUTHORIZED',
+          'message': '인증이 필요합니다',
+        },
+        'meta': null,
+      }),
+    );
+
+    await tester.pumpWidget(wrapForTest(LoginScreen(auth: auth.controller)));
+    await tester.tap(_social(SocialProvider.apple));
+    await tester.pumpAndSettle();
+
+    // 무음 복귀가 아니라 실패 안내가 노출되어야 한다.
+    expect(auth.controller.status, isNot(AuthStatus.authenticated));
+    expect(find.textContaining('계정 확인에 실패'), findsOneWidget);
+  });
 }

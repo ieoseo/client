@@ -66,12 +66,25 @@ class AuthController extends ChangeNotifier {
 
   AuthStatus _status = AuthStatus.unknown;
   AuthUser? _user;
+  String? _authError;
 
   /// 현재 진입 상태.
   AuthStatus get status => _status;
 
   /// 현재 인증 사용자(미인증이면 null).
   AuthUser? get user => _user;
+
+  /// 최근 로그인/provisioning 실패 안내(없으면 null). 로그인 화면이 배너로 노출한다(#156).
+  /// OAuth 딥링크 복귀 후 `/auth/me` 가 실패하면 무음으로 로그인 화면에 되돌아오던 문제를
+  /// 이 메시지로 드러낸다. 새 로그인 시도 시 [clearAuthError] 로 비운다.
+  String? get authError => _authError;
+
+  /// 로그인 화면이 새 시도를 시작할 때 이전 에러 안내를 지운다.
+  void clearAuthError() {
+    if (_authError == null) return;
+    _authError = null;
+    notifyListeners();
+  }
 
   /// 인증된 상태인지.
   bool get isAuthenticated => _status == AuthStatus.authenticated;
@@ -123,15 +136,28 @@ class AuthController extends ChangeNotifier {
     if (_status == AuthStatus.authenticated || _provisioning) return;
     try {
       await _provisionAndAuthenticate();
-    } on ApiException {
-      // 복귀 직후 me 실패 — 미인증 유지(화면이 재시도).
+    } on ApiException catch (e) {
+      // 세션은 생겼지만 me 실패 = "인증 후 로그인 화면 복귀"(#156). 무음 대신 안내를 세운다.
+      await _failExternalSignIn('로그인은 됐지만 계정 확인에 실패했어요. 잠시 후 다시 시도해 주세요.', e);
     } catch (e, stack) {
-      // ApiException 이 아닌 예외(네트워크 raw·파싱 등)도 흡수한다 — 그렇지 않으면
-      // onSignedIn 스트림 리스너 밖으로 전파돼 구독이 끊기고, 이후 복귀 이벤트가
-      // 전부 무시된다. 미인증 유지는 _provisionAndAuthenticate 의 finally 가 보장한다.
-      debugPrint('OAuth 복귀 provisioning 실패(흡수): $e');
+      // ApiException 이 아닌 예외(네트워크 raw·파싱 등)도 흡수해 구독이 끊기지 않게 한다.
+      // 무음 흡수는 원인을 감추므로(#156) 로그는 남기되 화면 안내도 세운다.
+      debugPrint('OAuth 복귀 provisioning 실패: $e');
       debugPrint('$stack');
+      await _failExternalSignIn('로그인 처리 중 문제가 생겼어요. 다시 시도해 주세요.', e);
     }
+  }
+
+  /// 딥링크 복귀 provisioning 실패 처리: 매달린 세션을 정리(반쪽 상태 방지)하고
+  /// 안내를 세운 뒤 미인증으로 확정한다(로그인 화면이 배너로 노출).
+  Future<void> _failExternalSignIn(String message, Object error) async {
+    try {
+      await _gateway.signOut();
+    } on Object catch (e) {
+      debugPrint('실패 정리(signOut) 중 오류(무시): $e');
+    }
+    _authError = message;
+    _setUnauthenticated();
   }
 
   /// 사용자 갱신(연동 추가 등) 통지 시 최신 identity 를 로컬에 반영하고 알린다.
@@ -192,6 +218,7 @@ class AuthController extends ChangeNotifier {
   void _setAuthenticated(AuthUser user) {
     _user = user;
     _status = AuthStatus.authenticated;
+    _authError = null;
     notifyListeners();
   }
 

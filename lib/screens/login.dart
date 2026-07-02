@@ -63,9 +63,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool get _busy => _socialBusy != null;
 
+  @override
+  void initState() {
+    super.initState();
+    // 딥링크 복귀 provisioning 실패(#156)는 버튼 핸들러 밖(컨트롤러 스트림)에서 발생하므로
+    // 컨트롤러를 구독해 authError 를 배너로 반영한다.
+    widget.auth.addListener(_onAuthChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.auth.removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// 로컬 오류(버튼 직접 실패) 우선, 없으면 컨트롤러의 out-of-band provisioning 오류(#156).
+  String? get _bannerError => _error ?? widget.auth.authError;
+
   /// 소셜 로그인(ADR-0014, ADR-0023). Supabase `signInWithOAuth`(브라우저 + 딥링크)로 위임한다.
   Future<void> _socialSignIn(SocialProvider provider) async {
     if (_busy) return;
+    widget.auth.clearAuthError();
     setState(() {
       _socialBusy = provider;
       _error = null;
@@ -133,8 +155,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       Expanded(child: Center(child: _Hero())),
-                      if (_error != null) ...<Widget>[
-                        _ErrorBanner(message: _error!),
+                      if (_bannerError != null) ...<Widget>[
+                        _ErrorBanner(message: _bannerError!),
                         const SizedBox(height: 12),
                       ],
                       for (int i = 0; i < social.length; i++) ...<Widget>[
