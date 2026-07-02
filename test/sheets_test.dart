@@ -127,6 +127,44 @@ void main() {
     expect(find.text('기간'), findsOneWidget);
   });
 
+  testWidgets('D-Day 추가 시 목표일 기본값은 오늘이다(먼 미래 아님)', (WidgetTester tester) async {
+    await _pumpTall(tester, EventSheetBody(isNew: true, onClose: () {}));
+
+    // 기본 타입은 D-Day(single) → 목표일 필드가 오늘 날짜를 보인다.
+    expect(find.text(fmtDate(ymd(kToday))), findsOneWidget);
+  });
+
+  testWidgets('동작하지 않는 D-Day 알림 토글은 숨긴다(#159)', (WidgetTester tester) async {
+    // 로컬 알림 실구현(#160) 전까지 오해를 주는 토글을 노출하지 않는다.
+    await _pumpTall(tester, EventSheetBody(isNew: true, onClose: () {}));
+
+    expect(find.textContaining('D-Day 알림'), findsNothing);
+  });
+
+  testWidgets('핀 토글을 켜고 저장하면 pinned=true 로 제출된다(#162)', (
+    WidgetTester tester,
+  ) async {
+    DkEvent? submitted;
+    await _pumpTall(
+      tester,
+      EventSheetBody(
+        isNew: true,
+        onClose: () {},
+        onSubmit: (DkEvent e) => submitted = e,
+      ),
+    );
+
+    // 제목 입력(제출 조건) 후 핀 토글 → 추가하기.
+    await tester.enterText(find.byType(EditableText).first, '기념 시험');
+    await tester.tap(find.text('홈 상단에 고정'));
+    await tester.pump();
+    await tester.tap(find.text('추가하기'));
+    await tester.pump();
+
+    expect(submitted, isNotNull);
+    expect(submitted!.pinned, isTrue);
+  });
+
   testWidgets('기간 이벤트 상세는 보기 토글을 보이고 진행률로 전환하면 %를 보인다', (
     WidgetTester tester,
   ) async {

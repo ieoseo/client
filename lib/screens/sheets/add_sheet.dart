@@ -6,10 +6,10 @@ import '../../widgets/dk_sheet.dart';
 import 'event_sheet.dart';
 import 'task_sheet.dart';
 
-/// 추가 시트의 상단 탭(무엇을 추가할지).
-enum _AddTab { task, event }
+/// 추가 시트의 상단 탭(무엇을 추가할지). 앱은 D-Day 중심이라 event 를 앞에 둔다(#158).
+enum _AddTab { event, task }
 
-/// 통합 추가 시트. 하단 + 로 열며, **상단 세그먼트 [할 일 | D-Day 일정]** 로 한 시트 안에서
+/// 통합 추가 시트. 하단 + 로 열며, **상단 세그먼트 [D-Day 일정 | 할 일]** 로 한 시트 안에서
 /// 종류를 전환한다(별도 선택지 시트 없이). 태스크(할 일)와 이벤트(D-Day)는 별개 도메인이라
 /// 폼이 다르므로, 선택한 탭에 맞는 본문(`TaskSheetBody`/`EventSheetBody`)을 보여준다.
 Future<void> showAddSheet(
@@ -51,7 +51,7 @@ class _AddSheetBody extends StatefulWidget {
 }
 
 class _AddSheetBodyState extends State<_AddSheetBody> {
-  _AddTab _tab = _AddTab.task;
+  _AddTab _tab = _AddTab.event;
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +63,8 @@ class _AddSheetBodyState extends State<_AddSheetBody> {
           value: _tab,
           onChanged: (_AddTab v) => setState(() => _tab = v),
           options: const <DkSegment<_AddTab>>[
-            DkSegment<_AddTab>(_AddTab.task, '할 일'),
             DkSegment<_AddTab>(_AddTab.event, 'D-Day 일정'),
+            DkSegment<_AddTab>(_AddTab.task, '할 일'),
           ],
         ),
         const SizedBox(height: 16),

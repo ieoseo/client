@@ -262,7 +262,7 @@ class _MainScaffoldState extends State<MainScaffold>
     );
   }
 
-  /// 하단 + (FAB): 통합 추가 시트(상단 [할 일 | D-Day 일정] 세그먼트)로 한 시트에서 분기한다.
+  /// 하단 + (FAB): 통합 추가 시트(상단 [D-Day 일정 | 할 일] 세그먼트, 기본 D-Day)로 한 시트에서 분기한다.
   /// 태스크와 D-Day 는 별개 도메인이라(홈 "다가오는 일정"=D-Day 만) 폼은 탭으로 전환한다.
   void _openAddSheet() {
     showAddSheet(

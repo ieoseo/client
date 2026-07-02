@@ -50,14 +50,15 @@ class _EventSheetBodyState extends State<EventSheetBody> {
       : (widget.event?.type ?? DkEventType.single);
   // 기간 이벤트 히어로 보기 토글: false=마감 D-Day 카운트다운, true=진행률(%).
   late bool _showProgress = widget.event?.type == DkEventType.progress;
+  // 홈 상단 고정(핀). 저장 시 서버로 반영, 정렬에서 최우선(#162).
+  late bool _pinned = widget.event?.pinned ?? false;
   late String _cat = widget.event?.category ?? '자격증';
-  bool _remind = true;
   late final TextEditingController _title = TextEditingController(
     text: widget.event?.title ?? '',
   );
-  // 기본값은 오늘 기준 상대(과거 고정 날짜 제거): 목표일 4주 뒤, 기간 오늘~5일.
+  // 기본값: 목표일은 오늘(먼 미래로 점프하지 않게, 사용자가 미래로 옮겨 고름), 기간은 오늘~+4일.
   late final TextEditingController _date = TextEditingController(
-    text: widget.event?.date ?? ymd(addDays(kToday, 28)),
+    text: widget.event?.date ?? ymd(kToday),
   );
   late final TextEditingController _start = TextEditingController(
     text: widget.event?.start ?? ymd(kToday),
@@ -90,8 +91,8 @@ class _EventSheetBodyState extends State<EventSheetBody> {
       date: single ? _date.text.trim() : null,
       start: single ? null : _start.text.trim(),
       end: single ? null : _end.text.trim(),
-      // 핀(홈 고정) 기능 제거 — 신규는 false, 편집은 기존 값 보존(서버 계약 필드는 유지).
-      pinned: widget.event?.pinned ?? false,
+      // 홈 고정(핀). 토글 값으로 반영(#162).
+      pinned: _pinned,
       memo: _memo.text.trim(),
       color: widget.event?.color ?? 'cool',
     );
@@ -239,6 +240,8 @@ class _EventSheetBodyState extends State<EventSheetBody> {
             minHeight: 64,
           ),
         ),
+        // D-Day 알림 토글은 실제 로컬 알림이 없어(오해 유발) 숨김 — 실구현은 #160.
+        // 홈 상단 고정(핀) 토글(#162) — 저장 시 서버 반영, 정렬 최우선.
         Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -246,16 +249,43 @@ class _EventSheetBodyState extends State<EventSheetBody> {
             color: t.bgSubtle,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Column(
-            children: <Widget>[
-              _toggleRow(t, 'bell', 'D-Day 알림 (7·3·1일 전)', _remind, (bool v) {
-                setState(() => _remind = v);
-              }),
-            ],
-          ),
+          child: _pinRow(t),
         ),
         _stickyActions(t, ev),
       ],
+    );
+  }
+
+  /// 홈 상단 고정(핀) 토글 줄(#162). 켜면 홈 "다가오는 일정" 최상단에 고정된다.
+  /// 줄 전체가 탭 대상(토글과 동일 동작).
+  Widget _pinRow(DkTokens t) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _pinned = !_pinned),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: <Widget>[
+            DkIcon('pin', size: 19, color: t.fgMuted, strokeWidth: 2),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Text(
+                '홈 상단에 고정',
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w500,
+                  color: t.fg,
+                ),
+              ),
+            ),
+            DkToggle(
+              value: _pinned,
+              onChanged: (bool v) => setState(() => _pinned = v),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -385,36 +415,6 @@ class _EventSheetBodyState extends State<EventSheetBody> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _toggleRow(
-    DkTokens t,
-    String icon,
-    String label,
-    bool value,
-    ValueChanged<bool> onChanged,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: <Widget>[
-          DkIcon(icon, size: 19, color: t.fgMuted),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontSize: 14.5,
-                fontWeight: FontWeight.w500,
-                color: t.fg,
-              ),
-            ),
-          ),
-          DkToggle(value: value, onChanged: onChanged),
-        ],
       ),
     );
   }
