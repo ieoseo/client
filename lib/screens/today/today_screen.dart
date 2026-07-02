@@ -178,6 +178,20 @@ class _DdayRow extends StatelessWidget {
                       color: h.color,
                     ),
                   ),
+                  const SizedBox(height: 2),
+                  // 실제 날짜(단일=목표일, 기간=시작~종료)를 보여 D-값의 기준을 명확히 한다(#157).
+                  Text(
+                    eventDateLabel(event),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.12,
+                      color: t.fgSubtle,
+                    ),
+                  ),
                 ],
               ),
             ),
