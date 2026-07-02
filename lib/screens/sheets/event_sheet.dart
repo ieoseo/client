@@ -55,9 +55,9 @@ class _EventSheetBodyState extends State<EventSheetBody> {
   late final TextEditingController _title = TextEditingController(
     text: widget.event?.title ?? '',
   );
-  // 기본값은 오늘 기준 상대(과거 고정 날짜 제거): 목표일 4주 뒤, 기간 오늘~5일.
+  // 기본값: 목표일은 오늘(먼 미래로 점프하지 않게, 사용자가 미래로 옮겨 고름), 기간은 오늘~+4일.
   late final TextEditingController _date = TextEditingController(
-    text: widget.event?.date ?? ymd(addDays(kToday, 28)),
+    text: widget.event?.date ?? ymd(kToday),
   );
   late final TextEditingController _start = TextEditingController(
     text: widget.event?.start ?? ymd(kToday),
