@@ -141,6 +141,30 @@ void main() {
     expect(find.textContaining('D-Day 알림'), findsNothing);
   });
 
+  testWidgets('핀 토글을 켜고 저장하면 pinned=true 로 제출된다(#162)', (
+    WidgetTester tester,
+  ) async {
+    DkEvent? submitted;
+    await _pumpTall(
+      tester,
+      EventSheetBody(
+        isNew: true,
+        onClose: () {},
+        onSubmit: (DkEvent e) => submitted = e,
+      ),
+    );
+
+    // 제목 입력(제출 조건) 후 핀 토글 → 추가하기.
+    await tester.enterText(find.byType(EditableText).first, '기념 시험');
+    await tester.tap(find.text('홈 상단에 고정'));
+    await tester.pump();
+    await tester.tap(find.text('추가하기'));
+    await tester.pump();
+
+    expect(submitted, isNotNull);
+    expect(submitted!.pinned, isTrue);
+  });
+
   testWidgets('기간 이벤트 상세는 보기 토글을 보이고 진행률로 전환하면 %를 보인다', (
     WidgetTester tester,
   ) async {

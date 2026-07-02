@@ -240,6 +240,11 @@ class _DdayRow extends StatelessWidget {
                 children: <Widget>[
                   Row(
                     children: <Widget>[
+                      // 핀 고정 표식(#162) — 제목 앞 작은 pin 아이콘.
+                      if (event.pinned) ...<Widget>[
+                        DkIcon('pin', size: 13, color: h.color, strokeWidth: 2),
+                        const SizedBox(width: 4),
+                      ],
                       Flexible(
                         child: Text(
                           event.title,

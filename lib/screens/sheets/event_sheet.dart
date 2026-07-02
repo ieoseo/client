@@ -10,6 +10,7 @@ import '../../widgets/dk_button.dart';
 import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_segmented.dart';
 import '../../widgets/dk_sheet.dart';
+import '../me/settings_section.dart';
 import 'date_picker_sheet.dart';
 import 'date_range_picker_sheet.dart';
 import 'sheet_fields.dart';
@@ -49,6 +50,8 @@ class _EventSheetBodyState extends State<EventSheetBody> {
       : (widget.event?.type ?? DkEventType.single);
   // 기간 이벤트 히어로 보기 토글: false=마감 D-Day 카운트다운, true=진행률(%).
   late bool _showProgress = widget.event?.type == DkEventType.progress;
+  // 홈 상단 고정(핀). 저장 시 서버로 반영, 정렬에서 최우선(#162).
+  late bool _pinned = widget.event?.pinned ?? false;
   late String _cat = widget.event?.category ?? '자격증';
   late final TextEditingController _title = TextEditingController(
     text: widget.event?.title ?? '',
@@ -88,8 +91,8 @@ class _EventSheetBodyState extends State<EventSheetBody> {
       date: single ? _date.text.trim() : null,
       start: single ? null : _start.text.trim(),
       end: single ? null : _end.text.trim(),
-      // 핀(홈 고정) 기능 제거 — 신규는 false, 편집은 기존 값 보존(서버 계약 필드는 유지).
-      pinned: widget.event?.pinned ?? false,
+      // 홈 고정(핀). 토글 값으로 반영(#162).
+      pinned: _pinned,
       memo: _memo.text.trim(),
       color: widget.event?.color ?? 'cool',
     );
@@ -238,8 +241,51 @@ class _EventSheetBodyState extends State<EventSheetBody> {
           ),
         ),
         // D-Day 알림 토글은 실제 로컬 알림이 없어(오해 유발) 숨김 — 실구현은 #160.
+        // 홈 상단 고정(핀) 토글(#162) — 저장 시 서버 반영, 정렬 최우선.
+        Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: t.bgSubtle,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: _pinRow(t),
+        ),
         _stickyActions(t, ev),
       ],
+    );
+  }
+
+  /// 홈 상단 고정(핀) 토글 줄(#162). 켜면 홈 "다가오는 일정" 최상단에 고정된다.
+  /// 줄 전체가 탭 대상(토글과 동일 동작).
+  Widget _pinRow(DkTokens t) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _pinned = !_pinned),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: <Widget>[
+            DkIcon('pin', size: 19, color: t.fgMuted, strokeWidth: 2),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Text(
+                '홈 상단에 고정',
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w500,
+                  color: t.fg,
+                ),
+              ),
+            ),
+            DkToggle(
+              value: _pinned,
+              onChanged: (bool v) => setState(() => _pinned = v),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

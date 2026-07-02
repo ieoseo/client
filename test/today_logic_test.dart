@@ -132,5 +132,39 @@ void main() {
       ddayOrdered(events, today: DateTime(2026, 6, 1));
       expect(events.map((DkEvent e) => e.id).toList(), <String>['b', 'a']);
     });
+
+    test('핀 고정 일정은 덜 임박해도 상단에 온다(#162)', () {
+      final List<DkEvent> events = <DkEvent>[
+        ev('soon', '2026-06-03'), // D-2 (핀 아님)
+        ev('pinnedFar', '2026-06-20', pinned: true), // D-19 이지만 핀
+      ];
+
+      final List<DkEvent> out = ddayOrdered(
+        events,
+        today: DateTime(2026, 6, 1),
+      );
+      expect(out.map((DkEvent e) => e.id).toList(), <String>[
+        'pinnedFar',
+        'soon',
+      ]);
+    });
+
+    test('핀 고정끼리는 임박순으로 정렬한다(#162)', () {
+      final List<DkEvent> events = <DkEvent>[
+        ev('pinFar', '2026-06-20', pinned: true), // D-19
+        ev('pinSoon', '2026-06-05', pinned: true), // D-4
+        ev('plain', '2026-06-03'), // D-2
+      ];
+
+      final List<DkEvent> out = ddayOrdered(
+        events,
+        today: DateTime(2026, 6, 1),
+      );
+      expect(out.map((DkEvent e) => e.id).toList(), <String>[
+        'pinSoon',
+        'pinFar',
+        'plain',
+      ]);
+    });
   });
 }
