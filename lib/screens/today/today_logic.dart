@@ -54,13 +54,16 @@ int _ddayKey(DkEvent ev, DateTime today) {
   return (1 << 29) - marks.last;
 }
 
-/// 이벤트를 D-Day 임박순으로 정렬한다(가장 임박한 순). 원본은 변형하지 않고 새 리스트 반환.
+/// 이벤트를 정렬한다: **핀 고정 먼저**(#162), 그 안에서 D-Day 임박순(가장 임박한 순).
+/// 원본은 변형하지 않고 새 리스트 반환.
 List<DkEvent> ddayOrdered(List<DkEvent> events, {DateTime? today}) {
   final DateTime t = today ?? kToday;
   final List<DkEvent> ordered = <DkEvent>[...events];
-  ordered.sort(
-    (DkEvent a, DkEvent b) => _ddayKey(a, t).compareTo(_ddayKey(b, t)),
-  );
+  ordered.sort((DkEvent a, DkEvent b) {
+    // 핀 고정이 항상 상단(pinned=true 먼저).
+    if (a.pinned != b.pinned) return a.pinned ? -1 : 1;
+    return _ddayKey(a, t).compareTo(_ddayKey(b, t));
+  });
   return ordered;
 }
 
