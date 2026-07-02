@@ -70,6 +70,33 @@ void main() {
     expect(opened, true);
   });
 
+  testWidgets('단일 D-Day 행은 목표일 날짜를 보인다(#157)', (WidgetTester tester) async {
+    const DkEvent single = DkEvent(
+      id: 's1',
+      type: DkEventType.single,
+      title: '정보처리기사',
+      category: '자격증',
+      date: '2026-12-24',
+    );
+    await _pumpTall(tester, _screen(events: <DkEvent>[single]));
+
+    expect(find.text('2026. 12. 24'), findsOneWidget);
+  });
+
+  testWidgets('기간 행은 시작~종료 날짜를 보인다(#157)', (WidgetTester tester) async {
+    const DkEvent period = DkEvent(
+      id: 'p1',
+      type: DkEventType.period,
+      title: '원서 접수',
+      category: '자격증',
+      start: '2026-12-01',
+      end: '2026-12-05',
+    );
+    await _pumpTall(tester, _screen(events: <DkEvent>[period]));
+
+    expect(find.text('2026. 12. 01 ~ 2026. 12. 05'), findsOneWidget);
+  });
+
   testWidgets('종료(완료) 처리한 이벤트는 홈에서 숨긴다', (WidgetTester tester) async {
     const DkEvent done = DkEvent(
       id: 'done',
