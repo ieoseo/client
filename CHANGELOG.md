@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.10.0](https://github.com/ieoseo/client/compare/ieoseo-client-v0.9.3...ieoseo-client-v0.10.0) (2026-07-02)
+
+
+### Features
+
+* D-Day 핀 고정(홈 상단) ([#169](https://github.com/ieoseo/client/issues/169)) ([af9909f](https://github.com/ieoseo/client/commit/af9909f31a88c1c439224d5c1647dac93f2f089d)), closes [#162](https://github.com/ieoseo/client/issues/162)
+* 추가 시트 탭을 D-Day 우선으로 + 기본 탭 D-Day ([#166](https://github.com/ieoseo/client/issues/166)) ([bd819b7](https://github.com/ieoseo/client/commit/bd819b702f232f2123f1cdce8ef04a2675ceb467)), closes [#158](https://github.com/ieoseo/client/issues/158)
+* 홈 D-Day 행에 날짜 표시 ([#165](https://github.com/ieoseo/client/issues/165)) ([ff3cd3e](https://github.com/ieoseo/client/commit/ff3cd3ea74c6957117ed0ad87793b2cd6a452735)), closes [#157](https://github.com/ieoseo/client/issues/157)
+* 홈 카테고리 필터 추가 ([#167](https://github.com/ieoseo/client/issues/167)) ([1234525](https://github.com/ieoseo/client/commit/1234525172e6bb547a98a646d68b96add634c8c2)), closes [#163](https://github.com/ieoseo/client/issues/163)
+
+
+### Bug Fixes
+
+* D-Day 목표일 기본값을 오늘로 변경 ([#155](https://github.com/ieoseo/client/issues/155)) ([19c5027](https://github.com/ieoseo/client/commit/19c502733e6fd4efba4dede95a66d91b3f266f01))
+* 애플/딥링크 복귀 provisioning 실패를 로그인 화면에 노출 ([#164](https://github.com/ieoseo/client/issues/164)) ([f76b6f9](https://github.com/ieoseo/client/commit/f76b6f94b9cb2f91232268eb53c7cb255e1d305b))
+
 ## [0.9.3](https://github.com/ieoseo/client/compare/ieoseo-client-v0.9.2...ieoseo-client-v0.9.3) (2026-07-01)
 
 
