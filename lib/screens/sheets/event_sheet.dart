@@ -10,7 +10,6 @@ import '../../widgets/dk_button.dart';
 import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_segmented.dart';
 import '../../widgets/dk_sheet.dart';
-import '../me/settings_section.dart';
 import 'date_picker_sheet.dart';
 import 'date_range_picker_sheet.dart';
 import 'sheet_fields.dart';
@@ -51,7 +50,6 @@ class _EventSheetBodyState extends State<EventSheetBody> {
   // 기간 이벤트 히어로 보기 토글: false=마감 D-Day 카운트다운, true=진행률(%).
   late bool _showProgress = widget.event?.type == DkEventType.progress;
   late String _cat = widget.event?.category ?? '자격증';
-  bool _remind = true;
   late final TextEditingController _title = TextEditingController(
     text: widget.event?.title ?? '',
   );
@@ -239,21 +237,7 @@ class _EventSheetBodyState extends State<EventSheetBody> {
             minHeight: 64,
           ),
         ),
-        Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: t.bgSubtle,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            children: <Widget>[
-              _toggleRow(t, 'bell', 'D-Day 알림 (7·3·1일 전)', _remind, (bool v) {
-                setState(() => _remind = v);
-              }),
-            ],
-          ),
-        ),
+        // D-Day 알림 토글은 실제 로컬 알림이 없어(오해 유발) 숨김 — 실구현은 #160.
         _stickyActions(t, ev),
       ],
     );
@@ -385,36 +369,6 @@ class _EventSheetBodyState extends State<EventSheetBody> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _toggleRow(
-    DkTokens t,
-    String icon,
-    String label,
-    bool value,
-    ValueChanged<bool> onChanged,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: <Widget>[
-          DkIcon(icon, size: 19, color: t.fgMuted),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontSize: 14.5,
-                fontWeight: FontWeight.w500,
-                color: t.fg,
-              ),
-            ),
-          ),
-          DkToggle(value: value, onChanged: onChanged),
-        ],
       ),
     );
   }
