@@ -7,6 +7,7 @@ import '../../parts/app_header.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/dk_badge.dart';
 import '../../widgets/dk_card.dart';
+import '../../widgets/dk_choice_chip.dart';
 import '../../widgets/dk_empty.dart';
 import '../../widgets/dk_icon.dart';
 import '../../widgets/dk_section.dart';
@@ -23,7 +24,7 @@ String _todayLabel() {
   return '${now.month}월 ${now.day}일 ${weekdays[now.weekday - 1]}요일';
 }
 
-class TodayScreen extends StatelessWidget {
+class TodayScreen extends StatefulWidget {
   const TodayScreen({
     super.key,
     required this.events,
@@ -44,40 +45,88 @@ class TodayScreen extends StatelessWidget {
   final VoidCallback onOpenDebt;
 
   @override
+  State<TodayScreen> createState() => _TodayScreenState();
+}
+
+class _TodayScreenState extends State<TodayScreen> {
+  /// 선택한 카테고리 필터(null=전체, 세션 한정 — 저장 안 함, #163).
+  String? _category;
+
+  /// 이벤트에 실제로 등장하는 카테고리를 표준 순서(kCategoryIcon)로, 미매핑은 뒤에 붙여 나열.
+  List<String> _presentCategories(List<DkEvent> events) {
+    final Set<String> present = events.map((DkEvent e) => e.category).toSet();
+    final List<String> ordered = <String>[
+      for (final String c in kCategoryIcon.keys)
+        if (present.contains(c)) c,
+    ];
+    final List<String> extras =
+        present.where((String c) => !kCategoryIcon.containsKey(c)).toList()
+          ..sort();
+    return <String>[...ordered, ...extras];
+  }
+
+  @override
   Widget build(BuildContext context) {
     // 종료(완료) 처리한 이벤트는 홈에서 숨긴다(미종료는 D+ 로 계속 노출). FRD 5.1.
-    final List<DkEvent> ordered = ddayOrdered(
-      events.where((DkEvent e) => !e.completed).toList(growable: false),
-    );
-    final int debtTotal = debts.fold(0, (int s, DkDebt d) => s + d.mins);
-    final int debtOverdue = debts
+    final List<DkEvent> live = widget.events
+        .where((DkEvent e) => !e.completed)
+        .toList(growable: false);
+    final List<String> categories = _presentCategories(live);
+    // 선택 카테고리가 목록에서 사라지면(데이터 변경) 전체로 되돌린다.
+    final String? active = (_category != null && categories.contains(_category))
+        ? _category
+        : null;
+    final List<DkEvent> filtered = active == null
+        ? live
+        : live.where((DkEvent e) => e.category == active).toList();
+    final List<DkEvent> ordered = ddayOrdered(filtered);
+
+    final int debtTotal = widget.debts.fold(0, (int s, DkDebt d) => s + d.mins);
+    final int debtOverdue = widget.debts
         .where((DkDebt d) => d.status == DkDebtStatus.overdue)
         .length;
+
+    // 카테고리가 2개 이상일 때만 필터 칩을 노출한다(1개면 필터 의미 없음).
+    final bool showFilter = categories.length >= 2;
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 120),
       children: <Widget>[
         // 다른 탭과 동일한 AppHeader — 좌측 상단에 오늘 날짜(제목), 우측 상단에 알림 벨.
         // ink 인사 카드는 제거(요청)하고 헤더 위치/벨을 4개 탭에서 통일한다.
-        AppHeader(title: _todayLabel(), unread: unread, onBell: onBell),
+        AppHeader(
+          title: _todayLabel(),
+          unread: widget.unread,
+          onBell: widget.onBell,
+        ),
         const SizedBox(height: 8),
         const Padding(
           padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
           child: DkSectionLabel('다가오는 일정'),
         ),
+        if (showFilter) ...<Widget>[
+          _CategoryFilter(
+            categories: categories,
+            selected: active,
+            onSelect: (String? c) => setState(() => _category = c),
+          ),
+          const SizedBox(height: 14),
+        ],
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: ordered.isEmpty
-              ? const DkEmpty(
+              ? DkEmpty(
                   icon: 'target',
-                  title: '다가오는 일정이 없어요',
-                  body: '플랜에서 D-Day 일정을 추가하면 임박한 순서로 모아 보여드려요.',
+                  title: active == null ? '다가오는 일정이 없어요' : '$active 일정이 없어요',
+                  body: active == null
+                      ? '플랜에서 D-Day 일정을 추가하면 임박한 순서로 모아 보여드려요.'
+                      : '다른 카테고리를 선택하거나 전체로 보세요.',
                 )
               : Column(
                   children: <Widget>[
                     for (int i = 0; i < ordered.length; i++) ...<Widget>[
                       if (i > 0) const SizedBox(height: 10),
-                      _DdayRow(event: ordered[i], onOpen: onOpenEvent),
+                      _DdayRow(event: ordered[i], onOpen: widget.onOpenEvent),
                     ],
                   ],
                 ),
@@ -89,11 +138,50 @@ class TodayScreen extends StatelessWidget {
             child: _DebtNudge(
               total: debtTotal,
               overdueCount: debtOverdue,
-              onTap: onOpenDebt,
+              onTap: widget.onOpenDebt,
             ),
           ),
         ],
       ],
+    );
+  }
+}
+
+/// 홈 상단 카테고리 필터 칩 줄(전체 + 등장 카테고리, 단일 선택, #163).
+class _CategoryFilter extends StatelessWidget {
+  const _CategoryFilter({
+    required this.categories,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final List<String> categories;
+  final String? selected;
+  final ValueChanged<String?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 34,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        children: <Widget>[
+          DkChoiceChip(
+            label: '전체',
+            selected: selected == null,
+            onTap: () => onSelect(null),
+          ),
+          for (final String c in categories) ...<Widget>[
+            const SizedBox(width: 8),
+            DkChoiceChip(
+              label: c,
+              selected: selected == c,
+              onTap: () => onSelect(c),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

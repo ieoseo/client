@@ -97,6 +97,53 @@ void main() {
     expect(find.text('2026. 12. 01 ~ 2026. 12. 05'), findsOneWidget);
   });
 
+  testWidgets('카테고리가 2개 이상이면 필터 칩을 보인다(#163)', (WidgetTester tester) async {
+    const DkEvent a = DkEvent(
+      id: 'a',
+      type: DkEventType.single,
+      title: '정처기',
+      category: '자격증',
+      date: '2026-12-01',
+    );
+    const DkEvent b = DkEvent(
+      id: 'b',
+      type: DkEventType.single,
+      title: '건강검진',
+      category: '건강',
+      date: '2026-12-02',
+    );
+    await _pumpTall(tester, _screen(events: <DkEvent>[a, b]));
+
+    expect(find.text('전체'), findsOneWidget);
+    expect(find.text('자격증'), findsWidgets);
+    expect(find.text('건강'), findsWidgets);
+  });
+
+  testWidgets('카테고리 필터 탭 시 해당 카테고리만 보인다(#163)', (WidgetTester tester) async {
+    const DkEvent a = DkEvent(
+      id: 'a',
+      type: DkEventType.single,
+      title: '정처기',
+      category: '자격증',
+      date: '2026-12-01',
+    );
+    const DkEvent b = DkEvent(
+      id: 'b',
+      type: DkEventType.single,
+      title: '건강검진',
+      category: '건강',
+      date: '2026-12-02',
+    );
+    await _pumpTall(tester, _screen(events: <DkEvent>[a, b]));
+
+    // 필터 칩 '건강' 탭 → 건강 이벤트만 남고 자격증 이벤트는 사라진다.
+    await tester.tap(find.text('건강').first);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('건강검진'), findsOneWidget);
+    expect(find.text('정처기'), findsNothing);
+  });
+
   testWidgets('종료(완료) 처리한 이벤트는 홈에서 숨긴다', (WidgetTester tester) async {
     const DkEvent done = DkEvent(
       id: 'done',
