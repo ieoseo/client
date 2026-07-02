@@ -106,7 +106,7 @@ void main() {
     expect(find.byType(MeScreen), findsOneWidget);
   });
 
-  testWidgets('+ 버튼은 추가 시트를 열고 상단 탭으로 할 일↔D-Day 를 전환한다', (
+  testWidgets('+ 버튼은 추가 시트를 열고 상단 탭으로 D-Day↔할 일 를 전환한다', (
     WidgetTester tester,
   ) async {
     await _pumpTall(tester);
@@ -114,16 +114,17 @@ void main() {
     await tester.tap(find.byKey(const ValueKey<String>('tabbar-add')));
     await tester.pumpAndSettle();
 
-    // 상단 세그먼트 [할 일 | D-Day 일정], 기본은 할 일 탭(태스크 폼 = 예상 소요시간).
+    // 상단 세그먼트 [D-Day 일정 | 할 일], 기본은 D-Day 탭(이벤트 폼 = 이벤트 타입, #158).
     expect(find.text('할 일'), findsWidgets);
     expect(find.text('D-Day 일정'), findsOneWidget);
-    expect(find.text('예상 소요시간'), findsOneWidget);
-
-    // D-Day 일정 탭으로 전환 → 이벤트 폼(이벤트 타입), 태스크 폼은 사라진다.
-    await tester.tap(find.text('D-Day 일정'));
-    await tester.pumpAndSettle();
     expect(find.text('이벤트 타입'), findsOneWidget);
     expect(find.text('예상 소요시간'), findsNothing);
+
+    // 할 일 탭으로 전환 → 태스크 폼(예상 소요시간), 이벤트 폼은 사라진다.
+    await tester.tap(find.text('할 일').first);
+    await tester.pumpAndSettle();
+    expect(find.text('예상 소요시간'), findsOneWidget);
+    expect(find.text('이벤트 타입'), findsNothing);
   });
 
   testWidgets('미룬 시간 넛지 탭은 미룬 시간 상세 서브화면을 연다', (WidgetTester tester) async {
