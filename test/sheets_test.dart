@@ -134,6 +134,13 @@ void main() {
     expect(find.text(fmtDate(ymd(kToday))), findsOneWidget);
   });
 
+  testWidgets('동작하지 않는 D-Day 알림 토글은 숨긴다(#159)', (WidgetTester tester) async {
+    // 로컬 알림 실구현(#160) 전까지 오해를 주는 토글을 노출하지 않는다.
+    await _pumpTall(tester, EventSheetBody(isNew: true, onClose: () {}));
+
+    expect(find.textContaining('D-Day 알림'), findsNothing);
+  });
+
   testWidgets('기간 이벤트 상세는 보기 토글을 보이고 진행률로 전환하면 %를 보인다', (
     WidgetTester tester,
   ) async {
